@@ -4,15 +4,15 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 const AuthContext = createContext();
 
 const DEFAULT_MEMBER = {
-  id: "USR-VITC-2024-8842",
+  id: "USR-VITC-2024",
   name: "Michael Dias",
   email: "michael.dias2024@vitstudent.ac.in",
   regNumber: "24BCE5259",
-  role: "Creative Head",
-  instrument: "Guitar / Vocals",
-  yearOfStudy: "3rd Year B.Tech CSE",
+  role: "Creative Head / Guitarist",
+  instrument: "Lead Guitar & Production",
+  yearOfStudy: "2nd Year B.Tech",
   joinedYear: "2024",
-  secretKey: "88ff9228ab6faf06939fb624",
+  secretKey: "6911a3522c9c7646f3f5911e",
   verified: true
 };
 
@@ -144,44 +144,54 @@ const INITIAL_INSTRUMENT_REQUESTS = [
     id: "REQ-8021",
     instrumentName: "Fender Player Stratocaster (HSS)",
     instrumentCode: "GTR-FEN-01",
-    borrowDate: "2025-02-18",
+    borrowDate: "2026-11-10",
     borrowTime: "17:30",
-    returnDate: "2025-02-19",
+    returnDate: "2026-11-11",
     returnTime: "10:00",
     purpose: "College Cultural Fest Band Showcase",
     status: "Approved",
     requester: "Aarav Sharma",
     regNumber: "22BCE1289",
-    createdAt: "2025-02-11"
+    createdAt: "2026-11-01"
   },
   {
     id: "REQ-8022",
     instrumentName: "Roland XPS-30 Synthesizer",
     instrumentCode: "KEY-ROL-01",
-    borrowDate: "2025-02-25",
+    borrowDate: "2026-11-12",
     borrowTime: "15:00",
-    returnDate: "2025-02-26",
+    returnDate: "2026-11-13",
     returnTime: "18:00",
     purpose: "Live Track Sequencing & Stage Audition",
     status: "Pending",
     requester: "Aarav Sharma",
     regNumber: "22BCE1289",
-    createdAt: "2025-02-15"
+    createdAt: "2026-11-04"
   },
   {
     id: "REQ-7994",
     instrumentName: "Shure SM58 Dynamic Vocal Microphones (Set of 3)",
     instrumentCode: "MIC-SHU-03",
-    borrowDate: "2025-01-12",
+    borrowDate: "2026-10-25",
     borrowTime: "14:00",
-    returnDate: "2025-01-13",
+    returnDate: "2026-10-26",
     returnTime: "12:00",
     purpose: "Acoustic Unplugged Evening Rehearsal",
     status: "Returned",
-    requester: "Aarav Sharma",
-    regNumber: "22BCE1289",
-    createdAt: "2025-01-08"
+    requester: "Michael Dias",
+    regNumber: "24BCE5259",
+    createdAt: "2026-10-20"
   }
+];
+
+const INITIAL_ADMIN_USERS = [
+  { id: 'usr-1', name: 'Sarvesh C', email: 'sarvesh.c2024@vitstudent.ac.in', regNumber: '24BCE5259', role: 'Developer', type: 'Admin', verified: 'Verified', secretKey: '68ff9228ab0faf069397bb24' },
+  { id: 'usr-2', name: 'Michael Dias', email: 'michael.dias2024@vitstudent.ac.in', regNumber: '24BCE5260', role: 'Creative Head', type: 'Admin', verified: 'Verified', secretKey: '6911a3522c9c7646f3f5911e' },
+  { id: 'usr-3', name: 'Aarav Sharma', email: 'aarav.sharma2022@vitstudent.ac.in', regNumber: '22BCE1289', role: 'Guitarist', type: 'User', verified: 'Verified', secretKey: '68ff920169754d9fb129e4a2' },
+  { id: 'usr-4', name: 'Dhivi Bommisetty', email: 'dhivi.b2024@vitstudent.ac.in', regNumber: '26BHC1062', role: 'Vocalist', type: 'User', verified: 'Unverified', secretKey: '68ff925280e2ebc5981e2330' },
+  { id: 'usr-5', name: 'Aravindakshan C J', email: 'aravind.cj2024@vitstudent.ac.in', regNumber: '26MIS1138', role: 'Drummer', type: 'User', verified: 'Unverified', secretKey: '6900e3ff6657a7fe8361a944' },
+  { id: 'usr-6', name: 'Shruthika P', email: 'shruthika.p2024@vitstudent.ac.in', regNumber: '26BBH1010', role: 'Keyboardist', type: 'User', verified: 'Verified', secretKey: '68ff92123456789abcdef012' },
+  { id: 'usr-7', name: 'Ajay', email: 'ajay2025@vitstudent.ac.in', regNumber: '25BMV1028', role: 'Bassist', type: 'User', verified: 'Unverified', secretKey: '68ff92987654321fedcba345' },
 ];
 
 export const AuthProvider = ({ children }) => {
@@ -192,7 +202,7 @@ export const AuthProvider = ({ children }) => {
 
   const [isAdmin, setIsAdmin] = useState(() => {
     const saved = localStorage.getItem("vitc_music_is_admin");
-    return saved ? JSON.parse(saved) : false;
+    return saved ? JSON.parse(saved) : true;
   });
 
   const [bands, setBands] = useState(() => {
@@ -210,6 +220,11 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_INSTRUMENT_REQUESTS;
   });
 
+  const [allUsers, setAllUsers] = useState(() => {
+    const saved = localStorage.getItem("vitc_music_all_users");
+    return saved ? JSON.parse(saved) : INITIAL_ADMIN_USERS;
+  });
+
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = "success") => {
@@ -219,34 +234,21 @@ export const AuthProvider = ({ children }) => {
     }, 4000);
   };
 
-  // 1. SUPABASE REALTIME & DATA SYNC
-  useEffect(() => {
+  // ---------------- FETCH LIVE DATA FROM SUPABASE ----------------
+  const fetchLiveBookings = useCallback(async () => {
     if (!isSupabaseConfigured || !supabase) return;
-
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      }
-    });
-
-    // Listen for auth state changes
-    const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-      } else if (!localStorage.getItem("vitc_music_user")) {
-        setUser(null);
-      }
-    });
-
-    // Fetch live slot bookings
-    const fetchLiveBookings = async () => {
+    try {
       const { data, error } = await supabase
         .from('slot_bookings')
         .select('*')
         .order('slot_date', { ascending: false });
 
-      if (data && !error) {
+      if (error) {
+        console.warn('[Supabase] slot_bookings read error:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
         const formatted = data.map(b => ({
           id: b.id,
           date: b.slot_date,
@@ -259,19 +261,171 @@ export const AuthProvider = ({ children }) => {
           blockReason: b.block_reason,
           membersInfo: b.members_info,
           status: b.status,
-          createdAt: b.created_at
+          createdAt: b.created_at?.split('T')[0] || ''
         }));
         setBookings(formatted);
+        console.log(`%c[Supabase] Synced ${data.length} slot bookings`, 'color: #38bdf8');
       }
-    };
+    } catch (err) {
+      console.error('[Supabase] slot_bookings exception:', err);
+    }
+  }, []);
 
-    fetchLiveBookings();
+  const fetchLiveBands = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('bands')
+        .select('*, band_members(*)');
 
-    // Subscribe to realtime slot updates
+      if (error) {
+        console.warn('[Supabase] bands read error:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const formatted = data.map(b => ({
+          id: b.id,
+          name: b.name,
+          genre: b.genre || 'Rock / Fusion',
+          leader: b.leader_name,
+          madeBy: b.leader_name,
+          status: b.status || 'Approved',
+          createdAt: b.created_at?.split('T')[0] || '',
+          memberCount: (b.band_members || []).length || 1,
+          members: (b.band_members || []).map(m => ({
+            name: m.member_name,
+            reg: m.register_number,
+            key: m.secret_key || ''
+          })),
+          memberNames: (b.band_members || []).map(m => m.member_name),
+          registerNumbers: (b.band_members || []).map(m => m.register_number),
+          secretKeys: (b.band_members || []).map(m => m.secret_key || '')
+        }));
+        setBands(formatted);
+        console.log(`%c[Supabase] Synced ${data.length} bands`, 'color: #38bdf8');
+      }
+    } catch (err) {
+      console.error('[Supabase] bands exception:', err);
+    }
+  }, []);
+
+  const fetchLiveUsers = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('[Supabase] profiles read error:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const formatted = data.map(u => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          regNumber: u.reg_number,
+          role: u.role || 'Musician',
+          type: u.is_admin ? 'Admin' : 'User',
+          verified: u.is_verified ? 'Verified' : 'Unverified',
+          secretKey: u.secret_key
+        }));
+        setAllUsers(formatted);
+        console.log(`%c[Supabase] Synced ${data.length} profiles`, 'color: #38bdf8');
+      }
+    } catch (err) {
+      console.error('[Supabase] profiles exception:', err);
+    }
+  }, []);
+
+  const fetchLiveInstrumentRequests = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('instrument_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('[Supabase] instrument_requests read error:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const formatted = data.map(r => ({
+          id: r.id,
+          instrumentName: r.instrument_name,
+          instrumentCode: r.instrument_code,
+          borrowDate: r.borrow_date,
+          returnDate: r.return_date,
+          borrowTime: '17:30',
+          returnTime: '10:00',
+          purpose: r.event_name || 'Music Club Practice',
+          status: r.status,
+          requester: r.booker_name,
+          regNumber: r.booker_reg,
+          createdAt: r.created_at?.split('T')[0] || ''
+        }));
+        setInstrumentRequests(formatted);
+        console.log(`%c[Supabase] Synced ${data.length} instrument requests`, 'color: #38bdf8');
+      }
+    } catch (err) {
+      console.error('[Supabase] instrument_requests exception:', err);
+    }
+  }, []);
+
+  const refreshAllLiveData = useCallback(async () => {
+    await Promise.allSettled([
+      fetchLiveBookings(),
+      fetchLiveBands(),
+      fetchLiveUsers(),
+      fetchLiveInstrumentRequests()
+    ]);
+  }, [fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests]);
+
+  // Initial load and Realtime Subscriptions
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    // Load user session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      }
+    });
+
+    const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      } else if (!localStorage.getItem("vitc_music_user")) {
+        setUser(null);
+      }
+    });
+
+    // Initial fetch of all tables
+    refreshAllLiveData();
+
+    // Realtime listeners
     const channel = supabase
-      .channel('slot_bookings_changes')
+      .channel('schema_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'slot_bookings' }, () => {
         fetchLiveBookings();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bands' }, () => {
+        fetchLiveBands();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'band_members' }, () => {
+        fetchLiveBands();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchLiveUsers();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'instrument_requests' }, () => {
+        fetchLiveInstrumentRequests();
       })
       .subscribe();
 
@@ -279,7 +433,7 @@ export const AuthProvider = ({ children }) => {
       authListener?.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refreshAllLiveData, fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests]);
 
   const loadUserProfile = async (userId) => {
     if (!supabase) return;
@@ -288,7 +442,7 @@ export const AuthProvider = ({ children }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (data && !error) {
         const profile = {
@@ -335,13 +489,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("vitc_music_instruments", JSON.stringify(instrumentRequests));
   }, [instrumentRequests]);
 
+  useEffect(() => {
+    localStorage.setItem("vitc_music_all_users", JSON.stringify(allUsers));
+  }, [allUsers]);
+
   const loginAsDemo = () => {
     setUser(DEFAULT_MEMBER);
     showToast("Signed in as Demo Club Member (Michael Dias)");
   };
 
   const loginWithCredentials = async (userData) => {
-    // If Supabase is connected, attempt Supabase Auth
     if (isSupabaseConfigured && supabase && userData.email && userData.password) {
       try {
         if (userData.isSignUp) {
@@ -400,6 +557,7 @@ export const AuthProvider = ({ children }) => {
     showToast("Signed out of Member Portal", "info");
   };
 
+  // ---------------- BANDS ACTIONS ----------------
   const addBand = async (newBand) => {
     const bandRecord = {
       id: `band-${Date.now()}`,
@@ -411,7 +569,7 @@ export const AuthProvider = ({ children }) => {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data: bandRow } = await supabase
+        const { data: bandRow, error: bandErr } = await supabase
           .from('bands')
           .insert({
             name: newBand.name,
@@ -421,6 +579,8 @@ export const AuthProvider = ({ children }) => {
           })
           .select()
           .single();
+
+        if (bandErr) throw bandErr;
 
         if (bandRow && newBand.memberNames) {
           const membersToInsert = newBand.memberNames.map((name, i) => ({
@@ -440,6 +600,51 @@ export const AuthProvider = ({ children }) => {
     return bandRecord;
   };
 
+  const updateAdminBand = async (updatedBand) => {
+    setBands(prev => prev.map(b => b.id === updatedBand.id ? updatedBand : b));
+    showToast(`Updated band "${updatedBand.name}"`);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('bands')
+          .update({
+            name: updatedBand.name,
+            genre: updatedBand.genre,
+            leader_name: updatedBand.madeBy || updatedBand.leader
+          })
+          .eq('id', updatedBand.id);
+
+        if (updatedBand.members) {
+          await supabase.from('band_members').delete().eq('band_id', updatedBand.id);
+          const memberRows = updatedBand.members.map(m => ({
+            band_id: updatedBand.id,
+            member_name: m.name,
+            register_number: m.reg,
+            secret_key: m.key
+          }));
+          await supabase.from('band_members').insert(memberRows);
+        }
+      } catch (err) {
+        console.error("Update band in Supabase error:", err);
+      }
+    }
+  };
+
+  const deleteAdminBand = async (bandId) => {
+    setBands(prev => prev.filter(b => b.id !== bandId));
+    showToast(`Deleted band`, 'info');
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('bands').delete().eq('id', bandId);
+      } catch (err) {
+        console.error("Delete band in Supabase error:", err);
+      }
+    }
+  };
+
+  // ---------------- BOOKINGS ACTIONS ----------------
   const addBooking = async (newBooking) => {
     const isBlock = newBooking.bookingMode === 'Block';
     const bookingRecord = {
@@ -455,6 +660,7 @@ export const AuthProvider = ({ children }) => {
         const { error } = await supabase
           .from('slot_bookings')
           .insert({
+            id: bookingRecord.id,
             slot_date: newBooking.date,
             time_slot: newBooking.timeSlot,
             booker_name: newBooking.bookerName || user?.name || 'Member',
@@ -467,7 +673,7 @@ export const AuthProvider = ({ children }) => {
 
         if (error) {
           if (error.code === '23505') {
-            showToast("This slot is already booked or blocked by another member!", "error");
+            showToast("This slot is already booked or blocked!", "error");
             return null;
           }
           console.error("Booking sync error:", error);
@@ -500,6 +706,19 @@ export const AuthProvider = ({ children }) => {
     showToast(`Booking marked as ${newStatus}`);
   };
 
+  const deleteBooking = async (bookingId) => {
+    setBookings(prev => prev.filter(b => b.id !== bookingId));
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('slot_bookings').delete().eq('id', bookingId);
+      } catch (err) {
+        console.error("Delete booking error:", err);
+      }
+    }
+  };
+
+  // ---------------- INSTRUMENT ACTIONS ----------------
   const addInstrumentRequest = async (newRequest) => {
     const reqRecord = {
       id: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -516,6 +735,7 @@ export const AuthProvider = ({ children }) => {
         await supabase
           .from('instrument_requests')
           .insert({
+            id: reqRecord.id,
             instrument_name: newRequest.instrumentName,
             instrument_code: newRequest.instrumentCode,
             borrow_date: newRequest.borrowDate,
@@ -553,16 +773,66 @@ export const AuthProvider = ({ children }) => {
     showToast(`Instrument request marked as ${newStatus}`);
   };
 
-  const verifyMember = async (regNumber) => {
-    showToast(`Member ${regNumber} verified successfully!`);
+  // ---------------- USER & VERIFICATION ACTIONS ----------------
+  const verifyMember = async (userIdOrReg) => {
+    let targetName = '';
+    let targetNextStatus = 'Verified';
+
+    setAllUsers(prev => prev.map(u => {
+      if (u.id === userIdOrReg || u.regNumber === userIdOrReg) {
+        targetName = u.name;
+        targetNextStatus = u.verified === 'Verified' ? 'Unverified' : 'Verified';
+        return { ...u, verified: targetNextStatus };
+      }
+      return u;
+    }));
+
+    showToast(`${targetName || userIdOrReg} is now marked ${targetNextStatus}`);
+
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase
           .from('profiles')
-          .update({ is_verified: true })
-          .eq('reg_number', regNumber);
+          .update({ is_verified: targetNextStatus === 'Verified' })
+          .or(`id.eq.${userIdOrReg},reg_number.eq.${userIdOrReg}`);
       } catch (err) {
-        console.error("Verify member error:", err);
+        console.error("Verify member in Supabase error:", err);
+      }
+    }
+  };
+
+  const updateAdminUser = async (updatedUser) => {
+    setAllUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+    showToast(`Updated member account: ${updatedUser.name}`);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({
+            name: updatedUser.name,
+            email: updatedUser.email,
+            reg_number: updatedUser.regNumber,
+            role: updatedUser.role,
+            is_admin: updatedUser.type === 'Admin',
+            is_verified: updatedUser.verified === 'Verified'
+          })
+          .eq('id', updatedUser.id);
+      } catch (err) {
+        console.error("Update profile in Supabase error:", err);
+      }
+    }
+  };
+
+  const deleteAdminUser = async (userId) => {
+    setAllUsers(prev => prev.filter(u => u.id !== userId));
+    showToast(`Deleted member account`, 'info');
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('profiles').delete().eq('id', userId);
+      } catch (err) {
+        console.error("Delete profile in Supabase error:", err);
       }
     }
   };
@@ -583,18 +853,25 @@ export const AuthProvider = ({ children }) => {
         bands,
         bookings,
         instrumentRequests,
+        allUsers,
         toast,
         loginAsDemo,
         loginWithCredentials,
         logout,
         addBand,
+        updateAdminBand,
+        deleteAdminBand,
         addBooking,
         updateBookingStatus,
+        deleteBooking,
         addInstrumentRequest,
         updateInstrumentStatus,
         verifyMember,
+        updateAdminUser,
+        deleteAdminUser,
         toggleAdmin,
-        showToast
+        showToast,
+        refreshAllLiveData
       }}
     >
       {children}

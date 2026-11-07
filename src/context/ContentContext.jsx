@@ -17,9 +17,12 @@ export const ContentProvider = ({ children }) => {
             .from('site_content')
             .select('content')
             .eq('id', 'main')
-            .single();
+            .maybeSingle();
 
-          if (data?.content && !error) {
+          if (error) {
+            console.warn('[Supabase] site_content query error:', error.message);
+          } else if (data?.content) {
+            console.log('[Supabase] site_content loaded successfully from database.');
             setContent(data.content);
             localStorage.setItem("vitc_music_site_content", JSON.stringify(data.content));
             setLoading(false);
@@ -40,6 +43,17 @@ export const ContentProvider = ({ children }) => {
         if (res.ok) {
           const data = await res.json();
           setContent(data);
+
+          // Auto-seed to Supabase if database row is missing and Supabase is configured
+          if (isSupabaseConfigured && supabase) {
+            supabase
+              .from('site_content')
+              .upsert({ id: 'main', content: data, updated_at: new Date().toISOString() })
+              .then(({ error }) => {
+                if (!error) console.log('[Supabase] Auto-seeded default site_content to database.');
+              })
+              .catch(() => {});
+          }
         } else {
           console.warn("Failed to fetch /content.json, using fallback");
         }
@@ -59,9 +73,15 @@ export const ContentProvider = ({ children }) => {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase
+        const { error } = await supabase
           .from('site_content')
           .upsert({ id: 'main', content: newContent, updated_at: new Date().toISOString() });
+        
+        if (error) {
+          console.error("Failed to sync site content to Supabase:", error.message);
+        } else {
+          console.log("[Supabase] site_content saved to database successfully.");
+        }
       } catch (err) {
         console.error("Failed to sync site content to Supabase:", err);
       }
@@ -74,7 +94,7 @@ export const ContentProvider = ({ children }) => {
       const res = await fetch('/content.json');
       if (res.ok) {
         const data = await res.json();
-        setContent(data);
+        await updateContent(data);
       }
     } catch (e) {
       console.error(e);
