@@ -620,10 +620,15 @@ export const AuthProvider = ({ children }) => {
   // ---------------- BOOKINGS ACTIONS ----------------
   const addBooking = async (newBooking) => {
     const isBlock = newBooking.bookingMode === 'Block';
+    // Admin bookings are Approved (or Blocked). Non-admin member bookings start as Pending approval!
+    const initialStatus = isBlock 
+      ? 'Blocked' 
+      : (isAdmin ? (newBooking.status || 'Approved') : 'Pending');
+
     const bookingRecord = {
       id: `BKG-${Math.floor(1000 + Math.random() * 9000)}`,
       ...newBooking,
-      status: isBlock ? "Blocked" : "Approved",
+      status: initialStatus,
       createdAt: new Date().toISOString().split('T')[0]
     };
     setBookings(prev => [bookingRecord, ...prev]);
@@ -640,7 +645,7 @@ export const AuthProvider = ({ children }) => {
             booker_reg: newBooking.bookerReg || user?.regNumber || '',
             band_name: newBooking.bandName || null,
             members_info: newBooking.membersInfo || [],
-            status: isBlock ? 'Blocked' : 'Approved',
+            status: initialStatus,
             block_reason: newBooking.blockReason || null
           });
 
@@ -656,7 +661,13 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    showToast(isBlock ? "Time slot blocked successfully." : "Practice slot booked successfully!");
+    if (isBlock) {
+      showToast("Time slot blocked successfully.");
+    } else if (initialStatus === 'Pending') {
+      showToast("Booking submitted! Awaiting admin approval.", "info");
+    } else {
+      showToast("Practice slot booked successfully!");
+    }
     return bookingRecord;
   };
 

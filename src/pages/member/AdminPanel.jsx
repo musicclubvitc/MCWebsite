@@ -349,6 +349,27 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                   >
                     <Printer className="w-4 h-4" /> Print Booking Pass (PDF)
                   </button>
+                  {selectedBookingDetails.status !== 'Approved' && (
+                    <button
+                      onClick={() => {
+                        updateBookingStatus(selectedBookingDetails.id, 'Approved');
+                        setSelectedBookingDetails(prev => ({ ...prev, status: 'Approved' }));
+                      }}
+                      className="btn-primary"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 20px',
+                        borderRadius: '20px',
+                        fontSize: '0.85rem',
+                        background: '#16a34a',
+                        borderColor: '#22c55e'
+                      }}
+                    >
+                      <Check className="w-4 h-4" /> Approve Booking
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       updateBookingStatus(selectedBookingDetails.id, 'Declined');
@@ -411,100 +432,127 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
               </div>
 
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '12px 14px', width: '40px' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedBookingIds.length > 0 && selectedBookingIds.length === filteredBookings.length}
-                          onChange={toggleSelectAllBookings}
-                          style={{ cursor: 'pointer' }}
-                        />
-                      </th>
-                      <th style={{ padding: '12px 14px' }}>S.No.</th>
-                      <th style={{ padding: '12px 14px' }}>Date</th>
-                      <th style={{ padding: '12px 14px' }}>Day</th>
-                      <th style={{ padding: '12px 14px' }}>Slot</th>
-                      <th style={{ padding: '12px 14px' }}>Mode</th>
-                      <th style={{ padding: '12px 14px' }}>Status</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'right' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredBookings.length === 0 ? (
-                      <tr>
-                        <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
-                          No slot bookings recorded yet.
-                        </td>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                  <table style={{ width: '100%', minWidth: '880px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '12px 14px', width: '40px' }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedBookingIds.length > 0 && selectedBookingIds.length === filteredBookings.length}
+                            onChange={toggleSelectAllBookings}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        </th>
+                        <th style={{ padding: '12px 14px' }}>S.No.</th>
+                        <th style={{ padding: '12px 14px' }}>Booked By</th>
+                        <th style={{ padding: '12px 14px' }}>Date</th>
+                        <th style={{ padding: '12px 14px' }}>Day</th>
+                        <th style={{ padding: '12px 14px' }}>Slot</th>
+                        <th style={{ padding: '12px 14px' }}>Mode</th>
+                        <th style={{ padding: '12px 14px' }}>Status</th>
+                        <th style={{ padding: '12px 14px', textAlign: 'right' }}>Action</th>
                       </tr>
-                    ) : filteredBookings.map((b, idx) => {
-                      const isSel = selectedBookingIds.includes(b.id);
-                      return (
-                        <tr key={b.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
-                          <td style={{ padding: '12px 14px' }}>
-                            <input
-                              type="checkbox"
-                              checked={isSel}
-                              onChange={() => toggleSelectBooking(b.id)}
-                              style={{ cursor: 'pointer' }}
-                            />
-                          </td>
-                          <td style={{ padding: '12px 14px', color: '#64748B' }}>{idx + 1}</td>
-                          <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{b.date?.split('-').reverse().join('-')}</td>
-                          <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>{b.day}</td>
-                          <td style={{ padding: '12px 14px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{b.timeSlot}</td>
-                          <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>
-                            {b.bookingMode || 'Self'}
-                            {b.bandName && <span style={{ color: 'var(--blue-sky)', marginLeft: '6px' }}>({b.bandName})</span>}
-                          </td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <span style={{
-                              padding: '3px 10px',
-                              borderRadius: '12px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              background: b.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : (b.status === 'Blocked' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)'),
-                              color: b.status === 'Approved' ? '#22c55e' : (b.status === 'Blocked' ? '#fbbf24' : '#ef4444')
-                            }}>
-                              {b.status}
-                            </span>
-                            {b.blockReason && (
-                              <div style={{ fontSize: '0.7rem', color: '#fbbf24', marginTop: '2px' }}>
-                                Reason: {b.blockReason}
-                              </div>
-                            )}
-                          </td>
-                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                              <button
-                                onClick={() => setPrintBooking(b)}
-                                style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
-                                title="Print Booking Pass / PDF"
-                              >
-                                <Printer className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setSelectedBookingDetails(b)}
-                                className="btn-secondary"
-                                style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                              >
-                                Details
-                              </button>
-                              <button
-                                onClick={() => deleteBooking(b.id)}
-                                style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
-                                title="Delete booking"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
+                    </thead>
+                    <tbody>
+                      {filteredBookings.length === 0 ? (
+                        <tr>
+                          <td colSpan="9" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                            No slot bookings recorded yet.
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      ) : filteredBookings.map((b, idx) => {
+                        const isSel = selectedBookingIds.includes(b.id);
+                        return (
+                          <tr key={b.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
+                            <td style={{ padding: '12px 14px' }}>
+                              <input
+                                type="checkbox"
+                                checked={isSel}
+                                onChange={() => toggleSelectBooking(b.id)}
+                                style={{ cursor: 'pointer' }}
+                              />
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#64748B' }}>{idx + 1}</td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ color: '#F8FAFC', fontWeight: 600 }}>{b.bookerName || 'Member'}</div>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{b.bookerReg || ''}</div>
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{b.date?.split('-').reverse().join('-')}</td>
+                            <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>{b.day}</td>
+                            <td style={{ padding: '12px 14px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{b.timeSlot}</td>
+                            <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>
+                              {b.bookingMode || 'Self'}
+                              {b.bandName && <span style={{ color: 'var(--blue-sky)', marginLeft: '6px' }}>({b.bandName})</span>}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span style={{
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                background: b.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : (b.status === 'Blocked' ? 'rgba(245, 158, 11, 0.15)' : (b.status === 'Pending' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(239, 68, 68, 0.15)')),
+                                color: b.status === 'Approved' ? '#22c55e' : (b.status === 'Blocked' ? '#fbbf24' : (b.status === 'Pending' ? '#facc15' : '#ef4444'))
+                              }}>
+                                {b.status}
+                              </span>
+                              {b.blockReason && (
+                                <div style={{ fontSize: '0.7rem', color: '#fbbf24', marginTop: '2px' }}>
+                                  Reason: {b.blockReason}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                {b.status === 'Pending' && (
+                                  <>
+                                    <button
+                                      onClick={() => updateBookingStatus(b.id, 'Approved')}
+                                      className="btn-primary"
+                                      style={{ padding: '4px 10px', fontSize: '0.74rem', background: '#16a34a', borderColor: '#22c55e' }}
+                                      title="Approve Booking"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      onClick={() => updateBookingStatus(b.id, 'Declined')}
+                                      className="btn-secondary"
+                                      style={{ padding: '4px 10px', fontSize: '0.74rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}
+                                      title="Decline Booking"
+                                    >
+                                      Decline
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  onClick={() => setPrintBooking(b)}
+                                  style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+                                  title="Print Booking Pass / PDF"
+                                >
+                                  <Printer className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setSelectedBookingDetails(b)}
+                                  className="btn-secondary"
+                                  style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                                >
+                                  Details
+                                </button>
+                                <button
+                                  onClick={() => deleteBooking(b.id)}
+                                  style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
+                                  title="Delete booking"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -630,36 +678,38 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
               </div>
 
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '12px 18px' }}>S.No.</th>
-                      <th style={{ padding: '12px 18px' }}>Band Name</th>
-                      <th style={{ padding: '12px 18px' }}>Genre</th>
-                      <th style={{ padding: '12px 18px' }}>Made by</th>
-                      <th style={{ padding: '12px 18px', textAlign: 'right' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bands.map((band, idx) => (
-                      <tr key={band.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
-                        <td style={{ padding: '12px 18px', color: '#64748B' }}>{idx + 1}</td>
-                        <td style={{ padding: '12px 18px', color: '#F1F5F9', fontWeight: 600 }}>{band.name}</td>
-                        <td style={{ padding: '12px 18px', color: '#94A3B8' }}>{band.genre || 'Rock'}</td>
-                        <td style={{ padding: '12px 18px', color: '#CBD5E1' }}>{band.madeBy || band.leader}</td>
-                        <td style={{ padding: '12px 18px', textAlign: 'right' }}>
-                          <button
-                            onClick={() => setSelectedBand(band)}
-                            className="btn-secondary"
-                            style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                          >
-                            Details
-                          </button>
-                        </td>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                  <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '12px 18px' }}>S.No.</th>
+                        <th style={{ padding: '12px 18px' }}>Band Name</th>
+                        <th style={{ padding: '12px 18px' }}>Genre</th>
+                        <th style={{ padding: '12px 18px' }}>Made by</th>
+                        <th style={{ padding: '12px 18px', textAlign: 'right' }}>Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {bands.map((band, idx) => (
+                        <tr key={band.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
+                          <td style={{ padding: '12px 18px', color: '#64748B' }}>{idx + 1}</td>
+                          <td style={{ padding: '12px 18px', color: '#F1F5F9', fontWeight: 600 }}>{band.name}</td>
+                          <td style={{ padding: '12px 18px', color: '#94A3B8' }}>{band.genre || 'Rock'}</td>
+                          <td style={{ padding: '12px 18px', color: '#CBD5E1' }}>{band.madeBy || band.leader}</td>
+                          <td style={{ padding: '12px 18px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => setSelectedBand(band)}
+                              className="btn-secondary"
+                              style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                            >
+                              Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -775,74 +825,76 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
               </div>
 
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                  <thead>
-                    <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
-                      <th style={{ padding: '12px 14px' }}>S.No.</th>
-                      <th style={{ padding: '12px 14px' }}>Name</th>
-                      <th style={{ padding: '12px 14px' }}>VIT Email</th>
-                      <th style={{ padding: '12px 14px' }}>Register Number</th>
-                      <th style={{ padding: '12px 14px' }}>Role</th>
-                      <th style={{ padding: '12px 14px' }}>Type</th>
-                      <th style={{ padding: '12px 14px' }}>Verification Status</th>
-                      <th style={{ padding: '12px 14px', textAlign: 'right' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allUsers.map((u, idx) => (
-                      <tr key={u.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
-                        <td style={{ padding: '12px 14px', color: '#64748B' }}>{idx + 1}</td>
-                        <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{u.name}</td>
-                        <td style={{ padding: '12px 14px', color: '#94A3B8' }}>{u.email}</td>
-                        <td style={{ padding: '12px 14px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{u.regNumber}</td>
-                        <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>{u.role}</td>
-                        <td style={{ padding: '12px 14px' }}>
-                          <span style={{
-                            padding: '3px 10px',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            background: u.type === 'Admin' ? 'rgba(147, 51, 234, 0.2)' : 'rgba(56, 189, 248, 0.1)',
-                            color: u.type === 'Admin' ? '#c084fc' : 'var(--blue-sky)'
-                          }}>
-                            {u.type}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          {/* 1-Click Verification Toggle Button */}
-                          <button
-                            onClick={() => toggleUserVerification(u.id)}
-                            style={{
-                              padding: '4px 12px',
-                              borderRadius: '20px',
-                              fontSize: '0.78rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              border: u.verified === 'Verified' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
-                              background: u.verified === 'Verified' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                              color: u.verified === 'Verified' ? '#4ade80' : '#f87171'
-                            }}
-                          >
-                            {u.verified === 'Verified' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                            {u.verified}
-                          </button>
-                        </td>
-                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                          <button
-                            onClick={() => setSelectedUser(u)}
-                            className="btn-secondary"
-                            style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                          >
-                            Edit
-                          </button>
-                        </td>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                  <table style={{ width: '100%', minWidth: '840px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                    <thead>
+                      <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
+                        <th style={{ padding: '12px 14px' }}>S.No.</th>
+                        <th style={{ padding: '12px 14px' }}>Name</th>
+                        <th style={{ padding: '12px 14px' }}>VIT Email</th>
+                        <th style={{ padding: '12px 14px' }}>Register Number</th>
+                        <th style={{ padding: '12px 14px' }}>Role</th>
+                        <th style={{ padding: '12px 14px' }}>Type</th>
+                        <th style={{ padding: '12px 14px' }}>Verification Status</th>
+                        <th style={{ padding: '12px 14px', textAlign: 'right' }}>Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {allUsers.map((u, idx) => (
+                        <tr key={u.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
+                          <td style={{ padding: '12px 14px', color: '#64748B' }}>{idx + 1}</td>
+                          <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{u.name}</td>
+                          <td style={{ padding: '12px 14px', color: '#94A3B8' }}>{u.email}</td>
+                          <td style={{ padding: '12px 14px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{u.regNumber}</td>
+                          <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>{u.role}</td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              background: u.type === 'Admin' ? 'rgba(147, 51, 234, 0.2)' : 'rgba(56, 189, 248, 0.1)',
+                              color: u.type === 'Admin' ? '#c084fc' : 'var(--blue-sky)'
+                            }}>
+                              {u.type}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            {/* 1-Click Verification Toggle Button */}
+                            <button
+                              onClick={() => toggleUserVerification(u.id)}
+                              style={{
+                                padding: '4px 12px',
+                                borderRadius: '20px',
+                                fontSize: '0.78rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                border: u.verified === 'Verified' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                                background: u.verified === 'Verified' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                color: u.verified === 'Verified' ? '#4ade80' : '#f87171'
+                              }}
+                            >
+                              {u.verified === 'Verified' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                              {u.verified}
+                            </button>
+                          </td>
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <button
+                              onClick={() => setSelectedUser(u)}
+                              className="btn-secondary"
+                              style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                            >
+                              Edit
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1215,85 +1267,87 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                   </div>
 
                   <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
-                      <thead>
-                        <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
-                          <th style={{ padding: '12px 14px', width: '40px' }}>
-                            <input
-                              type="checkbox"
-                              checked={selectedInstIds.length > 0 && selectedInstIds.length === instrumentRequests.length}
-                              onChange={toggleSelectAllInst}
-                              style={{ cursor: 'pointer' }}
-                            />
-                          </th>
-                          <th style={{ padding: '12px 16px' }}>Req ID</th>
-                          <th style={{ padding: '12px 16px' }}>Instrument</th>
-                          <th style={{ padding: '12px 16px' }}>Code</th>
-                          <th style={{ padding: '12px 16px' }}>Borrow Date</th>
-                          <th style={{ padding: '12px 16px' }}>Requester</th>
-                          <th style={{ padding: '12px 16px' }}>Status</th>
-                          <th style={{ padding: '12px 16px', textAlign: 'right' }}>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {instrumentRequests.length === 0 ? (
-                          <tr>
-                            <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
-                              No gear requisition requests found in database.
-                            </td>
+                    <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+                      <table style={{ width: '100%', minWidth: '820px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
+                            <th style={{ padding: '12px 14px', width: '40px' }}>
+                              <input
+                                type="checkbox"
+                                checked={selectedInstIds.length > 0 && selectedInstIds.length === instrumentRequests.length}
+                                onChange={toggleSelectAllInst}
+                                style={{ cursor: 'pointer' }}
+                              />
+                            </th>
+                            <th style={{ padding: '12px 16px' }}>Req ID</th>
+                            <th style={{ padding: '12px 16px' }}>Instrument</th>
+                            <th style={{ padding: '12px 16px' }}>Code</th>
+                            <th style={{ padding: '12px 16px' }}>Borrow Date</th>
+                            <th style={{ padding: '12px 16px' }}>Requester</th>
+                            <th style={{ padding: '12px 16px' }}>Status</th>
+                            <th style={{ padding: '12px 16px', textAlign: 'right' }}>Action</th>
                           </tr>
-                        ) : instrumentRequests.map((req, idx) => {
-                          const isSel = selectedInstIds.includes(req.id);
-                          return (
-                            <tr key={req.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
-                              <td style={{ padding: '12px 14px' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={isSel}
-                                  onChange={() => toggleSelectInst(req.id)}
-                                  style={{ cursor: 'pointer' }}
-                                />
-                              </td>
-                              <td style={{ padding: '12px 16px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{req.id}</td>
-                              <td style={{ padding: '12px 16px', color: '#F1F5F9', fontWeight: 600 }}>{req.instrumentName}</td>
-                              <td style={{ padding: '12px 16px', color: '#94A3B8', fontFamily: 'monospace' }}>{req.instrumentCode}</td>
-                              <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.borrowDate}</td>
-                              <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.requester}</td>
-                              <td style={{ padding: '12px 16px' }}>
-                                <span style={{
-                                  padding: '3px 10px',
-                                  borderRadius: '12px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 700,
-                                  background: req.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : (req.status === 'Pending' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(56, 189, 248, 0.15)'),
-                                  color: req.status === 'Approved' ? '#22c55e' : (req.status === 'Pending' ? '#fbbf24' : '#38bdf8')
-                                }}>
-                                  {req.status}
-                                </span>
-                              </td>
-                              <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                                <div style={{ display: 'inline-flex', gap: '8px' }}>
-                                  <button
-                                    onClick={() => setSelectedInstDetails(req)}
-                                    className="btn-secondary"
-                                    style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                                  >
-                                    Details
-                                  </button>
-                                  <button
-                                    onClick={() => deleteInstrumentRequest(req.id)}
-                                    style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
-                                    title="Delete request"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </div>
+                        </thead>
+                        <tbody>
+                          {instrumentRequests.length === 0 ? (
+                            <tr>
+                              <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                                No gear requisition requests found in database.
                               </td>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                          ) : instrumentRequests.map((req, idx) => {
+                            const isSel = selectedInstIds.includes(req.id);
+                            return (
+                              <tr key={req.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
+                                <td style={{ padding: '12px 14px' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={isSel}
+                                    onChange={() => toggleSelectInst(req.id)}
+                                    style={{ cursor: 'pointer' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '12px 16px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{req.id}</td>
+                                <td style={{ padding: '12px 16px', color: '#F1F5F9', fontWeight: 600 }}>{req.instrumentName}</td>
+                                <td style={{ padding: '12px 16px', color: '#94A3B8', fontFamily: 'monospace' }}>{req.instrumentCode}</td>
+                                <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.borrowDate}</td>
+                                <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.requester}</td>
+                                <td style={{ padding: '12px 16px' }}>
+                                  <span style={{
+                                    padding: '3px 10px',
+                                    borderRadius: '12px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    background: req.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : (req.status === 'Pending' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(56, 189, 248, 0.15)'),
+                                    color: req.status === 'Approved' ? '#22c55e' : (req.status === 'Pending' ? '#fbbf24' : '#38bdf8')
+                                  }}>
+                                    {req.status}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                                  <div style={{ display: 'inline-flex', gap: '8px' }}>
+                                    <button
+                                      onClick={() => setSelectedInstDetails(req)}
+                                      className="btn-secondary"
+                                      style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                                    >
+                                      Details
+                                    </button>
+                                    <button
+                                      onClick={() => deleteInstrumentRequest(req.id)}
+                                      style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
+                                      title="Delete request"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )}

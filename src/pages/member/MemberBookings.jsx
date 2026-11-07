@@ -8,6 +8,21 @@ export const MemberBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [printBooking, setPrintBooking] = useState(null);
 
+  // Filter bookings belonging to the logged-in user or where user is in membersInfo
+  const userBookings = (bookings || []).filter(b => {
+    if (!b || !user) return false;
+    const matchesReg = user.regNumber && b.bookerReg && b.bookerReg.toLowerCase() === user.regNumber.toLowerCase();
+    const matchesName = user.name && b.bookerName && b.bookerName.toLowerCase() === user.name.toLowerCase();
+    
+    const isMemberOfBooking = Array.isArray(b.membersInfo) && b.membersInfo.some(m => {
+      const mReg = (m.reg || m.registerNumber || '').toLowerCase();
+      const mName = (m.name || m.memberName || '').toLowerCase();
+      return (user.regNumber && mReg === user.regNumber.toLowerCase()) || (user.name && mName === user.name.toLowerCase());
+    });
+
+    return matchesReg || matchesName || isMemberOfBooking;
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -18,7 +33,7 @@ export const MemberBookings = () => {
         </h2>
       </div>
 
-      {bookings.length === 0 ? (
+      {userBookings.length === 0 ? (
         <div className="glass-panel" style={{ padding: '50px 20px', textAlign: 'center' }}>
           <Clock className="w-10 h-10 text-slate-500" style={{ margin: '0 auto 12px auto' }} />
           <h3 style={{ color: '#F1F5F9', fontWeight: 600, fontSize: '1.1rem' }}>No bookings yet</h3>
@@ -27,101 +42,105 @@ export const MemberBookings = () => {
           </p>
         </div>
       ) : (
-        /* Table layout matching the original site */
+        /* Responsive Table layout matching the original site */
         <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
-          {/* Table Header */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '60px 1.2fr 1fr 1.5fr 1fr 100px',
-            background: 'rgba(15, 23, 42, 0.95)',
-            borderBottom: '1px solid var(--blue-border)',
-            padding: '14px 20px',
-            gap: '12px',
-            alignItems: 'center'
-          }}>
-            {['S.No.', 'Date', 'Day', 'Time', 'Status', 'Action'].map(h => (
-              <div key={h} style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: h === 'Action' ? 'right' : 'left' }}>
-                {h}
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
+            <div style={{ minWidth: '640px' }}>
+              {/* Table Header */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '60px 1.2fr 1fr 1.5fr 1fr 100px',
+                background: 'rgba(15, 23, 42, 0.95)',
+                borderBottom: '1px solid var(--blue-border)',
+                padding: '14px 20px',
+                gap: '12px',
+                alignItems: 'center'
+              }}>
+                {['S.No.', 'Date', 'Day', 'Time', 'Status', 'Action'].map(h => (
+                  <div key={h} style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: h === 'Action' ? 'right' : 'left' }}>
+                    {h}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Rows */}
-          {bookings.map((booking, idx) => {
-            const statusColors = {
-              Approved: '#22c55e',
-              Pending:  '#f59e0b',
-              Blocked:  '#F8FAFC',
-              Declined: '#ef4444',
-            };
-            const col = statusColors[booking.status] || '#94A3B8';
-            const dateLabel = booking.date
-              ? booking.date.split('-').reverse().join('-')
-              : '—';
+              {/* Rows */}
+              {userBookings.map((booking, idx) => {
+                const statusColors = {
+                  Approved: '#22c55e',
+                  Pending:  '#f59e0b',
+                  Blocked:  '#F8FAFC',
+                  Declined: '#ef4444',
+                };
+                const col = statusColors[booking.status] || '#94A3B8';
+                const dateLabel = booking.date
+                  ? booking.date.split('-').reverse().join('-')
+                  : '—';
 
-            return (
-              <div
-                key={booking.id || idx}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '60px 1.2fr 1fr 1.5fr 1fr 100px',
-                  padding: '14px 20px',
-                  alignItems: 'center',
-                  gap: '12px',
-                  borderBottom: idx < bookings.length - 1 ? '1px solid var(--blue-border)' : 'none',
-                  background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent',
-                  fontSize: '0.88rem'
-                }}
-              >
-                <div style={{ color: '#64748B', fontWeight: 600 }}>{idx + 1}</div>
-                <div style={{ color: '#F1F5F9', fontWeight: 500 }}>{dateLabel}</div>
-                <div style={{ color: '#CBD5E1' }}>{booking.day || '—'}</div>
-                <div style={{ color: '#CBD5E1', fontFamily: 'monospace', fontSize: '0.85rem' }}>{booking.timeSlot || '—'}</div>
-                <div>
-                  <span style={{ fontWeight: 700, color: col }}>
-                    {booking.status}
-                  </span>
-                  {booking.status === 'Blocked' && booking.blockReason && (
-                    <div style={{ fontSize: '0.72rem', color: '#fbbf24', marginTop: '2px' }}>
-                      Reason: {booking.blockReason}
+                return (
+                  <div
+                    key={booking.id || idx}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '60px 1.2fr 1fr 1.5fr 1fr 100px',
+                      padding: '14px 20px',
+                      alignItems: 'center',
+                      gap: '12px',
+                      borderBottom: idx < userBookings.length - 1 ? '1px solid var(--blue-border)' : 'none',
+                      background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent',
+                      fontSize: '0.88rem'
+                    }}
+                  >
+                    <div style={{ color: '#64748B', fontWeight: 600 }}>{idx + 1}</div>
+                    <div style={{ color: '#F1F5F9', fontWeight: 500 }}>{dateLabel}</div>
+                    <div style={{ color: '#CBD5E1' }}>{booking.day || '—'}</div>
+                    <div style={{ color: '#CBD5E1', fontFamily: 'monospace', fontSize: '0.85rem' }}>{booking.timeSlot || '—'}</div>
+                    <div>
+                      <span style={{ fontWeight: 700, color: col }}>
+                        {booking.status}
+                      </span>
+                      {booking.status === 'Blocked' && booking.blockReason && (
+                        <div style={{ fontSize: '0.72rem', color: '#fbbf24', marginTop: '2px' }}>
+                          Reason: {booking.blockReason}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-                  <button
-                    onClick={() => setPrintBooking(booking)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#38bdf8',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
-                    title="Print Pass (PDF)"
-                  >
-                    <Printer className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setSelectedBooking(booking)}
-                    style={{
-                      background: 'rgba(56, 189, 248, 0.2)',
-                      border: '1px solid var(--blue-sky)',
-                      color: 'var(--blue-sky)',
-                      fontSize: '0.78rem',
-                      padding: '5px 16px',
-                      borderRadius: '20px',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Details
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                    <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={() => setPrintBooking(booking)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#38bdf8',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                        title="Print Pass (PDF)"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setSelectedBooking(booking)}
+                        style={{
+                          background: 'rgba(56, 189, 248, 0.2)',
+                          border: '1px solid var(--blue-sky)',
+                          color: 'var(--blue-sky)',
+                          fontSize: '0.78rem',
+                          padding: '5px 16px',
+                          borderRadius: '20px',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Details
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 

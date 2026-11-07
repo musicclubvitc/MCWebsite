@@ -400,21 +400,26 @@ div[style*="position: fixed"][style*="bottom"][style*="right"]:has(a[href*="netl
   clip: rect(0, 0, 0, 0) !important;
 }
 
-/* Date Input Styling & White Calendar Picker Indicator */
+/* Date Input Styling & Crisp White Calendar Picker Indicator */
 input[type="date"] {
-  color-scheme: dark;
+  color-scheme: dark !important;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1.2) !important;
-  cursor: pointer;
-  opacity: 0.95;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="%23ffffff" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/></svg>') !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 18px 18px !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-  transform: scale(1.08);
+  transform: scale(1.1);
+  opacity: 1 !important;
 }
 
 @media (max-width: 640px) {

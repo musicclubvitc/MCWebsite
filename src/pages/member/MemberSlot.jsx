@@ -77,19 +77,23 @@ function getSlotInfo(slot, dateStr, bookings) {
   const booked = dateBookings.find(
     b => b.bookingMode !== 'Block' && b.status !== 'Blocked' && slotsOverlap(slot, b.timeSlot)
   );
-  if (booked) return {
-    status: 'Not Available',
-    booker: booked.bandName ? `${booked.bandName} (${booked.bookerName})` : booked.bookerName,
-    reason: ''
-  };
+  if (booked) {
+    const isPending = booked.status === 'Pending';
+    return {
+      status: isPending ? 'Pending Review' : 'Not Available',
+      booker: booked.bandName ? `${booked.bandName} (${booked.bookerName})` : booked.bookerName,
+      reason: isPending ? 'Pending Admin Approval' : ''
+    };
+  }
 
   return { status: 'Available', booker: null, reason: '' };
 }
 
 const STATUS_STYLES = {
-  'Available':     { bg: '#16a34a', color: '#ffffff' },
-  'Blocked':       { bg: '#ca8a04', color: '#ffffff' },
-  'Not Available': { bg: '#dc2626', color: '#ffffff' },
+  'Available':      { bg: '#16a34a', color: '#ffffff' },
+  'Blocked':        { bg: '#ca8a04', color: '#ffffff' },
+  'Not Available':  { bg: '#dc2626', color: '#ffffff' },
+  'Pending Review': { bg: '#d97706', color: '#ffffff' },
 };
 
 const BOOKING_MODES = [
@@ -263,6 +267,13 @@ export const MemberSlot = () => {
             type="date"
             min={todayStr()}
             value={selectedDate}
+            onClick={(e) => {
+              try {
+                if (typeof e.target.showPicker === 'function') {
+                  e.target.showPicker();
+                }
+              } catch (_) {}
+            }}
             onChange={e => {
               const val = e.target.value;
               if (val && val < todayStr()) {
@@ -278,7 +289,8 @@ export const MemberSlot = () => {
               padding: '8px 14px', 
               fontSize: '0.92rem',
               colorScheme: 'dark',
-              color: '#ffffff'
+              color: '#ffffff',
+              cursor: 'pointer'
             }}
           />
           {selectedDate && (
