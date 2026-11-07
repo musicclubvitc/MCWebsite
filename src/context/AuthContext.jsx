@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('slot_bookings')
         .select('*')
-        .order('slot_date', { ascending: false });
+        .order('slot_date', { ascending: true });
 
       if (error) {
         console.warn('[Supabase] slot_bookings read error:', error.message);
@@ -121,7 +121,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data, error } = await supabase
         .from('bands')
-        .select('*, band_members(*)');
+        .select('*, band_members(*)')
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.warn('[Supabase] bands read error:', error.message);
@@ -193,7 +194,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('instrument_requests')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('borrow_date', { ascending: true });
 
       if (error) {
         console.warn('[Supabase] instrument_requests read error:', error.message);

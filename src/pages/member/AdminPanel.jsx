@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { BookingPrintSlip } from '../../components/BookingPrintSlip';
@@ -12,6 +12,9 @@ import {
   Disc, 
   Trash2, 
   ChevronLeft, 
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Plus, 
   Minus,
   FileEdit,
@@ -20,8 +23,80 @@ import {
   Printer,
   Package,
   Search,
+  Filter,
   Edit3
 } from 'lucide-react';
+
+const PaginationControls = ({ currentPage, totalPages, totalItems, pageSize, onPageChange }) => {
+  if (totalItems <= pageSize && currentPage === 1) return null;
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: '12px',
+      padding: '12px 18px',
+      background: 'rgba(15, 23, 42, 0.75)',
+      borderTop: '1px solid var(--blue-border)',
+      borderBottomLeftRadius: '12px',
+      borderBottomRightRadius: '12px'
+    }}>
+      <div style={{ fontSize: '0.82rem', color: '#94A3B8' }}>
+        Showing <strong style={{ color: '#F1F5F9' }}>{startItem}</strong>–<strong style={{ color: '#F1F5F9' }}>{endItem}</strong> of <strong style={{ color: 'var(--blue-sky)' }}>{totalItems}</strong> records
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          className="btn-ghost"
+          style={{ padding: '4px 8px', fontSize: '0.78rem', opacity: currentPage === 1 ? 0.35 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          title="First Page"
+        >
+          <ChevronsLeft className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="btn-ghost"
+          style={{ padding: '4px 10px', fontSize: '0.78rem', opacity: currentPage === 1 ? 0.35 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          title="Previous Page"
+        >
+          <ChevronLeft className="w-4 h-4" /> Prev
+        </button>
+
+        <span style={{ fontSize: '0.82rem', color: '#CBD5E1', padding: '0 8px', fontWeight: 600 }}>
+          {currentPage} / {totalPages}
+        </span>
+
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="btn-ghost"
+          style={{ padding: '4px 10px', fontSize: '0.78rem', opacity: currentPage >= totalPages ? 0.35 : 1, cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer' }}
+          title="Next Page"
+        >
+          Next <ChevronRight className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage >= totalPages}
+          className="btn-ghost"
+          style={{ padding: '4px 8px', fontSize: '0.78rem', opacity: currentPage >= totalPages ? 0.35 : 1, cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer' }}
+          title="Last Page"
+        >
+          <ChevronsRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange }) => {
   const { 
@@ -146,14 +221,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   };
 
   // ---------------- BOOKING ACTIONS ----------------
-  const toggleSelectAllBookings = () => {
-    if (selectedBookingIds.length === filteredBookings.length) {
-      setSelectedBookingIds([]);
-    } else {
-      setSelectedBookingIds(filteredBookings.map(b => b.id));
-    }
-  };
-
   const toggleSelectBooking = (id) => {
     setSelectedBookingIds(prev => 
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -170,14 +237,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   };
 
   // ---------------- INSTRUMENT ACTIONS ----------------
-  const toggleSelectAllInst = () => {
-    if (selectedInstIds.length === instrumentRequests.length) {
-      setSelectedInstIds([]);
-    } else {
-      setSelectedInstIds(instrumentRequests.map(r => r.id));
-    }
-  };
-
   const toggleSelectInst = (id) => {
     setSelectedInstIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
@@ -192,10 +251,174 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     setSelectedInstIds([]);
   };
 
-  // Filter bookings by date
-  const filteredBookings = dateFilter
-    ? bookings.filter(b => b.date === dateFilter)
-    : bookings;
+  // ==================== 1. BOOKINGS (Earliest to Latest) ====================
+  const [bookingSearch, setBookingSearch] = useState('');
+  const [bookingStatusFilter, setBookingStatusFilter] = useState('All');
+  const [bookingPage, setBookingPage] = useState(1);
+  const BOOKINGS_PAGE_SIZE = 15;
+
+  const sortedBookings = useMemo(() => {
+    return [...bookings].sort((a, b) => {
+      const dComp = (a.date || '').localeCompare(b.date || '');
+      if (dComp !== 0) return dComp;
+      return (a.timeSlot || '').localeCompare(b.timeSlot || '');
+    });
+  }, [bookings]);
+
+  const filteredBookings = useMemo(() => {
+    return sortedBookings.filter(b => {
+      if (dateFilter && b.date !== dateFilter) return false;
+      if (bookingStatusFilter !== 'All' && b.status !== bookingStatusFilter) return false;
+      if (bookingSearch.trim()) {
+        const q = bookingSearch.toLowerCase();
+        const bName = (b.bookerName || '').toLowerCase();
+        const bReg = (b.bookerReg || '').toLowerCase();
+        const band = (b.bandName || '').toLowerCase();
+        const slot = (b.timeSlot || '').toLowerCase();
+        const id = (b.id || '').toLowerCase();
+        if (!bName.includes(q) && !bReg.includes(q) && !band.includes(q) && !slot.includes(q) && !id.includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [sortedBookings, dateFilter, bookingStatusFilter, bookingSearch]);
+
+  const totalBookingPages = Math.max(1, Math.ceil(filteredBookings.length / BOOKINGS_PAGE_SIZE));
+  const paginatedBookings = useMemo(() => {
+    const start = (bookingPage - 1) * BOOKINGS_PAGE_SIZE;
+    return filteredBookings.slice(start, start + BOOKINGS_PAGE_SIZE);
+  }, [filteredBookings, bookingPage]);
+
+  const toggleSelectAllBookings = () => {
+    if (selectedBookingIds.length === paginatedBookings.length && paginatedBookings.length > 0) {
+      setSelectedBookingIds([]);
+    } else {
+      setSelectedBookingIds(paginatedBookings.map(b => b.id));
+    }
+  };
+
+  // ==================== 2. BANDS (Latest to Earliest) ====================
+  const [bandSearch, setBandSearch] = useState('');
+  const [bandStatusFilter, setBandStatusFilter] = useState('All');
+  const [bandPage, setBandPage] = useState(1);
+  const BANDS_PAGE_SIZE = 15;
+
+  const sortedBands = useMemo(() => {
+    return [...bands].sort((a, b) => {
+      const dComp = (b.createdAt || '').localeCompare(a.createdAt || '');
+      if (dComp !== 0) return dComp;
+      return (b.id || '').localeCompare(a.id || '');
+    });
+  }, [bands]);
+
+  const filteredBands = useMemo(() => {
+    return sortedBands.filter(band => {
+      if (bandStatusFilter !== 'All' && (band.status || 'Approved') !== bandStatusFilter) return false;
+      if (bandSearch.trim()) {
+        const q = bandSearch.toLowerCase();
+        const name = (band.name || '').toLowerCase();
+        const leader = (band.madeBy || band.leader || '').toLowerCase();
+        const genre = (band.genre || '').toLowerCase();
+        if (!name.includes(q) && !leader.includes(q) && !genre.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [sortedBands, bandStatusFilter, bandSearch]);
+
+  const totalBandPages = Math.max(1, Math.ceil(filteredBands.length / BANDS_PAGE_SIZE));
+  const paginatedBands = useMemo(() => {
+    const start = (bandPage - 1) * BANDS_PAGE_SIZE;
+    return filteredBands.slice(start, start + BANDS_PAGE_SIZE);
+  }, [filteredBands, bandPage]);
+
+  // ==================== 3. USERS (Latest to Earliest) ====================
+  const [userSearch, setUserSearch] = useState('');
+  const [userStatusFilter, setUserStatusFilter] = useState('All');
+  const [userPage, setUserPage] = useState(1);
+  const USERS_PAGE_SIZE = 15;
+
+  const sortedUsers = useMemo(() => {
+    return [...allUsers].sort((a, b) => {
+      const dComp = (b.createdAt || '').localeCompare(a.createdAt || '');
+      if (dComp !== 0) return dComp;
+      return (b.id || '').localeCompare(a.id || '');
+    });
+  }, [allUsers]);
+
+  const filteredUsers = useMemo(() => {
+    return sortedUsers.filter(u => {
+      if (userStatusFilter === 'Pending') {
+        if (u.verified === 'Verified' || u.type === 'Admin') return false;
+      } else if (userStatusFilter === 'Verified') {
+        if (u.verified !== 'Verified') return false;
+      } else if (userStatusFilter === 'Admin') {
+        if (u.type !== 'Admin') return false;
+      }
+
+      if (userSearch.trim()) {
+        const q = userSearch.toLowerCase();
+        const name = (u.name || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const reg = (u.regNumber || '').toLowerCase();
+        const role = (u.role || '').toLowerCase();
+        if (!name.includes(q) && !email.includes(q) && !reg.includes(q) && !role.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [sortedUsers, userStatusFilter, userSearch]);
+
+  const totalUserPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PAGE_SIZE));
+  const paginatedUsers = useMemo(() => {
+    const start = (userPage - 1) * USERS_PAGE_SIZE;
+    return filteredUsers.slice(start, start + USERS_PAGE_SIZE);
+  }, [filteredUsers, userPage]);
+
+  // ==================== 4. INSTRUMENT REQUESTS (Earliest to Latest) ====================
+  const [instReqSearch, setInstReqSearch] = useState('');
+  const [instReqStatusFilter, setInstReqStatusFilter] = useState('All');
+  const [instReqPage, setInstReqPage] = useState(1);
+  const INST_REQ_PAGE_SIZE = 15;
+
+  const sortedInstRequests = useMemo(() => {
+    return [...instrumentRequests].sort((a, b) => {
+      const dComp = (a.borrowDate || '').localeCompare(b.borrowDate || '');
+      if (dComp !== 0) return dComp;
+      return (a.borrowTime || '').localeCompare(b.borrowTime || '');
+    });
+  }, [instrumentRequests]);
+
+  const filteredInstRequests = useMemo(() => {
+    return sortedInstRequests.filter(req => {
+      if (instReqStatusFilter !== 'All' && req.status !== instReqStatusFilter) return false;
+      if (instReqSearch.trim()) {
+        const q = instReqSearch.toLowerCase();
+        const instName = (req.instrumentName || '').toLowerCase();
+        const instCode = (req.instrumentCode || '').toLowerCase();
+        const requester = (req.requester || '').toLowerCase();
+        const reg = (req.regNumber || '').toLowerCase();
+        const id = (req.id || '').toLowerCase();
+        if (!instName.includes(q) && !instCode.includes(q) && !requester.includes(q) && !reg.includes(q) && !id.includes(q)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [sortedInstRequests, instReqStatusFilter, instReqSearch]);
+
+  const totalInstReqPages = Math.max(1, Math.ceil(filteredInstRequests.length / INST_REQ_PAGE_SIZE));
+  const paginatedInstRequests = useMemo(() => {
+    const start = (instReqPage - 1) * INST_REQ_PAGE_SIZE;
+    return filteredInstRequests.slice(start, start + INST_REQ_PAGE_SIZE);
+  }, [filteredInstRequests, instReqPage]);
+
+  const toggleSelectAllInst = () => {
+    if (selectedInstIds.length === paginatedInstRequests.length && paginatedInstRequests.length > 0) {
+      setSelectedInstIds([]);
+    } else {
+      setSelectedInstIds(paginatedInstRequests.map(r => r.id));
+    }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -395,23 +618,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
             /* Bookings Table View */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
-                  ALL BOOKINGS
-                </h2>
+                <div>
+                  <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
+                    ALL BOOKINGS
+                  </h2>
+                  <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
+                    Ordered earliest to latest • Total: {filteredBookings.length}
+                  </div>
+                </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <input
-                    type="date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="input-field"
-                    style={{ padding: '6px 12px', fontSize: '0.85rem' }}
-                  />
-                  {dateFilter && (
-                    <button onClick={() => setDateFilter('')} className="btn-ghost" style={{ fontSize: '0.78rem', padding: '6px 10px' }}>
-                      Clear
-                    </button>
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   <button
                     onClick={handleBulkDeleteBookings}
                     disabled={selectedBookingIds.length === 0}
@@ -431,6 +647,78 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                 </div>
               </div>
 
+              {/* Search & Filter Toolbar */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 280px', maxWidth: '420px', position: 'relative' }}>
+                  <Search className="w-4 h-4 text-slate-400" style={{ position: 'absolute', left: '12px' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by booker, reg no, band, slot..."
+                    value={bookingSearch}
+                    onChange={(e) => {
+                      setBookingSearch(e.target.value);
+                      setBookingPage(1);
+                    }}
+                    className="input-field"
+                    style={{ paddingLeft: '36px', fontSize: '0.85rem', width: '100%' }}
+                  />
+                  {bookingSearch && (
+                    <button
+                      onClick={() => { setBookingSearch(''); setBookingPage(1); }}
+                      style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  {/* Status Pills */}
+                  {['All', 'Pending', 'Approved', 'Blocked', 'Declined'].map((st) => {
+                    const isActive = bookingStatusFilter === st;
+                    return (
+                      <button
+                        key={st}
+                        onClick={() => { setBookingStatusFilter(st); setBookingPage(1); }}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: isActive ? 'var(--blue-sky)' : 'rgba(255,255,255,0.04)',
+                          color: isActive ? '#0b1120' : '#CBD5E1',
+                          border: isActive ? '1px solid var(--blue-sky)' : '1px solid rgba(255,255,255,0.08)'
+                        }}
+                      >
+                        {st}
+                      </button>
+                    );
+                  })}
+
+                  {/* Date Filter */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input
+                      type="date"
+                      value={dateFilter}
+                      onChange={(e) => { setDateFilter(e.target.value); setBookingPage(1); }}
+                      className="input-field"
+                      style={{ padding: '5px 10px', fontSize: '0.82rem', colorScheme: 'dark' }}
+                      title="Filter by specific date"
+                    />
+                    {dateFilter && (
+                      <button
+                        onClick={() => { setDateFilter(''); setBookingPage(1); }}
+                        className="btn-ghost"
+                        style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
                   <table style={{ width: '100%', minWidth: '880px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
@@ -439,7 +727,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                         <th style={{ padding: '12px 14px', width: '40px' }}>
                           <input
                             type="checkbox"
-                            checked={selectedBookingIds.length > 0 && selectedBookingIds.length === filteredBookings.length}
+                            checked={selectedBookingIds.length > 0 && selectedBookingIds.length === paginatedBookings.length}
                             onChange={toggleSelectAllBookings}
                             style={{ cursor: 'pointer' }}
                           />
@@ -455,13 +743,14 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredBookings.length === 0 ? (
+                      {paginatedBookings.length === 0 ? (
                         <tr>
                           <td colSpan="9" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
-                            No slot bookings recorded yet.
+                            {filteredBookings.length === 0 ? 'No bookings found matching filters.' : 'No bookings on this page.'}
                           </td>
                         </tr>
-                      ) : filteredBookings.map((b, idx) => {
+                      ) : paginatedBookings.map((b, idx) => {
+                        const globalIdx = (bookingPage - 1) * BOOKINGS_PAGE_SIZE + idx + 1;
                         const isSel = selectedBookingIds.includes(b.id);
                         return (
                           <tr key={b.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
@@ -473,7 +762,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                                 style={{ cursor: 'pointer' }}
                               />
                             </td>
-                            <td style={{ padding: '12px 14px', color: '#64748B' }}>{idx + 1}</td>
+                            <td style={{ padding: '12px 14px', color: '#64748B' }}>{globalIdx}</td>
                             <td style={{ padding: '12px 14px' }}>
                               <div style={{ color: '#F8FAFC', fontWeight: 600 }}>{b.bookerName || 'Member'}</div>
                               <div style={{ fontSize: '0.74rem', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{b.bookerReg || ''}</div>
@@ -553,6 +842,13 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     </tbody>
                   </table>
                 </div>
+                <PaginationControls
+                  currentPage={bookingPage}
+                  totalPages={totalBookingPages}
+                  totalItems={filteredBookings.length}
+                  pageSize={BOOKINGS_PAGE_SIZE}
+                  onPageChange={setBookingPage}
+                />
               </div>
             </div>
           )}
@@ -670,11 +966,66 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
             </div>
           ) : (
             /* Bands Table View */
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
-                  ALL BANDS
-                </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
+                    ALL BANDS
+                  </h2>
+                  <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
+                    Ordered latest to earliest • Total: {filteredBands.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Search & Filter Toolbar */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 280px', maxWidth: '420px', position: 'relative' }}>
+                  <Search className="w-4 h-4 text-slate-400" style={{ position: 'absolute', left: '12px' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by band name, leader, genre..."
+                    value={bandSearch}
+                    onChange={(e) => {
+                      setBandSearch(e.target.value);
+                      setBandPage(1);
+                    }}
+                    className="input-field"
+                    style={{ paddingLeft: '36px', fontSize: '0.85rem', width: '100%' }}
+                  />
+                  {bandSearch && (
+                    <button
+                      onClick={() => { setBandSearch(''); setBandPage(1); }}
+                      style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  {['All', 'Approved', 'Pending'].map((st) => {
+                    const isActive = bandStatusFilter === st;
+                    return (
+                      <button
+                        key={st}
+                        onClick={() => { setBandStatusFilter(st); setBandPage(1); }}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: isActive ? 'var(--blue-sky)' : 'rgba(255,255,255,0.04)',
+                          color: isActive ? '#0b1120' : '#CBD5E1',
+                          border: isActive ? '1px solid var(--blue-sky)' : '1px solid rgba(255,255,255,0.08)'
+                        }}
+                      >
+                        {st}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
@@ -690,26 +1041,41 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       </tr>
                     </thead>
                     <tbody>
-                      {bands.map((band, idx) => (
-                        <tr key={band.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
-                          <td style={{ padding: '12px 18px', color: '#64748B' }}>{idx + 1}</td>
-                          <td style={{ padding: '12px 18px', color: '#F1F5F9', fontWeight: 600 }}>{band.name}</td>
-                          <td style={{ padding: '12px 18px', color: '#94A3B8' }}>{band.genre || 'Rock'}</td>
-                          <td style={{ padding: '12px 18px', color: '#CBD5E1' }}>{band.madeBy || band.leader}</td>
-                          <td style={{ padding: '12px 18px', textAlign: 'right' }}>
-                            <button
-                              onClick={() => setSelectedBand(band)}
-                              className="btn-secondary"
-                              style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                            >
-                              Details
-                            </button>
+                      {paginatedBands.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                            No bands match your criteria.
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        paginatedBands.map((band, idx) => (
+                          <tr key={band.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
+                            <td style={{ padding: '12px 18px', color: '#64748B' }}>{(bandPage - 1) * BANDS_PAGE_SIZE + idx + 1}</td>
+                            <td style={{ padding: '12px 18px', color: '#F1F5F9', fontWeight: 600 }}>{band.name}</td>
+                            <td style={{ padding: '12px 18px', color: '#94A3B8' }}>{band.genre || 'Rock'}</td>
+                            <td style={{ padding: '12px 18px', color: '#CBD5E1' }}>{band.madeBy || band.leader}</td>
+                            <td style={{ padding: '12px 18px', textAlign: 'right' }}>
+                              <button
+                                onClick={() => setSelectedBand(band)}
+                                className="btn-secondary"
+                                style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                              >
+                                Details
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
+                <PaginationControls
+                  currentPage={bandPage}
+                  totalPages={totalBandPages}
+                  totalItems={filteredBands.length}
+                  pageSize={BANDS_PAGE_SIZE}
+                  onPageChange={setBandPage}
+                />
               </div>
             </div>
           )}
@@ -817,11 +1183,84 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
             </div>
           ) : (
             /* Users Table View with 1-Click Verification */
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
-                  ALL MEMBERS
-                </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
+                    ALL MEMBERS
+                  </h2>
+                  <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
+                    Ordered latest to earliest • Total: {filteredUsers.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Search & Filter Toolbar */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 280px', maxWidth: '420px', position: 'relative' }}>
+                  <Search className="w-4 h-4 text-slate-400" style={{ position: 'absolute', left: '12px' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by name, VIT email, reg no, role..."
+                    value={userSearch}
+                    onChange={(e) => {
+                      setUserSearch(e.target.value);
+                      setUserPage(1);
+                    }}
+                    className="input-field"
+                    style={{ paddingLeft: '36px', fontSize: '0.85rem', width: '100%' }}
+                  />
+                  {userSearch && (
+                    <button
+                      onClick={() => { setUserSearch(''); setUserPage(1); }}
+                      style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'All', label: 'All', count: allUsers.length },
+                    { id: 'Pending', label: 'Pending Approval', count: allUsers.filter(u => u.verified !== 'Verified' && u.type !== 'Admin').length },
+                    { id: 'Verified', label: 'Verified', count: allUsers.filter(u => u.verified === 'Verified').length },
+                    { id: 'Admin', label: 'Admins', count: allUsers.filter(u => u.type === 'Admin').length }
+                  ].map((filterItem) => {
+                    const isActive = userStatusFilter === filterItem.id;
+                    return (
+                      <button
+                        key={filterItem.id}
+                        onClick={() => { setUserStatusFilter(filterItem.id); setUserPage(1); }}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: isActive ? 'var(--blue-sky)' : 'rgba(255,255,255,0.04)',
+                          color: isActive ? '#0b1120' : '#CBD5E1',
+                          border: isActive ? '1px solid var(--blue-sky)' : '1px solid rgba(255,255,255,0.08)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>{filterItem.label}</span>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          padding: '1px 6px',
+                          borderRadius: '10px',
+                          background: isActive ? 'rgba(11,17,32,0.2)' : 'rgba(255,255,255,0.08)',
+                          color: isActive ? '#0b1120' : '#94A3B8',
+                          fontWeight: 700
+                        }}>
+                          {filterItem.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
@@ -840,61 +1279,76 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       </tr>
                     </thead>
                     <tbody>
-                      {allUsers.map((u, idx) => (
-                        <tr key={u.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
-                          <td style={{ padding: '12px 14px', color: '#64748B' }}>{idx + 1}</td>
-                          <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{u.name}</td>
-                          <td style={{ padding: '12px 14px', color: '#94A3B8' }}>{u.email}</td>
-                          <td style={{ padding: '12px 14px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{u.regNumber}</td>
-                          <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>{u.role}</td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <span style={{
-                              padding: '3px 10px',
-                              borderRadius: '12px',
-                              fontSize: '0.75rem',
-                              fontWeight: 700,
-                              background: u.type === 'Admin' ? 'rgba(147, 51, 234, 0.2)' : 'rgba(56, 189, 248, 0.1)',
-                              color: u.type === 'Admin' ? '#c084fc' : 'var(--blue-sky)'
-                            }}>
-                              {u.type}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 14px' }}>
-                            {/* 1-Click Verification Toggle Button */}
-                            <button
-                              onClick={() => toggleUserVerification(u.id)}
-                              style={{
-                                padding: '4px 12px',
-                                borderRadius: '20px',
-                                fontSize: '0.78rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                border: u.verified === 'Verified' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
-                                background: u.verified === 'Verified' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                color: u.verified === 'Verified' ? '#4ade80' : '#f87171'
-                              }}
-                            >
-                              {u.verified === 'Verified' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                              {u.verified}
-                            </button>
-                          </td>
-                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            <button
-                              onClick={() => setSelectedUser(u)}
-                              className="btn-secondary"
-                              style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                            >
-                              Edit
-                            </button>
+                      {paginatedUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                            No members match your criteria.
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        paginatedUsers.map((u, idx) => (
+                          <tr key={u.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
+                            <td style={{ padding: '12px 14px', color: '#64748B' }}>{(userPage - 1) * USERS_PAGE_SIZE + idx + 1}</td>
+                            <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{u.name}</td>
+                            <td style={{ padding: '12px 14px', color: '#94A3B8' }}>{u.email}</td>
+                            <td style={{ padding: '12px 14px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{u.regNumber}</td>
+                            <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>{u.role}</td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span style={{
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                background: u.type === 'Admin' ? 'rgba(147, 51, 234, 0.2)' : 'rgba(56, 189, 248, 0.1)',
+                                color: u.type === 'Admin' ? '#c084fc' : 'var(--blue-sky)'
+                              }}>
+                                {u.type}
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              {/* 1-Click Verification Toggle Button */}
+                              <button
+                                onClick={() => toggleUserVerification(u.id)}
+                                style={{
+                                  padding: '4px 12px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  border: u.verified === 'Verified' ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(239, 68, 68, 0.4)',
+                                  background: u.verified === 'Verified' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                  color: u.verified === 'Verified' ? '#4ade80' : '#f87171'
+                                }}
+                              >
+                                {u.verified === 'Verified' ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                                {u.verified}
+                              </button>
+                            </td>
+                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                              <button
+                                onClick={() => setSelectedUser(u)}
+                                className="btn-secondary"
+                                style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                              >
+                                Edit
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
+                <PaginationControls
+                  currentPage={userPage}
+                  totalPages={totalUserPages}
+                  totalItems={filteredUsers.length}
+                  pageSize={USERS_PAGE_SIZE}
+                  onPageChange={setUserPage}
+                />
               </div>
             </div>
           )}
@@ -1242,11 +1696,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                 </div>
               ) : (
                 /* Instrument Requests Table View with Checkboxes & Bulk Delete */
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
-                    <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
-                      GEAR REQUISITION REQUESTS
-                    </h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
+                        GEAR REQUISITION REQUESTS
+                      </h2>
+                      <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
+                        Ordered earliest to latest • Total: {filteredInstRequests.length}
+                      </div>
+                    </div>
 
                     <button
                       onClick={handleBulkDeleteInst}
@@ -1266,6 +1725,56 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     </button>
                   </div>
 
+                  {/* Search & Filter Toolbar */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 280px', maxWidth: '420px', position: 'relative' }}>
+                      <Search className="w-4 h-4 text-slate-400" style={{ position: 'absolute', left: '12px' }} />
+                      <input
+                        type="text"
+                        placeholder="Search by instrument, code, requester, reg..."
+                        value={instReqSearch}
+                        onChange={(e) => {
+                          setInstReqSearch(e.target.value);
+                          setInstReqPage(1);
+                        }}
+                        className="input-field"
+                        style={{ paddingLeft: '36px', fontSize: '0.85rem', width: '100%' }}
+                      />
+                      {instReqSearch && (
+                        <button
+                          onClick={() => { setInstReqSearch(''); setInstReqPage(1); }}
+                          style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      {['All', 'Pending', 'Approved', 'Returned', 'Rejected'].map((st) => {
+                        const isActive = instReqStatusFilter === st;
+                        return (
+                          <button
+                            key={st}
+                            onClick={() => { setInstReqStatusFilter(st); setInstReqPage(1); }}
+                            style={{
+                              padding: '5px 12px',
+                              borderRadius: '20px',
+                              fontSize: '0.78rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              background: isActive ? 'var(--blue-sky)' : 'rgba(255,255,255,0.04)',
+                              color: isActive ? '#0b1120' : '#CBD5E1',
+                              border: isActive ? '1px solid var(--blue-sky)' : '1px solid rgba(255,255,255,0.08)'
+                            }}
+                          >
+                            {st}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
                     <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
                       <table style={{ width: '100%', minWidth: '820px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
@@ -1274,7 +1783,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                             <th style={{ padding: '12px 14px', width: '40px' }}>
                               <input
                                 type="checkbox"
-                                checked={selectedInstIds.length > 0 && selectedInstIds.length === instrumentRequests.length}
+                                checked={selectedInstIds.length > 0 && selectedInstIds.length === paginatedInstRequests.length}
                                 onChange={toggleSelectAllInst}
                                 style={{ cursor: 'pointer' }}
                               />
@@ -1289,13 +1798,13 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                           </tr>
                         </thead>
                         <tbody>
-                          {instrumentRequests.length === 0 ? (
+                          {paginatedInstRequests.length === 0 ? (
                             <tr>
                               <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
-                                No gear requisition requests found in database.
+                                No gear requisition requests match your criteria.
                               </td>
                             </tr>
-                          ) : instrumentRequests.map((req, idx) => {
+                          ) : paginatedInstRequests.map((req, idx) => {
                             const isSel = selectedInstIds.includes(req.id);
                             return (
                               <tr key={req.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
@@ -1348,6 +1857,13 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                         </tbody>
                       </table>
                     </div>
+                    <PaginationControls
+                      currentPage={instReqPage}
+                      totalPages={totalInstReqPages}
+                      totalItems={filteredInstRequests.length}
+                      pageSize={INST_REQ_PAGE_SIZE}
+                      onPageChange={setInstReqPage}
+                    />
                   </div>
                 </div>
               )}
