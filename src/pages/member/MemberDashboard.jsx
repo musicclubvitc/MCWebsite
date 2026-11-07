@@ -225,12 +225,12 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
       <div style={{ marginBottom: '28px' }}>
         {/* Member tabs row */}
         <div 
+          className="portal-nav-row"
           style={{
             display: 'flex',
-            gap: '6px',
-            overflowX: 'auto',
-            paddingBottom: '8px',
-            scrollbarWidth: 'none'
+            flexWrap: 'wrap',
+            gap: '8px',
+            alignItems: 'center'
           }}
         >
           {memberTabs.map((item) => {
@@ -240,24 +240,25 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
               <button
                 key={item.id}
                 onClick={() => setActiveSubTab(item.id)}
+                className={`portal-nav-btn ${isActive ? 'active' : ''}`}
                 style={{
                   background: isActive ? 'var(--blue-primary)' : 'rgba(255, 255, 255, 0.04)',
                   color: isActive ? '#ffffff' : '#94A3B8',
-                  border: 'none',
-                  padding: '9px 18px',
-                  borderRadius: '8px',
+                  border: isActive ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.05)',
+                  padding: '9px 16px',
+                  borderRadius: '10px',
                   fontWeight: 600,
-                  fontSize: '0.88rem',
+                  fontSize: '0.86rem',
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '7px',
                   whiteSpace: 'nowrap',
-                  transition: 'background-color 0.15s ease'
+                  transition: 'all 0.15s ease'
                 }}
               >
-                <Icon className="w-4 h-4" />
-                {item.label}
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{item.label}</span>
               </button>
             );
           })}
@@ -266,25 +267,28 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
         {/* Admin tabs row — only visible when isAdmin */}
         {isAdmin && (
           <div 
+            className="portal-admin-nav-row"
             style={{
               display: 'flex',
-              gap: '6px',
-              overflowX: 'auto',
-              paddingBottom: '8px',
-              marginTop: '6px',
-              scrollbarWidth: 'none',
+              flexWrap: 'wrap',
+              gap: '8px',
+              alignItems: 'center',
+              marginTop: '10px',
               borderTop: '1px solid rgba(56,189,248,0.15)',
-              paddingTop: '8px'
+              paddingTop: '10px'
             }}
           >
             <span style={{ 
               fontSize: '0.7rem', 
               fontWeight: 700, 
-              color: '#4a7fd4', 
+              color: '#38bdf8', 
               letterSpacing: '1px',
               textTransform: 'uppercase',
-              alignSelf: 'center',
-              marginRight: '4px',
+              background: 'rgba(56, 189, 248, 0.12)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              marginRight: '2px',
               whiteSpace: 'nowrap',
               flexShrink: 0
             }}>
@@ -297,24 +301,25 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
                 <button
                   key={item.id}
                   onClick={() => setActiveSubTab(item.id)}
+                  className={`portal-admin-btn ${isActive ? 'active' : ''}`}
                   style={{
                     background: isActive ? 'rgba(37, 99, 235, 0.35)' : 'rgba(37, 99, 235, 0.08)',
                     color: isActive ? '#ffffff' : '#7fb3f5',
                     border: isActive ? '1px solid rgba(56,189,248,0.5)' : '1px solid rgba(56,189,248,0.15)',
-                    padding: '7px 16px',
+                    padding: '7px 14px',
                     borderRadius: '8px',
                     fontWeight: 600,
-                    fontSize: '0.85rem',
+                    fontSize: '0.82rem',
                     cursor: 'pointer',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '7px',
+                    gap: '6px',
                     whiteSpace: 'nowrap',
-                    transition: 'background-color 0.15s ease'
+                    transition: 'all 0.15s ease'
                   }}
                 >
-                  <Icon className="w-3.5 h-3.5" />
-                  {item.label}
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{item.label}</span>
                 </button>
               );
             })}
@@ -322,7 +327,7 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
         )}
 
         {/* Bottom border */}
-        <div style={{ borderBottom: '1px solid var(--blue-border)', marginTop: '2px' }} />
+        <div style={{ borderBottom: '1px solid var(--blue-border)', marginTop: '12px' }} />
       </div>
 
       {/* Panel Content */}

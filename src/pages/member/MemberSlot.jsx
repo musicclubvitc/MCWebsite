@@ -140,6 +140,12 @@ export const MemberSlot = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (selectedDate < todayStr()) {
+      showToast('Cannot book a slot for a past date. Please select today or a future date.', 'error');
+      return;
+    }
+
     if (!startSlot || !endSlot) {
       showToast('Please select a start and end time.', 'error');
       return;
@@ -236,16 +242,44 @@ export const MemberSlot = () => {
       {/* Date picker */}
       <div className="glass-panel" style={{ padding: '16px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
-            <Calendar className="w-4 h-4" />
-            Choose Date :
+          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', color: '#ffffff', fontWeight: 600, fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffffff',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+            }}>
+              <Calendar className="w-4 h-4 text-white" style={{ color: '#ffffff', stroke: '#ffffff' }} />
+            </div>
+            <span style={{ color: '#f8fafc', fontWeight: 600 }}>Choose Date :</span>
           </div>
           <input
             type="date"
+            min={todayStr()}
             value={selectedDate}
-            onChange={e => setSelectedDate(e.target.value)}
-            className="input-field"
-            style={{ maxWidth: '220px', padding: '7px 12px', fontSize: '0.9rem' }}
+            onChange={e => {
+              const val = e.target.value;
+              if (val && val < todayStr()) {
+                showToast('Cannot select a date in the past.', 'error');
+                setSelectedDate(todayStr());
+                return;
+              }
+              setSelectedDate(val);
+            }}
+            className="input-field booking-date-input"
+            style={{ 
+              maxWidth: '220px', 
+              padding: '8px 14px', 
+              fontSize: '0.92rem',
+              colorScheme: 'dark',
+              color: '#ffffff'
+            }}
           />
           {selectedDate && (
             <span style={{ color: '#94A3B8', fontSize: '0.85rem' }}>

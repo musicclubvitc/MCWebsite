@@ -400,6 +400,23 @@ div[style*="position: fixed"][style*="bottom"][style*="right"]:has(a[href*="netl
   clip: rect(0, 0, 0, 0) !important;
 }
 
+/* Date Input Styling & White Calendar Picker Indicator */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.2) !important;
+  cursor: pointer;
+  opacity: 0.95;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
 @media (max-width: 640px) {
   .toast-container {
     top: 72px !important;
@@ -407,6 +424,20 @@ div[style*="position: fixed"][style*="bottom"][style*="right"]:has(a[href*="netl
     left: 12px !important;
     width: auto !important;
     max-width: 100% !important;
+  }
+
+  .portal-nav-row, .portal-admin-nav-row {
+    gap: 6px !important;
+  }
+  .portal-nav-btn {
+    padding: 7px 11px !important;
+    font-size: 0.8rem !important;
+    gap: 6px !important;
+  }
+  .portal-admin-btn {
+    padding: 6px 10px !important;
+    font-size: 0.76rem !important;
+    gap: 5px !important;
   }
 }
 

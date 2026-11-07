@@ -10,8 +10,7 @@ const CLUB_ROLES = [
   'Drummer / Percussionist',
   'Keyboardist / Pianist',
   'Violinist / Flutist',
-  'Producer',
-  'Developer'
+  'Producer'
 ];
 
 export const AuthModal = ({ isOpen, onClose }) => {

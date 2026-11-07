@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { isSupabaseConfigured, testSupabaseTables } from '../../lib/supabase';
+import { isSupabaseConfigured } from '../../lib/supabase';
 import { BookingPrintSlip } from '../../components/BookingPrintSlip';
 import { 
   ShieldCheck, 
@@ -76,25 +76,20 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     image: ''
   });
 
-  // Supabase Diagnostics
-  const [diagRunning, setDiagRunning] = useState(false);
-  const [diagResults, setDiagResults] = useState(null);
+  // Refresh Live Supabase Data
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const runDiagnostics = async () => {
-    setDiagRunning(true);
+  const handleRefreshData = async () => {
+    setIsRefreshing(true);
     try {
-      const res = await testSupabaseTables();
-      setDiagResults(res);
-      if (res.configured) {
-        showToast("Database test complete! Check table status below.");
-        if (refreshAllLiveData) await refreshAllLiveData();
-      } else {
-        showToast("Supabase not detected in build.", "error");
+      if (refreshAllLiveData) {
+        await refreshAllLiveData();
       }
+      showToast("Data refreshed successfully!");
     } catch (e) {
-      showToast(e.message, "error");
+      showToast(e.message || "Failed to refresh data", "error");
     } finally {
-      setDiagRunning(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -251,53 +246,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
-            onClick={runDiagnostics}
-            disabled={diagRunning}
+            onClick={handleRefreshData}
+            disabled={isRefreshing}
             className="btn-secondary"
-            style={{ fontSize: '0.82rem', padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ fontSize: '0.82rem', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${diagRunning ? 'animate-spin' : ''}`} />
-            {diagRunning ? 'Testing DB...' : 'Test Database Tables'}
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing Data...' : 'Refresh Data'}
           </button>
         </div>
       </div>
-
-      {/* Database Diagnostic Results Card (if tested) */}
-      {diagResults && (
-        <div className="glass-panel" style={{ padding: '16px 20px', borderRadius: '12px', border: '1px solid var(--blue-border)', background: 'rgba(15,23,42,0.8)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <span style={{ fontWeight: 700, fontSize: '0.88rem', color: '#F8FAFC' }}>
-              Database Tables Status:
-            </span>
-            <button onClick={() => setDiagResults(null)} className="btn-ghost" style={{ padding: '2px 8px', fontSize: '0.75rem' }}>Dismiss</button>
-          </div>
-          {diagResults.configured ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', fontSize: '0.8rem' }}>
-              {Object.entries(diagResults.results || {}).map(([tbl, res]) => (
-                <div key={tbl} style={{
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  background: res.ok ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
-                  border: res.ok ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239,68,68,0.2)',
-                  display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-                  <span style={{ color: '#E2E8F0', fontFamily: 'monospace' }}>{tbl}</span>
-                  <span style={{ color: res.ok ? '#4ade80' : '#f87171', fontWeight: 600 }}>
-                    {res.ok ? `${res.rows} rows` : 'Error'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ color: '#facc15', fontSize: '0.85rem' }}>
-              ⚠️ Netlify environment variables were not available when the current deployment was built.
-              <br />
-              <strong>Fix:</strong> In Netlify, navigate to <strong>Deploys &gt; Trigger deploy &gt; Clear cache and deploy site</strong>.
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ===================== 1. ALL BOOKINGS ===================== */}
       {currentSection === 'manage-bookings' && (
