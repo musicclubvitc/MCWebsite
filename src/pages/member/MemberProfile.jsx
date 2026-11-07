@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 export const MemberProfile = ({ setActiveMemberSubTab }) => {
-  const { user, bands, bookings, instrumentRequests, showToast } = useAuth();
+  const { user, myBands, bookings, instrumentRequests, showToast } = useAuth();
 
   if (!user) return null;
 
@@ -103,8 +103,8 @@ export const MemberProfile = ({ setActiveMemberSubTab }) => {
             <Disc className="w-6 h-6" />
           </div>
           <div>
-            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#F8FAFC' }}>{bands.length}</div>
-            <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Active Bands</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#F8FAFC' }}>{myBands ? myBands.length : 0}</div>
+            <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>My Bands</div>
           </div>
         </div>
 

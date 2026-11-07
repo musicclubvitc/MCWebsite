@@ -3,6 +3,37 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const AuthContext = createContext();
 
+export const isUserInBand = (band, user) => {
+  if (!band || !user) return false;
+  const userReg = (user.regNumber || '').trim().toUpperCase();
+  const userName = (user.name || '').trim().toLowerCase();
+  const userKey = (user.secretKey || user.id || '').trim();
+
+  // 1. Leader / Made by check
+  const leader = (band.leader || band.madeBy || '').trim().toLowerCase();
+  if (userName && leader && userName === leader) return true;
+
+  // 2. Register number match
+  if (userReg) {
+    if ((band.registerNumbers || []).some(r => (r || '').trim().toUpperCase() === userReg)) return true;
+    if ((band.members || []).some(m => (m.reg || '').trim().toUpperCase() === userReg)) return true;
+  }
+
+  // 3. Secret Key match
+  if (userKey) {
+    if ((band.secretKeys || []).some(k => (k || '').trim() === userKey)) return true;
+    if ((band.members || []).some(m => (m.key || '').trim() === userKey)) return true;
+  }
+
+  // 4. Member name match as fallback
+  if (userName) {
+    if ((band.memberNames || []).some(n => (n || '').trim().toLowerCase() === userName)) return true;
+    if ((band.members || []).some(m => (m.name || '').trim().toLowerCase() === userName)) return true;
+  }
+
+  return false;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
@@ -917,12 +948,19 @@ export const AuthProvider = ({ children }) => {
     // Admin mode is automatically determined by user role in database
   };
 
+  const myBands = useMemo(() => {
+    if (!user) return [];
+    return bands.filter(b => isUserInBand(b, user));
+  }, [bands, user]);
+
   return (
     <AuthContext.Provider
       value={{
         user,
         isAdmin,
         bands,
+        myBands,
+        isUserInBand,
         bookings,
         instruments,
         instrumentRequests,

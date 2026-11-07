@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export const MemberBands = () => {
-  const { bands, addBand, user, showToast } = useAuth();
+  const { myBands, addBand, user, showToast } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form State
@@ -130,11 +130,11 @@ export const MemberBands = () => {
       </div>
 
       {/* Band Cards */}
-      {bands.length === 0 ? (
+      {myBands.length === 0 ? (
         <div className="glass-panel" style={{ padding: '50px 20px', textAlign: 'center' }}>
           <Disc className="w-10 h-10 text-slate-500" style={{ margin: '0 auto 12px auto' }} />
           <h3 style={{ color: '#F1F5F9', fontWeight: 600, fontSize: '1.1rem' }}>No bands registered yet</h3>
-          <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: '4px' }}>Form your band roster with fellow club musicians.</p>
+          <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: '4px' }}>You are not currently a member of any band. Form your band roster with fellow club musicians.</p>
           <button 
             onClick={() => setIsModalOpen(true)}
             className="btn-secondary"
@@ -145,7 +145,7 @@ export const MemberBands = () => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {bands.map((band, idx) => (
+          {myBands.map((band, idx) => (
             <div 
               key={band.id || idx}
               className="glass-panel"

@@ -984,7 +984,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                   <Search className="w-4 h-4 text-slate-400" style={{ position: 'absolute', left: '12px' }} />
                   <input
                     type="text"
-                    placeholder="Search by band name, leader, genre..."
+                    placeholder="Search by band name or leader..."
                     value={bandSearch}
                     onChange={(e) => {
                       setBandSearch(e.target.value);
@@ -1035,7 +1035,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
                         <th style={{ padding: '12px 18px' }}>S.No.</th>
                         <th style={{ padding: '12px 18px' }}>Band Name</th>
-                        <th style={{ padding: '12px 18px' }}>Genre</th>
                         <th style={{ padding: '12px 18px' }}>Made by</th>
                         <th style={{ padding: '12px 18px', textAlign: 'right' }}>Action</th>
                       </tr>
@@ -1043,7 +1042,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     <tbody>
                       {paginatedBands.length === 0 ? (
                         <tr>
-                          <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                          <td colSpan="4" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
                             No bands match your criteria.
                           </td>
                         </tr>
@@ -1052,7 +1051,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                           <tr key={band.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
                             <td style={{ padding: '12px 18px', color: '#64748B' }}>{(bandPage - 1) * BANDS_PAGE_SIZE + idx + 1}</td>
                             <td style={{ padding: '12px 18px', color: '#F1F5F9', fontWeight: 600 }}>{band.name}</td>
-                            <td style={{ padding: '12px 18px', color: '#94A3B8' }}>{band.genre || 'Rock'}</td>
                             <td style={{ padding: '12px 18px', color: '#CBD5E1' }}>{band.madeBy || band.leader}</td>
                             <td style={{ padding: '12px 18px', textAlign: 'right' }}>
                               <button

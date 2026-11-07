@@ -288,7 +288,6 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                <span className="badge-sky">{activeBand.genre}</span>
                 <span className="badge-blue">{activeBand.status || 'Active Roster'}</span>
               </div>
 

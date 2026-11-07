@@ -112,19 +112,25 @@ function todayStr() {
 }
 
 export const MemberSlot = () => {
-  const { isAdmin, addBooking, bookings, bands, user, showToast } = useAuth();
+  const { isAdmin, addBooking, bookings, myBands, user, showToast } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const [startSlot, setStartSlot] = useState('');
   const [endSlot,   setEndSlot]   = useState('');
   const [bookingMode, setBookingMode] = useState('Self');
-  const [selectedBand, setSelectedBand] = useState(bands.length > 0 ? bands[0].id : '');
+  const [selectedBand, setSelectedBand] = useState('');
   const [blockReason, setBlockReason] = useState('');
   // Manual mode: array of { name, reg }
   const [manualMembers, setManualMembers] = useState([{ name: '', reg: '' }]);
   const [submitting, setSubmitting] = useState(false);
 
   const modes = isAdmin ? ADMIN_MODES : BOOKING_MODES;
+
+  useEffect(() => {
+    if (myBands.length > 0 && (!selectedBand || !myBands.some(b => b.id === selectedBand))) {
+      setSelectedBand(myBands[0].id);
+    }
+  }, [myBands, selectedBand]);
 
   useEffect(() => {
     if (!isAdmin && bookingMode === 'Block') setBookingMode('Self');
@@ -186,7 +192,11 @@ export const MemberSlot = () => {
         reg: user?.regNumber || '—'
       }];
     } else if (bookingMode === 'Bands') {
-      const selectedBandObj = bands.find(b => b.id === selectedBand);
+      if (!myBands || myBands.length === 0) {
+        showToast('You are not a member of any band. Form or join a band first.', 'error');
+        return;
+      }
+      const selectedBandObj = myBands.find(b => b.id === selectedBand) || myBands[0];
       if (selectedBandObj?.members && selectedBandObj.members.length > 0) {
         resolvedMembers = selectedBandObj.members.map(m => ({
           name: m.name || m.memberName,
@@ -219,7 +229,7 @@ export const MemberSlot = () => {
       bookerReg:  user?.regNumber || '',
       blockReason: bookingMode === 'Block' ? blockReason.trim() : null,
       bandId:   bookingMode === 'Bands' ? selectedBand : null,
-      bandName: bookingMode === 'Bands' ? (bands.find(b => b.id === selectedBand)?.name || '') : null,
+      bandName: bookingMode === 'Bands' ? (myBands.find(b => b.id === selectedBand)?.name || '') : null,
       membersInfo: resolvedMembers,
     });
 
@@ -469,17 +479,23 @@ export const MemberSlot = () => {
             </div>
           </div>
 
-          {/* Conditional: Band selector */}
-          {bookingMode === 'Bands' && bands.length > 0 && (
+          {/* Conditional: Band selector (Only bands user is a member of) */}
+          {bookingMode === 'Bands' && (
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
                 Select Band
               </label>
-              <select value={selectedBand} onChange={e => setSelectedBand(e.target.value)} className="input-field">
-                {bands.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
+              {myBands && myBands.length > 0 ? (
+                <select value={selectedBand} onChange={e => setSelectedBand(e.target.value)} className="input-field">
+                  {myBands.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', fontSize: '0.85rem', lineHeight: '1.5' }}>
+                  You are not registered in any band roster yet. Please go to <strong>My Bands</strong> to form or join a band before booking under Bands mode.
+                </div>
+              )}
             </div>
           )}
 
