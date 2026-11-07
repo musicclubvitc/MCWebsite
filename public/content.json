@@ -1,0 +1,310 @@
+{
+  "site": {
+    "name": "Music Club",
+    "campus": "VIT Chennai",
+    "tagline": "Official Music Society of VIT Chennai",
+    "description": "Bringing together talented vocalists, instrumentalists, and composers from across the country. From classical ragas to modern rock, jazz, and metal.",
+    "established": "2012",
+    "heroNotice": ""
+  },
+  "stats": [
+    { "label": "Events Conducted", "value": "60+", "detail": "Annual concerts, fests & open mics" },
+    { "label": "Active Members", "value": "500+", "detail": "Vocalists, musicians & sound crew" },
+    { "label": "Followers", "value": "2.7k+", "detail": "On Instagram & YouTube" },
+    { "label": "Awards & Trophies", "value": "54+", "detail": "National collegiate wins" }
+  ],
+  "about": {
+    "title": "Where Melodies Meet Passion",
+    "image": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1000&q=80",
+    "paragraphs": [
+      "Music Club VITCC, one of the oldest and most prestigious cultural clubs at VIT Chennai, brings forward the culmination of some of the most talented musicians from around the country.",
+      "The excellent musical taste, arduous effort, and dedication of all members inspire the club to organize numerous events, stage productions, and college concerts throughout the year.",
+      "Make sure to catch us live at various events across the campus, whether it be the soulful sargams of classical ragas or the heavy headbangs of hardcore rock."
+    ]
+  },
+  "contact": {
+    "email": "musicclubvitchennai@gmail.com",
+    "instagram": "https://www.instagram.com/vitcmusicclub",
+    "youtube": "https://www.youtube.com/@MusicClubVITChennai"
+  },
+  "faqs": [
+    {
+      "q": "When are auditions held for freshers?",
+      "a": "Club auditions are conducted every academic year right after the Fresher's Talent Hunt. Circulars and audition dates are posted on our Instagram @vitcmusicclub."
+    },
+    {
+      "q": "Can non-members book the music room?",
+      "a": "The music room is reserved for verified club members and registered bands. During Open Mic weeks, slots may open to other students with prior registration."
+    },
+    {
+      "q": "How do I register a new band?",
+      "a": "Sign in to the Member Portal, navigate to 'My Bands', and submit the registration form with between 3 and 9 members."
+    },
+    {
+      "q": "What instruments does the club provide?",
+      "a": "The club maintains Fender Stratocaster electric guitars, Yamaha acoustic guitars, Ibanez 5-string bass, Roland XPS-30 synthesizers, Pearl drumkits, and Shure vocal microphones."
+    }
+  ],
+  "events": [
+    {
+      "id": "resonance-2k25",
+      "name": "Resonance 2k25 - Annual Music Fest",
+      "type": "Intercollege Fest",
+      "dateDisplay": "March 14 - 16, 2025",
+      "venue": "Main Amphitheatre & Nethaji Auditorium",
+      "prizePool": "₹50,000",
+      "registrationFees": "₹150",
+      "status": "Upcoming",
+      "description": "VIT Chennai Music Club's flagship national inter-collegiate musical extravaganza! Three adrenaline-filled days of Western Battle of the Bands, Eastern Band Showdowns, Acoustic Solos, Beatboxing, and guest performances.",
+      "image": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "curtain-raiser-2k24",
+      "name": "Curtain Raiser 2k24",
+      "type": "Band Showcase",
+      "dateDisplay": "October 18, 2024",
+      "venue": "Nethaji Auditorium (AB1, 7th Floor)",
+      "prizePool": "Exhibition",
+      "registrationFees": "Free",
+      "status": "Completed",
+      "description": "The grand kickoff concert welcoming the new academic session. Catch all official club bands unveiling their freshest repertoires ranging from A.R. Rahman to Iron Maiden and Coldplay.",
+      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "sleigh-along-2k24",
+      "name": "Sleigh Along - Christmas Carol Night",
+      "type": "Performances",
+      "dateDisplay": "December 21, 2024",
+      "venue": "MBA Amphitheatre",
+      "prizePool": "Exhibition",
+      "registrationFees": "Free",
+      "status": "Completed",
+      "description": "Music Club VITCC brings a festive Christmas choir and acoustically harmonized jingles under the starry Chennai night sky.",
+      "image": "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "freshers-talent-hunt-2k24",
+      "name": "Fresher's Talent Hunt 2k24",
+      "type": "Competition",
+      "dateDisplay": "September 28, 2024",
+      "venue": "Nethaji Auditorium",
+      "prizePool": "₹6,000",
+      "registrationFees": "₹100",
+      "status": "Completed",
+      "description": "Exclusively for 1st-year students to showcase their vocal and instrumental talent across genres.",
+      "image": "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "polyphony-western-bob",
+      "name": "Polyphony - Western Battle of Bands",
+      "type": "Western Battle of Bands",
+      "dateDisplay": "March 22, 2024",
+      "venue": "MBA Amphitheatre Stage",
+      "prizePool": "₹15,000",
+      "registrationFees": "₹300",
+      "status": "Completed",
+      "description": "Hardcore rock and metal riffs, rhythm groove, and collegiate battle for western music supremacy.",
+      "image": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "aakriti-eastern-bob",
+      "name": "Aakriti - Eastern & Fusion Battle",
+      "type": "Eastern Battle of Bands",
+      "dateDisplay": "March 23, 2024",
+      "venue": "MBA Amphitheatre Stage",
+      "prizePool": "₹15,000",
+      "registrationFees": "₹300",
+      "status": "Completed",
+      "description": "Soulful eastern ragas, Carnatic fusion, and modern regional melodies clashing in a live showdown.",
+      "image": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "b-minor-instrumental",
+      "name": "B-Minor - Instrumental Championship",
+      "type": "Instrumental Competition",
+      "dateDisplay": "November 18, 2023",
+      "venue": "AB1 Audio Hall",
+      "prizePool": "₹5,000",
+      "registrationFees": "₹100",
+      "status": "Completed",
+      "description": "A pure instrumental competition for classical instruments, guitars, keyboards, violins, and flutes.",
+      "image": "https://images.unsplash.com/photo-1520523839898-507121c2762a?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "open-mic-acoustic",
+      "name": "Campus Unplugged - Open Mic Evening",
+      "type": "Open Mic",
+      "dateDisplay": "April 14, 2023",
+      "venue": "MBA Amphitheatre",
+      "prizePool": "Open Stage",
+      "registrationFees": "Free",
+      "status": "Completed",
+      "description": "An informal acoustic gathering open to every student of VIT Chennai to share music and poetry.",
+      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80"
+    }
+  ],
+  "bands": [
+    {
+      "id": "six-delusions",
+      "name": "Six Delusions",
+      "genre": "Hard Rock & Funk",
+      "description": "A high-octane western band shredding through hard rock, heavy funk, and energetic stage sets that electrify campus concerts.",
+      "image": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
+      "instagram": "https://www.instagram.com/sixdelusions/",
+      "status": "Active Roster",
+      "members": [
+        { "name": "Rheminth Simeon", "role": "Drummer", "reg": "21BCE1402" },
+        { "name": "Anshul", "role": "Lead Guitarist", "reg": "21BCE2891" },
+        { "name": "Jerald Elias", "role": "Rhythm Guitarist", "reg": "22BEE0412" },
+        { "name": "Surya", "role": "Keyboardist", "reg": "21BME0911" },
+        { "name": "Aurum", "role": "Bassist", "reg": "22BCI0144" },
+        { "name": "Mihir", "role": "Vocalist", "reg": "21BCE1980" },
+        { "name": "Olivia", "role": "Vocalist", "reg": "22BCE3421" }
+      ]
+    },
+    {
+      "id": "band-ish",
+      "name": "Band-ish",
+      "genre": "Indo-Western Fusion & Carnatic Pop",
+      "description": "A soulful fusion band that marries traditional Indian classical gamakas with contemporary western groove.",
+      "image": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+      "instagram": "https://www.instagram.com/vitcmusicclub",
+      "status": "Active Roster",
+      "members": [
+        { "name": "Karthik Raj", "role": "Carnatic Vocals", "reg": "22BCI0812" },
+        { "name": "Sneha V", "role": "Violinist", "reg": "22BCE1145" },
+        { "name": "Aditya Mohan", "role": "Mridangam / Percussion", "reg": "21BME0221" },
+        { "name": "Rohan Nair", "role": "Acoustic / Electric Guitar", "reg": "22BCE2411" },
+        { "name": "Nandini R", "role": "Flutist", "reg": "23BCE0981" }
+      ]
+    },
+    {
+      "id": "fragments",
+      "name": "Fragments",
+      "genre": "Pop, Soul & Jazz",
+      "description": "Smooth jazz voicings, pop melodies, and acoustic arrangements that touch the deepest soul.",
+      "image": "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80",
+      "instagram": "https://www.instagram.com/vitcmusicclub",
+      "status": "Active Roster",
+      "members": [
+        { "name": "Tara Menon", "role": "Lead Vocals", "reg": "22BCE0314" },
+        { "name": "David John", "role": "Jazz Keys & Synth", "reg": "21BCE2210" },
+        { "name": "Aryan Sen", "role": "Saxophone / Flute", "reg": "22BME1032" },
+        { "name": "Kiran Paul", "role": "Fretless Bass", "reg": "21BEE0931" }
+      ]
+    },
+    {
+      "id": "beatroots",
+      "name": "Beatroots",
+      "genre": "Rock & Alternative Metal",
+      "description": "Raw overdrive, crushing bass lines, and soaring alt-rock anthems.",
+      "image": "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?auto=format&fit=crop&w=800&q=80",
+      "instagram": "https://www.instagram.com/vitcmusicclub",
+      "status": "Active Roster",
+      "members": [
+        { "name": "Akash Sharma", "role": "Lead Vocalist", "reg": "22BCE1590" },
+        { "name": "Vikram R", "role": "Guitarist", "reg": "21BCI0876" },
+        { "name": "Siddharth P", "role": "Drummer", "reg": "22BME0344" },
+        { "name": "Harish K", "role": "Bassist", "reg": "21BEE1120" }
+      ]
+    }
+  ],
+  "team": {
+    "2026-27": [],
+    "2025-26": [],
+    "2024-25": [
+      {
+        "role": "President",
+        "name": "Siddharth Raman",
+        "image": "",
+        "instrument": "Lead Vocals & Rhythm Guitar",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 99802 79489"
+      },
+      {
+        "role": "Vice President",
+        "name": "Aishwarya Iyer",
+        "image": "",
+        "instrument": "Carnatic Vocals & Veena",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 98401 23456"
+      },
+      {
+        "role": "General Secretary",
+        "name": "Jerald Elias",
+        "image": "",
+        "instrument": "Electric Guitar / Sound Engineering",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 97902 44321"
+      },
+      {
+        "role": "Management Head",
+        "name": "Meghna Roy",
+        "image": "",
+        "instrument": "Acoustic Guitar & Logistics",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 91234 56780"
+      },
+      {
+        "role": "Event Director",
+        "name": "Rheminth Simeon",
+        "image": "",
+        "instrument": "Drums & Stage Operations",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 96543 21890"
+      },
+      {
+        "role": "Creative Head",
+        "name": "Tanvi Deshmukh",
+        "image": "",
+        "instrument": "Keyboard & Visual Media",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 95432 10987"
+      },
+      {
+        "role": "Gear & Sound Head",
+        "name": "Aurum Sengupta",
+        "image": "",
+        "instrument": "Bass Guitar & Studio Gear",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 94321 09876"
+      }
+    ],
+    "2023-24": [
+      {
+        "role": "President",
+        "name": "Aditya Bhattacharya",
+        "image": "",
+        "instrument": "Western Vocals",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 99802 79489"
+      },
+      {
+        "role": "Vice President",
+        "name": "Ria Elizabeth",
+        "image": "",
+        "instrument": "Violinist",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 98765 43210"
+      },
+      {
+        "role": "General Secretary",
+        "name": "Varun Nair",
+        "image": "",
+        "instrument": "Drummer",
+        "instagram": "https://instagram.com/vitcmusicclub",
+        "linkedin": "https://linkedin.com",
+        "phone": "+91 97654 32109"
+      }
+    ]
+  }
+}
