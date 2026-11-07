@@ -35,30 +35,42 @@ create table public.profiles (
 -- Automatic Profile Creation Trigger on Supabase Auth User Sign Up
 create or replace function public.handle_new_user()
 returns trigger as $$
+declare
+  existing_profile_id text;
 begin
-  insert into public.profiles (
-    id,
-    user_id,
-    name,
-    email,
-    reg_number,
-    role,
-    instrument,
-    is_verified,
-    is_admin
-  ) values (
-    new.id::text,
-    new.id,
-    coalesce(new.raw_user_meta_data->>'name', 'Musician'),
-    new.email,
-    coalesce(new.raw_user_meta_data->>'reg_number', 'PENDING-' || substr(new.id::text, 1, 6)),
-    coalesce(new.raw_user_meta_data->>'role', 'Member'),
-    coalesce(new.raw_user_meta_data->>'instrument', 'Vocals'),
-    false,
-    false
-  ) on conflict (id) do update set
-    email = excluded.email,
-    name = coalesce(excluded.name, profiles.name);
+  -- Check if member profile already pre-exists (e.g. imported verified club members)
+  select id into existing_profile_id from public.profiles where lower(email) = lower(new.email) limit 1;
+  
+  if existing_profile_id is not null then
+    -- Link Supabase Auth user to existing pre-verified profile
+    update public.profiles set
+      user_id = new.id,
+      name = coalesce(nullif(new.raw_user_meta_data->>'name', ''), profiles.name),
+      reg_number = coalesce(nullif(new.raw_user_meta_data->>'reg_number', ''), profiles.reg_number)
+    where id = existing_profile_id;
+  else
+    insert into public.profiles (
+      id,
+      user_id,
+      name,
+      email,
+      reg_number,
+      role,
+      instrument,
+      is_verified,
+      is_admin
+    ) values (
+      new.id::text,
+      new.id,
+      coalesce(new.raw_user_meta_data->>'name', 'Musician'),
+      new.email,
+      coalesce(new.raw_user_meta_data->>'reg_number', 'PENDING-' || substr(new.id::text, 1, 6)),
+      coalesce(new.raw_user_meta_data->>'role', 'Member'),
+      coalesce(new.raw_user_meta_data->>'instrument', 'Vocals'),
+      false,
+      false
+    );
+  end if;
   return new;
 end;
 $$ language plpgsql security definer;
