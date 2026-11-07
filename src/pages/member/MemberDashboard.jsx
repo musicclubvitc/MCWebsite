@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 // Access guard shown when a regular member tries to visit an admin-only tab
-const AdminGuard = ({ onToggleAdmin }) => (
+const AdminGuard = () => (
   <div 
     className="glass-panel"
     style={{
@@ -52,24 +52,16 @@ const AdminGuard = ({ onToggleAdmin }) => (
     </div>
 
     <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
-      Admin Access Required
+      Administrator Access Required
     </h2>
-    <p style={{ color: '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '28px' }}>
-      This section is only available to Board Members and Superusers. If you have admin privileges, switch to Admin Mode below.
+    <p style={{ color: '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6' }}>
+      This console is restricted to authorized VITC Music Club Board Members and Superusers.
     </p>
-
-    <button
-      onClick={onToggleAdmin}
-      className="btn-primary"
-      style={{ width: '100%', maxWidth: '260px', padding: '12px' }}
-    >
-      <ShieldCheck className="w-4 h-4" /> Switch to Admin Mode
-    </button>
   </div>
 );
 
 export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
-  const { user, isAdmin, toggleAdmin, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState(subTab);
 
   useEffect(() => {
@@ -153,7 +145,7 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
   const renderPanel = () => {
     // Admin-only panels — show guard if not admin
     if (isAdminTab) {
-      if (!isAdmin) return <AdminGuard onToggleAdmin={toggleAdmin} />;
+      if (!isAdmin) return <AdminGuard />;
       switch (activeSubTab) {
         case 'manage-users':
         case 'manage-bands':
@@ -202,25 +194,22 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            onClick={toggleAdmin}
-            style={{
-              background: isAdmin ? 'rgba(37, 99, 235, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-              border: isAdmin ? '1px solid var(--blue-sky)' : '1px solid var(--blue-border)',
-              color: isAdmin ? '#38bdf8' : '#94A3B8',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              cursor: 'pointer',
+          {isAdmin && (
+            <span style={{
+              background: 'rgba(37, 99, 235, 0.15)',
+              border: '1px solid var(--blue-border)',
+              color: 'var(--blue-sky)',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
-            }}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            {isAdmin ? 'Admin Mode ON' : 'Admin Mode'}
-          </button>
+            }}>
+              <ShieldCheck className="w-3.5 h-3.5" /> Board Admin
+            </span>
+          )}
 
           <button
             onClick={logout}

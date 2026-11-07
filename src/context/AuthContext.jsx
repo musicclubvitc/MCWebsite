@@ -13,14 +13,8 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  const [isAdmin, setIsAdmin] = useState(() => {
-    try {
-      const saved = localStorage.getItem("vitc_music_is_admin");
-      return saved ? JSON.parse(saved) : false;
-    } catch {
-      return false;
-    }
-  });
+  // Admin access is strictly derived from user's verified privileges in database (no demo switch)
+  const isAdmin = Boolean(user && (user.isAdmin || user.is_admin || user.type === 'Admin'));
 
   const [bands, setBands] = useState(() => {
     try {
@@ -333,10 +327,9 @@ export const AuthProvider = ({ children }) => {
           instrument: data.instrument || 'Guitar / Vocals',
           secretKey: data.secret_key,
           verified: data.is_verified,
-          isAdmin: data.is_admin
+          isAdmin: Boolean(data.is_admin)
         };
         setUser(profile);
-        if (data.is_admin) setIsAdmin(true);
       }
     } catch (err) {
       console.warn("Could not load Supabase profile:", err);
@@ -351,10 +344,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("vitc_music_user");
     }
   }, [user]);
-
-  useEffect(() => {
-    localStorage.setItem("vitc_music_is_admin", JSON.stringify(isAdmin));
-  }, [isAdmin]);
 
   useEffect(() => {
     localStorage.setItem("vitc_music_bands", JSON.stringify(bands));
@@ -384,10 +373,12 @@ export const AuthProvider = ({ children }) => {
     if (isSupabaseConfigured && supabase && userData.email && userData.password) {
       try {
         if (userData.isSignUp) {
+          const redirectOrigin = typeof window !== 'undefined' ? `${window.location.origin}/` : undefined;
           const { data, error } = await supabase.auth.signUp({
             email: userData.email,
             password: userData.password,
             options: {
+              emailRedirectTo: redirectOrigin,
               data: {
                 name: userData.name,
                 reg_number: userData.regNumber,
@@ -429,7 +420,6 @@ export const AuthProvider = ({ children }) => {
       isAdmin: false
     };
     setUser(newUser);
-    setIsAdmin(false);
     showToast(`Welcome to VITC Music Club, ${newUser.name}!`);
   };
 
@@ -438,7 +428,6 @@ export const AuthProvider = ({ children }) => {
       await supabase.auth.signOut();
     }
     setUser(null);
-    setIsAdmin(false);
     localStorage.removeItem("vitc_music_user");
     localStorage.removeItem("vitc_music_is_admin");
     showToast("Signed out of Member Portal", "info");
@@ -817,11 +806,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const toggleAdmin = () => {
-    setIsAdmin(prev => {
-      const next = !prev;
-      showToast(next ? "Superuser / Board Admin Mode Enabled" : "Returned to Member View", "info");
-      return next;
-    });
+    // Admin mode is automatically determined by user role in database
   };
 
   return (

@@ -259,14 +259,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
             <RefreshCw className={`w-3.5 h-3.5 ${diagRunning ? 'animate-spin' : ''}`} />
             {diagRunning ? 'Testing DB...' : 'Test Database Tables'}
           </button>
-
-          <button
-            onClick={toggleAdmin}
-            className="btn-ghost"
-            style={{ fontSize: '0.82rem' }}
-          >
-            Exit Admin View
-          </button>
         </div>
       </div>
 

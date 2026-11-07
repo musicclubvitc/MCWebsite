@@ -263,15 +263,6 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
 
                     <div style={{ height: '1px', background: 'var(--blue-border)', margin: '6px 4px' }} />
 
-                    {/* Toggle admin */}
-                    <button
-                      onClick={() => { toggleAdmin(); setDropdownOpen(false); }}
-                      style={{ ...dropdownItemStyle('__admin-toggle'), color: isAdmin ? 'var(--blue-sky)' : '#94A3B8' }}
-                    >
-                      <ShieldCheck style={{ width: '15px', height: '15px', flexShrink: 0, opacity: 0.7 }} />
-                      {isAdmin ? 'Exit Admin Mode' : 'Switch to Admin Mode'}
-                    </button>
-
                     {/* Logout */}
                     <button
                       onClick={() => { logout(); setDropdownOpen(false); }}
@@ -460,22 +451,9 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
                 )}
 
                 <button
-                  onClick={() => { toggleAdmin(); setMobileMenuOpen(false); }}
-                  className="btn-ghost"
-                  style={{
-                    marginTop: '8px',
-                    borderColor: isAdmin ? 'var(--blue-sky)' : undefined,
-                    color: isAdmin ? '#38bdf8' : undefined,
-                    justifyContent: 'center'
-                  }}
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  {isAdmin ? 'Exit Admin Mode' : 'Switch to Admin Mode'}
-                </button>
-
-                <button
                   onClick={() => { logout(); setMobileMenuOpen(false); }}
                   style={{
+                    marginTop: '8px',
                     background: 'rgba(239, 68, 68, 0.1)',
                     border: '1px solid rgba(239, 68, 68, 0.25)',
                     color: '#f87171',

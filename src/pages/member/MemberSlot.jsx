@@ -20,27 +20,66 @@ const TIME_SLOTS = [
   '07:55 PM - 08:50 PM',
 ];
 
+// Converts "08:00 AM" or "01:30 PM" to minutes from midnight
+function parseTimeToMinutes(t) {
+  if (!t) return 0;
+  const match = t.trim().match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!match) return 0;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const meridiem = match[3].toUpperCase();
+  if (meridiem === 'PM' && hours !== 12) hours += 12;
+  if (meridiem === 'AM' && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+// Checks if an interval [slotA] overlaps with [slotB]
+function slotsOverlap(slotA, slotB) {
+  if (!slotA || !slotB) return false;
+  if (slotA.trim().toLowerCase() === slotB.trim().toLowerCase()) return true;
+
+  const [aStartStr, aEndStr] = slotA.split(' - ');
+  const [bStartStr, bEndStr] = slotB.split(' - ');
+  if (!aStartStr || !aEndStr || !bStartStr || !bEndStr) return false;
+
+  const aStart = parseTimeToMinutes(aStartStr);
+  const aEnd = parseTimeToMinutes(aEndStr);
+  const bStart = parseTimeToMinutes(bStartStr);
+  const bEnd = parseTimeToMinutes(bEndStr);
+
+  return aStart < bEnd && aEnd > bStart;
+}
+
+function normalizeDate(d) {
+  if (!d) return '';
+  return d.split('T')[0];
+}
+
 // Check real bookings for a given slot on a given date
 function getSlotInfo(slot, dateStr, bookings) {
-  const dateBookings = bookings.filter(b => b.date === dateStr);
+  const targetDate = normalizeDate(dateStr);
+  const dateBookings = (bookings || []).filter(b => {
+    if (!b || b.status === 'Declined' || b.status === 'Cancelled' || b.status === 'Rejected') return false;
+    return normalizeDate(b.date) === targetDate;
+  });
 
   // Blocked by admin
   const blocked = dateBookings.find(
-    b => b.bookingMode === 'Block' && b.timeSlot === slot
+    b => (b.bookingMode === 'Block' || b.status === 'Blocked') && slotsOverlap(slot, b.timeSlot)
   );
   if (blocked) return {
     status: 'Blocked',
-    booker: blocked.bookerName,
-    reason: blocked.blockReason || ''
+    booker: blocked.bookerName || 'Admin',
+    reason: blocked.blockReason || 'Maintenance / Reserved'
   };
 
-  // Booked by someone
+  // Booked by someone (Self, Bands, Manual)
   const booked = dateBookings.find(
-    b => b.bookingMode !== 'Block' && b.timeSlot === slot
+    b => b.bookingMode !== 'Block' && b.status !== 'Blocked' && slotsOverlap(slot, b.timeSlot)
   );
   if (booked) return {
     status: 'Not Available',
-    booker: booked.bookerName,
+    booker: booked.bandName ? `${booked.bandName} (${booked.bookerName})` : booked.bookerName,
     reason: ''
   };
 
@@ -119,6 +158,16 @@ export const MemberSlot = () => {
     const startTime = startSlot.split(' - ')[0];
     const endTime   = endSlot.split(' - ')[1];
     const timeRange = `${startTime} - ${endTime}`;
+
+    const isConflict = bookings.some(b => {
+      if (!b || b.status === 'Declined' || b.status === 'Cancelled' || b.status === 'Rejected') return false;
+      return normalizeDate(b.date) === normalizeDate(selectedDate) && slotsOverlap(timeRange, b.timeSlot);
+    });
+
+    if (isConflict && bookingMode !== 'Block') {
+      showToast('Selected time interval conflicts with an existing booking. Please choose another slot.', 'error');
+      return;
+    }
 
     let resolvedMembers = [];
     if (bookingMode === 'Self') {

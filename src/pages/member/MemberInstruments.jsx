@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { AVAILABLE_INSTRUMENTS } from '../../data/clubData';
 import { 
   Guitar, 
   Plus, 
@@ -12,11 +11,17 @@ export const MemberInstruments = () => {
   const { instrumentRequests, addInstrumentRequest, instruments } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Use live database instruments, falling back to catalog if inventory is initially unpopulated
-  const activeInventory = (instruments && instruments.length > 0) ? instruments : AVAILABLE_INSTRUMENTS;
+  // Active inventory strictly from live database, no hardcoded fallbacks
+  const activeInventory = instruments || [];
 
   // Form State
-  const [selectedInstId, setSelectedInstId] = useState(() => activeInventory[0]?.id || 'inst-1');
+  const [selectedInstId, setSelectedInstId] = useState('');
+
+  useEffect(() => {
+    if (activeInventory.length > 0 && (!selectedInstId || !activeInventory.find(i => i.id === selectedInstId))) {
+      setSelectedInstId(activeInventory[0].id);
+    }
+  }, [activeInventory, selectedInstId]);
   const [borrowDate, setBorrowDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -36,16 +41,25 @@ export const MemberInstruments = () => {
     e.preventDefault();
     setFormError('');
 
+    if (activeInventory.length === 0) {
+      setFormError('No instruments are currently available in the club inventory.');
+      return;
+    }
+
     if (!agreedToTerms) {
       setFormError('Please accept the club equipment safety policy before requesting.');
       return;
     }
 
     const inst = activeInventory.find(i => i.id === selectedInstId);
+    if (!inst) {
+      setFormError('Please select a valid instrument from the inventory.');
+      return;
+    }
 
     addInstrumentRequest({
-      instrumentName: inst ? inst.name : 'Club Instrument',
-      instrumentCode: inst ? inst.code : 'INST-01',
+      instrumentName: inst.name,
+      instrumentCode: inst.code,
       borrowDate,
       borrowTime,
       returnDate,
@@ -92,38 +106,51 @@ export const MemberInstruments = () => {
         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--blue-sky)', textTransform: 'uppercase', marginBottom: '12px' }}>
           Available Club Gear Inventory
         </div>
-        <div 
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '14px'
-          }}
-        >
-          {activeInventory.slice(0, 6).map((inst) => (
-            <div 
-              key={inst.id}
-              className="glass-panel"
-              style={{
-                padding: '14px',
-                borderRadius: '12px',
-                display: 'flex',
-                gap: '12px',
-                alignItems: 'center'
-              }}
-            >
-              <img 
-                src={inst.image} 
-                alt={inst.name}
-                style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover' }} 
-              />
-              <div>
-                <div style={{ fontWeight: 600, color: '#F8FAFC', fontSize: '0.88rem' }}>{inst.name}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{inst.code}</div>
-                <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{inst.location}</div>
+        {activeInventory.length === 0 ? (
+          <div className="glass-panel" style={{ padding: '24px 20px', textAlign: 'center', borderRadius: '12px', border: '1px solid var(--blue-border)', background: 'rgba(15,23,42,0.6)' }}>
+            <Guitar className="w-8 h-8 text-slate-500" style={{ margin: '0 auto 8px auto' }} />
+            <div style={{ color: '#F1F5F9', fontWeight: 600, fontSize: '0.95rem' }}>No equipment registered yet</div>
+            <p style={{ color: '#94A3B8', fontSize: '0.82rem', marginTop: '4px' }}>
+              Instruments and sound equipment added by club board administrators will appear here for checkout.
+            </p>
+          </div>
+        ) : (
+          <div 
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: '14px'
+            }}
+          >
+            {activeInventory.slice(0, 6).map((inst) => (
+              <div 
+                key={inst.id}
+                className="glass-panel"
+                style={{
+                  padding: '14px',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  gap: '12px',
+                  alignItems: 'center'
+                }}
+              >
+                {inst.image && (
+                  <img 
+                    src={inst.image} 
+                    alt={inst.name}
+                    style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover' }} 
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                )}
+                <div>
+                  <div style={{ fontWeight: 600, color: '#F8FAFC', fontSize: '0.88rem' }}>{inst.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{inst.code}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{inst.location}</div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Active Requests List */}
@@ -316,17 +343,30 @@ export const MemberInstruments = () => {
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
                   Select Instrument *
                 </label>
-                <select
-                  value={selectedInstId}
-                  onChange={(e) => setSelectedInstId(e.target.value)}
-                  className="input-field"
-                >
-                  {activeInventory.map((inst) => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name} ({inst.code}) - {inst.available ? 'Available' : 'In Use'}
-                    </option>
-                  ))}
-                </select>
+                {activeInventory.length === 0 ? (
+                  <div style={{ 
+                    padding: '12px 14px', 
+                    background: 'rgba(239, 68, 68, 0.1)', 
+                    border: '1px solid rgba(239, 68, 68, 0.3)', 
+                    borderRadius: '8px', 
+                    color: '#fca5a5', 
+                    fontSize: '0.85rem' 
+                  }}>
+                    No instruments are currently registered in club inventory. Contact a board administrator to register equipment before submitting a requisition.
+                  </div>
+                ) : (
+                  <select
+                    value={selectedInstId}
+                    onChange={(e) => setSelectedInstId(e.target.value)}
+                    className="input-field"
+                  >
+                    {activeInventory.map((inst) => (
+                      <option key={inst.id} value={inst.id}>
+                        {inst.name} ({inst.code}) - {inst.available ? 'Available' : 'In Use'}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
@@ -435,7 +475,9 @@ export const MemberInstruments = () => {
 
                 <button
                   type="submit"
+                  disabled={activeInventory.length === 0}
                   className="btn-primary"
+                  style={activeInventory.length === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                 >
                   Submit Requisition
                 </button>
