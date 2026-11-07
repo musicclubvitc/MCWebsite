@@ -3,11 +3,20 @@
 -- Run this complete script in your Supabase SQL Editor (1-Click Run)
 -- ==============================================================================
 
+-- Clean reset of existing public club tables to ensure clean types & constraints
+drop table if exists public.band_members cascade;
+drop table if exists public.bands cascade;
+drop table if exists public.slot_bookings cascade;
+drop table if exists public.instrument_requests cascade;
+drop table if exists public.instruments cascade;
+drop table if exists public.site_content cascade;
+drop table if exists public.profiles cascade;
+
 -- 1. EXTENSIONS
 create extension if not exists "pgcrypto";
 
 -- 2. PUBLIC PROFILES
-create table if not exists public.profiles (
+create table public.profiles (
   id text primary key default gen_random_uuid()::text,
   user_id uuid references auth.users(id) on delete set null,
   name text not null,
@@ -22,17 +31,6 @@ create table if not exists public.profiles (
   is_admin boolean default false,
   created_at timestamptz default now()
 );
-
--- Drop old FK if it was referencing auth.users(id) as primary key
-do $$
-begin
-  if exists (select 1 from information_schema.table_constraints where constraint_name = 'profiles_id_fkey') then
-    alter table public.profiles drop constraint profiles_id_fkey;
-  end if;
-  alter table public.profiles alter column id type text;
-exception when others then
-  null;
-end $$;
 
 -- Automatic Profile Creation Trigger on Supabase Auth User Sign Up
 create or replace function public.handle_new_user()
@@ -71,7 +69,7 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- 3. BANDS TABLE
-create table if not exists public.bands (
+create table public.bands (
   id text primary key default gen_random_uuid()::text,
   name text not null,
   genre text default 'Rock / Fusion',
@@ -81,7 +79,7 @@ create table if not exists public.bands (
 );
 
 -- 4. BAND MEMBERS TABLE
-create table if not exists public.band_members (
+create table public.band_members (
   id text primary key default gen_random_uuid()::text,
   band_id text references public.bands(id) on delete cascade,
   member_name text not null,
@@ -91,7 +89,7 @@ create table if not exists public.band_members (
 );
 
 -- 5. SLOT BOOKINGS TABLE (Music Room)
-create table if not exists public.slot_bookings (
+create table public.slot_bookings (
   id text primary key default ('BKG-' || floor(1000 + random() * 9000)::text),
   slot_date date not null,
   time_slot text not null,
@@ -106,7 +104,7 @@ create table if not exists public.slot_bookings (
 );
 
 -- 6. INSTRUMENTS INVENTORY
-create table if not exists public.instruments (
+create table public.instruments (
   id text primary key,
   name text not null,
   category text not null,
@@ -119,7 +117,7 @@ create table if not exists public.instruments (
 );
 
 -- 7. INSTRUMENT REQUESTS
-create table if not exists public.instrument_requests (
+create table public.instrument_requests (
   id text primary key default ('REQ-' || floor(1000 + random() * 9000)::text),
   instrument_name text not null,
   instrument_code text not null,
@@ -133,7 +131,7 @@ create table if not exists public.instrument_requests (
 );
 
 -- 8. SITE CONTENT CMS (Tenures, Events, FAQ, Site Info)
-create table if not exists public.site_content (
+create table public.site_content (
   id text primary key default 'main',
   content jsonb not null,
   updated_at timestamptz default now()
@@ -150,22 +148,6 @@ alter table public.slot_bookings enable row level security;
 alter table public.instruments enable row level security;
 alter table public.instrument_requests enable row level security;
 alter table public.site_content enable row level security;
-
--- Drop all old policies to avoid duplicates on re-run
-drop policy if exists "Profiles viewable by everyone" on public.profiles;
-drop policy if exists "Profiles insertable and updatable" on public.profiles;
-drop policy if exists "Bands viewable by everyone" on public.bands;
-drop policy if exists "Bands insertable and updatable" on public.bands;
-drop policy if exists "Band members viewable by everyone" on public.band_members;
-drop policy if exists "Band members insertable and updatable" on public.band_members;
-drop policy if exists "Slot bookings viewable by everyone" on public.slot_bookings;
-drop policy if exists "Slot bookings insertable and updatable" on public.slot_bookings;
-drop policy if exists "Instruments viewable by everyone" on public.instruments;
-drop policy if exists "Instruments insertable and updatable" on public.instruments;
-drop policy if exists "Instrument requests viewable by everyone" on public.instrument_requests;
-drop policy if exists "Instrument requests insertable and updatable" on public.instrument_requests;
-drop policy if exists "Site content viewable by everyone" on public.site_content;
-drop policy if exists "Site content insertable and updatable" on public.site_content;
 
 -- Permissive policies for modern client-side Jamstack / Member Portal
 create policy "Profiles viewable by everyone" on public.profiles for select using (true);
@@ -232,8 +214,7 @@ insert into public.band_members (band_id, member_name, register_number, secret_k
   ('band-105', 'Sagarika', '23BCE2001', '68ff9244dd'),
   ('band-106', 'Soham', '24BCE1402', '68ff9255ee'),
   ('band-107', 'Rheminth Simeon', '21BCE1402', '68ff9266ff'),
-  ('band-107', 'Aarav Sharma', '22BCE1289', '68ff920169754d9fb129e4a2')
-on conflict do nothing;
+  ('band-107', 'Aarav Sharma', '22BCE1289', '68ff920169754d9fb129e4a2');
 
 -- 4. Instruments
 insert into public.instruments (id, name, category, code, location, condition, available) values
