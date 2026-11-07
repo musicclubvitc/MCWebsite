@@ -248,7 +248,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         const formatted = data.map(b => ({
           id: b.id,
           date: b.slot_date,
@@ -283,7 +283,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         const formatted = data.map(b => ({
           id: b.id,
           name: b.name,
@@ -323,7 +323,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         const formatted = data.map(u => ({
           id: u.id,
           name: u.name,
@@ -355,7 +355,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         const formatted = data.map(r => ({
           id: r.id,
           instrumentName: r.instrument_name,
@@ -572,6 +572,7 @@ export const AuthProvider = ({ children }) => {
         const { data: bandRow, error: bandErr } = await supabase
           .from('bands')
           .insert({
+            id: bandRecord.id,
             name: newBand.name,
             genre: newBand.genre,
             leader_name: newBand.leader || user?.name || 'Leader',
@@ -732,7 +733,7 @@ export const AuthProvider = ({ children }) => {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase
+        const { error } = await supabase
           .from('instrument_requests')
           .insert({
             id: reqRecord.id,
@@ -745,6 +746,7 @@ export const AuthProvider = ({ children }) => {
             booker_reg: user ? user.regNumber : "24BCE5259",
             status: 'Pending'
           });
+        if (error) console.error("Error creating instrument request in Supabase:", error);
       } catch (err) {
         console.error("Failed to sync instrument request:", err);
       }
@@ -761,16 +763,35 @@ export const AuthProvider = ({ children }) => {
 
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase
+        const { error } = await supabase
           .from('instrument_requests')
           .update({ status: newStatus })
           .eq('id', id);
+        if (error) console.error("Error updating instrument request in Supabase:", error);
       } catch (err) {
         console.error("Instrument status sync error:", err);
       }
     }
 
     showToast(`Instrument request marked as ${newStatus}`);
+  };
+
+  const deleteInstrumentRequest = async (id) => {
+    setInstrumentRequests(prev => prev.filter(r => r.id !== id));
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('instrument_requests')
+          .delete()
+          .eq('id', id);
+        if (error) console.error("Error deleting instrument request in Supabase:", error);
+      } catch (err) {
+        console.error("Delete instrument request error:", err);
+      }
+    }
+
+    showToast("Instrument requisition deleted", "info");
   };
 
   // ---------------- USER & VERIFICATION ACTIONS ----------------
@@ -866,6 +887,7 @@ export const AuthProvider = ({ children }) => {
         deleteBooking,
         addInstrumentRequest,
         updateInstrumentStatus,
+        deleteInstrumentRequest,
         verifyMember,
         updateAdminUser,
         deleteAdminUser,

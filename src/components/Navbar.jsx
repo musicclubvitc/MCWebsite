@@ -186,32 +186,6 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
                 </button>
               );
             })}
-
-            {/* Form Band button when logged in */}
-            {user && (
-              <button
-                onClick={() => handleNavClick('member-bands')}
-                style={{
-                  background: activeTab === 'member-bands' ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
-                  border: activeTab === 'member-bands' ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid transparent',
-                  color: activeTab === 'member-bands' ? 'var(--blue-sky)' : '#CBD5E1',
-                  padding: '7px 12px',
-                  borderRadius: '8px',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <Disc style={{ width: '14px', height: '14px', flexShrink: 0 }} />
-                <span>Form Band</span>
-              </button>
-            )}
           </nav>
 
           {/* Desktop Right — Auth / User Dropdown */}

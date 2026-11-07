@@ -15,8 +15,18 @@ import {
   Mail, 
   Info,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Image as ImageIcon,
+  HelpCircle,
+  BarChart3
 } from 'lucide-react';
+
+const PRESET_EVENT_IMAGES = [
+  { label: 'Concert Stage', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Rock Band', url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Acoustic Guitar', url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80' },
+  { label: 'Festival Crowd', url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=800&q=80' },
+];
 
 export const ContentManager = () => {
   const { content, updateContent, resetToDefault, exportContentJson, importContentJson } = useContent();
@@ -38,7 +48,7 @@ export const ContentManager = () => {
 
   const handleSave = () => {
     updateContent(localData);
-    showToast("Website content updated successfully!");
+    showToast("Website content and database updated successfully!");
   };
 
   const handleFileUpload = (e) => {
@@ -65,6 +75,7 @@ export const ContentManager = () => {
       const keys = path.split('.');
       let current = updated;
       for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) current[keys[i]] = {};
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = value;
@@ -72,7 +83,7 @@ export const ContentManager = () => {
     });
   };
 
-  // ----------------- BOARD SESSIONS MANAGEMENT -----------------
+  // ----------------- BOARD TENURES MANAGEMENT -----------------
   const handleAddSession = () => {
     const name = newSessionInput.trim();
     if (!name) {
@@ -99,46 +110,42 @@ export const ContentManager = () => {
     delete nextTeam[sessName];
     const remainingKeys = Object.keys(nextTeam);
     setLocalData({ ...localData, team: nextTeam });
-    setSelectedSession(remainingKeys[0]);
-    showToast(`Removed board tenure ${sessName}`);
+    setSelectedSession(remainingKeys[0] || "2024-25");
+    showToast(`Deleted board tenure ${sessName}`);
   };
 
   const handleAddMemberToSession = (sessName) => {
-    const nextTeam = { ...teamSessions };
-    const currentList = nextTeam[sessName] || [];
-    nextTeam[sessName] = [
-      ...currentList,
-      {
-        role: "Board Member",
-        name: "",
-        image: "",
-        instrument: "",
-        instagram: "https://www.instagram.com/vitcmusicclub",
-        linkedin: "https://linkedin.com"
-      }
-    ];
+    const newMember = {
+      role: "Core Member",
+      name: "New Musician",
+      instrument: "Vocals / Guitar",
+      image: "",
+      instagram: "https://www.instagram.com/vitcmusicclub",
+      linkedin: ""
+    };
+    const currentList = teamSessions[sessName] || [];
+    const nextTeam = { ...teamSessions, [sessName]: [...currentList, newMember] };
     setLocalData({ ...localData, team: nextTeam });
   };
 
   const handleRemoveMemberFromSession = (sessName, mIdx) => {
-    const nextTeam = { ...teamSessions };
-    nextTeam[sessName] = nextTeam[sessName].filter((_, idx) => idx !== mIdx);
-    setLocalData({ ...localData, team: nextTeam });
+    const currentList = teamSessions[sessName] || [];
+    const nextList = currentList.filter((_, idx) => idx !== mIdx);
+    setLocalData({ ...localData, team: { ...teamSessions, [sessName]: nextList } });
   };
 
-  const handleUpdateMember = (sessName, mIdx, field, value) => {
-    const nextTeam = { ...teamSessions };
-    const updatedMember = { ...nextTeam[sessName][mIdx], [field]: value };
-    nextTeam[sessName][mIdx] = updatedMember;
-    setLocalData({ ...localData, team: nextTeam });
+  const handleUpdateMember = (sessName, mIdx, field, val) => {
+    const currentList = [...(teamSessions[sessName] || [])];
+    currentList[mIdx] = { ...currentList[mIdx], [field]: val };
+    setLocalData({ ...localData, team: { ...teamSessions, [sessName]: currentList } });
   };
 
-  const activeMembers = (teamSessions[selectedSession]) || [];
+  const activeMembers = teamSessions[selectedSession] || [];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Top Banner with Export / Import buttons */}
+      {/* Top Banner & File Management Actions */}
       <div 
         className="glass-panel"
         style={{
@@ -154,11 +161,11 @@ export const ContentManager = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <FileEdit className="w-5 h-5 text-sky-400" />
             <h3 className="font-display font-bold text-xl" style={{ color: '#F8FAFC' }}>
-              No-Code Content Manager
+              Content Manager & Live CMS
             </h3>
           </div>
           <p style={{ color: '#94A3B8', fontSize: '0.88rem' }}>
-            Update events, bands, multi-year core board rosters, and contact links without touching source code.
+            Edit events with posters, about page paragraphs, tenures, showcased bands, and stats. Changes save instantly to Supabase.
           </p>
         </div>
 
@@ -224,9 +231,11 @@ export const ContentManager = () => {
       >
         {[
           { id: 'site', label: 'General & Hero' },
-          { id: 'events', label: 'Events Editor' },
-          { id: 'bands', label: 'Bands Editor' },
-          { id: 'team', label: 'Board Members (Multi-Year)' },
+          { id: 'about', label: 'About & Stats' },
+          { id: 'events', label: 'Events & Posters' },
+          { id: 'bands', label: 'Bands Showcase' },
+          { id: 'team', label: 'Tenures & Team' },
+          { id: 'faqs', label: 'FAQs' },
           { id: 'contact', label: 'Contact & Socials' }
         ].map((sec) => (
           <button
@@ -240,7 +249,8 @@ export const ContentManager = () => {
               borderRadius: '8px',
               fontWeight: 600,
               fontSize: '0.88rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             {sec.label}
@@ -248,10 +258,40 @@ export const ContentManager = () => {
         ))}
       </div>
 
-      {/* SECTION 1: SITE & HERO */}
+      {/* ===================== SECTION 1: SITE & HERO ===================== */}
       {activeSection === 'site' && (
         <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1rem' }}>General Club Information</h4>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '6px' }}>Club Name</label>
+              <input
+                type="text"
+                value={localData.site?.name || ''}
+                onChange={(e) => updateField('site.name', e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '6px' }}>Campus</label>
+              <input
+                type="text"
+                value={localData.site?.campus || ''}
+                onChange={(e) => updateField('site.campus', e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '6px' }}>Tagline</label>
+              <input
+                type="text"
+                value={localData.site?.tagline || ''}
+                onChange={(e) => updateField('site.tagline', e.target.value)}
+                className="input-field"
+              />
+            </div>
+          </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '6px' }}>Hero Description</label>
@@ -263,48 +303,209 @@ export const ContentManager = () => {
             />
           </div>
 
-          <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1rem', marginTop: '10px' }}>Live Club Statistics</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
-            {(localData.stats || []).map((stat, idx) => (
-              <div key={idx} style={{ padding: '14px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '10px', border: '1px solid var(--blue-border)' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', marginBottom: '4px' }}>Counter Value</label>
-                <input
-                  type="text"
-                  value={stat.value}
-                  onChange={(e) => {
-                    const next = [...localData.stats];
-                    next[idx].value = e.target.value;
-                    setLocalData({ ...localData, stats: next });
-                  }}
-                  className="input-field"
-                  style={{ marginBottom: '8px' }}
-                />
-                <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', marginBottom: '4px' }}>Label</label>
-                <input
-                  type="text"
-                  value={stat.label}
-                  onChange={(e) => {
-                    const next = [...localData.stats];
-                    next[idx].label = e.target.value;
-                    setLocalData({ ...localData, stats: next });
-                  }}
-                  className="input-field"
-                />
-              </div>
-            ))}
-          </div>
-
           <button onClick={handleSave} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>
             <Save className="w-4 h-4" /> Save Site Changes
           </button>
         </div>
       )}
 
-      {/* SECTION 2: EVENTS */}
+      {/* ===================== SECTION 2: ABOUT & STATS ===================== */}
+      {activeSection === 'about' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* About Section Settings */}
+          <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1.05rem', margin: 0 }}>
+                About Section Content
+              </h4>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '6px' }}>About Section Title</label>
+              <input
+                type="text"
+                value={localData.about?.title || ''}
+                onChange={(e) => updateField('about.title', e.target.value)}
+                className="input-field"
+              />
+            </div>
+
+            {/* About Hero Image */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', alignItems: 'center' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '6px' }}>
+                  About Hero Image URL
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  value={localData.about?.image || ''}
+                  onChange={(e) => updateField('about.image', e.target.value)}
+                  className="input-field"
+                />
+              </div>
+
+              {localData.about?.image && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <img
+                    src={localData.about.image}
+                    alt="About Preview"
+                    style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--blue-border)' }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                  <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>Live image preview</span>
+                </div>
+              )}
+            </div>
+
+            {/* Paragraphs */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <label style={{ fontSize: '0.85rem', color: '#F8FAFC', fontWeight: 600 }}>About Paragraphs</label>
+                <button
+                  onClick={() => {
+                    const paras = [...(localData.about?.paragraphs || []), "New club overview paragraph..."];
+                    updateField('about.paragraphs', paras);
+                  }}
+                  className="btn-secondary"
+                  style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Paragraph
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {(localData.about?.paragraphs || []).map((para, pIdx) => (
+                  <div key={pIdx} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                    <span style={{ color: '#64748B', fontWeight: 700, fontSize: '0.85rem', paddingTop: '8px' }}>
+                      P{pIdx + 1}
+                    </span>
+                    <textarea
+                      rows={3}
+                      value={para}
+                      onChange={(e) => {
+                        const paras = [...localData.about.paragraphs];
+                        paras[pIdx] = e.target.value;
+                        updateField('about.paragraphs', paras);
+                      }}
+                      className="input-field"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      onClick={() => {
+                        const paras = localData.about.paragraphs.filter((_, i) => i !== pIdx);
+                        updateField('about.paragraphs', paras);
+                      }}
+                      style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '8px', borderRadius: '8px', cursor: 'pointer', marginTop: '4px' }}
+                      title="Remove paragraph"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={handleSave} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '6px' }}>
+              <Save className="w-4 h-4" /> Save About Section
+            </button>
+          </div>
+
+          {/* Club Statistics Editor */}
+          <div className="glass-panel" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1.05rem', margin: 0 }}>
+                Club Statistics Counter
+              </h4>
+              <button
+                onClick={() => {
+                  const nextStats = [...(localData.stats || []), { label: "New Stat", value: "100+", detail: "Description" }];
+                  setLocalData({ ...localData, stats: nextStats });
+                }}
+                className="btn-secondary"
+                style={{ fontSize: '0.78rem', padding: '4px 10px' }}
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Counter
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+              {(localData.stats || []).map((stat, idx) => (
+                <div key={idx} style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '10px', border: '1px solid var(--blue-border)', position: 'relative' }}>
+                  <button
+                    onClick={() => {
+                      const nextStats = localData.stats.filter((_, i) => i !== idx);
+                      setLocalData({ ...localData, stats: nextStats });
+                    }}
+                    style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}
+                    title="Remove stat"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', marginBottom: '4px' }}>Stat Value</label>
+                  <input
+                    type="text"
+                    value={stat.value}
+                    onChange={(e) => {
+                      const next = [...localData.stats];
+                      next[idx].value = e.target.value;
+                      setLocalData({ ...localData, stats: next });
+                    }}
+                    className="input-field"
+                    style={{ marginBottom: '8px', fontWeight: 700, color: 'var(--blue-sky)' }}
+                  />
+
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', marginBottom: '4px' }}>Label</label>
+                  <input
+                    type="text"
+                    value={stat.label}
+                    onChange={(e) => {
+                      const next = [...localData.stats];
+                      next[idx].label = e.target.value;
+                      setLocalData({ ...localData, stats: next });
+                    }}
+                    className="input-field"
+                    style={{ marginBottom: '8px' }}
+                  />
+
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#94A3B8', marginBottom: '4px' }}>Subtext Detail</label>
+                  <input
+                    type="text"
+                    value={stat.detail || ''}
+                    onChange={(e) => {
+                      const next = [...localData.stats];
+                      next[idx].detail = e.target.value;
+                      setLocalData({ ...localData, stats: next });
+                    }}
+                    className="input-field"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button onClick={handleSave} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '6px' }}>
+              <Save className="w-4 h-4" /> Save Statistics
+            </button>
+          </div>
+
+        </div>
+      )}
+
+      {/* ===================== SECTION 3: EVENTS & POSTERS ===================== */}
       {activeSection === 'events' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.9rem', color: '#94A3B8' }}>Manage upcoming and past concerts & competitions</span>
+            <div>
+              <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1rem', margin: 0 }}>
+                Events, Concerts & Poster Images
+              </h4>
+              <p style={{ color: '#94A3B8', fontSize: '0.82rem', margin: '2px 0 0 0' }}>
+                Add live concert dates, poster images, venues, rules, and prize pools.
+              </p>
+            </div>
+
             <button
               onClick={() => {
                 const newEv = {
@@ -315,78 +516,217 @@ export const ContentManager = () => {
                   venue: "Campus Stage",
                   prizePool: "Exhibition",
                   status: "Upcoming",
-                  description: "Event details...",
+                  description: "Full details of the upcoming music concert...",
                   image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80"
                 };
                 setLocalData({ ...localData, events: [newEv, ...(localData.events || [])] });
               }}
               className="btn-secondary"
-              style={{ fontSize: '0.82rem', padding: '6px 12px' }}
+              style={{ fontSize: '0.82rem', padding: '8px 14px' }}
             >
               <Plus className="w-4 h-4" /> Add Event
             </button>
           </div>
 
           {(localData.events || []).map((ev, idx) => (
-            <div key={ev.id || idx} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div key={ev.id || idx} className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="badge-sky">Event {idx + 1}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="badge-sky">Event {idx + 1}</span>
+                  <span style={{ color: '#F8FAFC', fontWeight: 700, fontSize: '1.05rem' }}>{ev.name}</span>
+                </div>
                 <button
                   onClick={() => {
                     const next = localData.events.filter((_, i) => i !== idx);
                     setLocalData({ ...localData, events: next });
                   }}
-                  style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}
+                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" /> Delete Event
                 </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Event Name</label>
-                  <input
-                    type="text"
-                    value={ev.name}
-                    onChange={(e) => {
-                      const next = [...localData.events];
-                      next[idx].name = e.target.value;
-                      setLocalData({ ...localData, events: next });
-                    }}
-                    className="input-field"
-                  />
+              {/* Two Column Layout: Event Details & Poster Preview */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px' }}>
+                
+                {/* Left: Metadata */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Event Name</label>
+                    <input
+                      type="text"
+                      value={ev.name}
+                      onChange={(e) => {
+                        const next = [...localData.events];
+                        next[idx].name = e.target.value;
+                        setLocalData({ ...localData, events: next });
+                      }}
+                      className="input-field"
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Date Display</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Nov 15, 2026"
+                        value={ev.dateDisplay}
+                        onChange={(e) => {
+                          const next = [...localData.events];
+                          next[idx].dateDisplay = e.target.value;
+                          setLocalData({ ...localData, events: next });
+                        }}
+                        className="input-field"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Status</label>
+                      <select
+                        value={ev.status}
+                        onChange={(e) => {
+                          const next = [...localData.events];
+                          next[idx].status = e.target.value;
+                          setLocalData({ ...localData, events: next });
+                        }}
+                        className="input-field"
+                      >
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Completed">Completed</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Venue</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Amphitheatre"
+                        value={ev.venue || ''}
+                        onChange={(e) => {
+                          const next = [...localData.events];
+                          next[idx].venue = e.target.value;
+                          setLocalData({ ...localData, events: next });
+                        }}
+                        className="input-field"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Event Category / Type</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Battle of Bands"
+                        value={ev.type || ''}
+                        onChange={(e) => {
+                          const next = [...localData.events];
+                          next[idx].type = e.target.value;
+                          setLocalData({ ...localData, events: next });
+                        }}
+                        className="input-field"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Prize Pool / Recognition</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. ₹25,000 or Exhibition"
+                      value={ev.prizePool || ''}
+                      onChange={(e) => {
+                        const next = [...localData.events];
+                        next[idx].prizePool = e.target.value;
+                        setLocalData({ ...localData, events: next });
+                      }}
+                      className="input-field"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Date Display</label>
-                  <input
-                    type="text"
-                    value={ev.dateDisplay}
-                    onChange={(e) => {
-                      const next = [...localData.events];
-                      next[idx].dateDisplay = e.target.value;
-                      setLocalData({ ...localData, events: next });
-                    }}
-                    className="input-field"
-                  />
+                {/* Right: Poster Image URL & Live Preview */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
+                      Poster Image URL
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://images.unsplash.com/..."
+                      value={ev.image || ''}
+                      onChange={(e) => {
+                        const next = [...localData.events];
+                        next[idx].image = e.target.value;
+                        setLocalData({ ...localData, events: next });
+                      }}
+                      className="input-field"
+                    />
+                  </div>
+
+                  {/* Preset quick buttons */}
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Quick image suggestions: </span>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                      {PRESET_EVENT_IMAGES.map((preset, pI) => (
+                        <button
+                          key={pI}
+                          type="button"
+                          onClick={() => {
+                            const next = [...localData.events];
+                            next[idx].image = preset.url;
+                            setLocalData({ ...localData, events: next });
+                          }}
+                          className="btn-ghost"
+                          style={{ padding: '3px 8px', fontSize: '0.72rem' }}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Visual Image Preview */}
+                  <div style={{
+                    width: '100%',
+                    height: '140px',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    border: '1px solid var(--blue-border)',
+                    background: 'rgba(0,0,0,0.4)',
+                    position: 'relative'
+                  }}>
+                    {ev.image ? (
+                      <img
+                        src={ev.image}
+                        alt="Event poster"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748B', fontSize: '0.82rem' }}>
+                        No poster URL specified
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Status</label>
-                  <select
-                    value={ev.status}
-                    onChange={(e) => {
-                      const next = [...localData.events];
-                      next[idx].status = e.target.value;
-                      setLocalData({ ...localData, events: next });
-                    }}
-                    className="input-field"
-                  >
-                    <option value="Upcoming">Upcoming</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                </div>
               </div>
+
+              {/* Full Description Textarea */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Event Description</label>
+                <textarea
+                  rows={2}
+                  value={ev.description || ''}
+                  onChange={(e) => {
+                    const next = [...localData.events];
+                    next[idx].description = e.target.value;
+                    setLocalData({ ...localData, events: next });
+                  }}
+                  className="input-field"
+                />
+              </div>
+
             </div>
           ))}
 
@@ -396,7 +736,7 @@ export const ContentManager = () => {
         </div>
       )}
 
-      {/* SECTION 3: BANDS */}
+      {/* ===================== SECTION 4: BANDS SHOWCASE ===================== */}
       {activeSection === 'bands' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -464,6 +804,20 @@ export const ContentManager = () => {
                     className="input-field"
                   />
                 </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Band Photo URL</label>
+                  <input
+                    type="text"
+                    value={b.image || ''}
+                    onChange={(e) => {
+                      const next = [...localData.bands];
+                      next[idx].image = e.target.value;
+                      setLocalData({ ...localData, bands: next });
+                    }}
+                    className="input-field"
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -474,27 +828,27 @@ export const ContentManager = () => {
         </div>
       )}
 
-      {/* SECTION 4: TEAM (MULTI-YEAR & DYNAMIC SESSIONS) */}
+      {/* ===================== SECTION 5: TENURES & BOARD MEMBERS ===================== */}
       {activeSection === 'team' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Academic Sessions Manager Bar */}
+          {/* Academic Tenures Manager Bar */}
           <div className="glass-panel" style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <h4 style={{ color: '#F8FAFC', fontWeight: 700, fontSize: '1rem', margin: 0 }}>
-                  Academic Session Rosters
+                  Academic Tenure Rosters
                 </h4>
                 <p style={{ color: '#94A3B8', fontSize: '0.82rem', margin: '2px 0 0 0' }}>
-                  Select an academic session to edit, or create / delete entire boards.
+                  Select an academic tenure to edit, or add blank tenures (e.g. 2025-26, 2026-27).
                 </p>
               </div>
 
-              {/* Add New Session Form */}
+              {/* Add New Tenure Form */}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input
                   type="text"
-                  placeholder="e.g. 2025-26"
+                  placeholder="e.g. 2027-28"
                   value={newSessionInput}
                   onChange={(e) => setNewSessionInput(e.target.value)}
                   className="input-field"
@@ -505,12 +859,12 @@ export const ContentManager = () => {
                   className="btn-secondary"
                   style={{ fontSize: '0.82rem', padding: '6px 14px' }}
                 >
-                  <Plus className="w-3.5 h-3.5" /> Add Board Year
+                  <Plus className="w-3.5 h-3.5" /> Add Tenure
                 </button>
               </div>
             </div>
 
-            {/* Session Selector Pills */}
+            {/* Tenure Selector Pills */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               {sessionKeys.map((sess) => (
                 <div key={sess} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -568,7 +922,7 @@ export const ContentManager = () => {
 
           {activeMembers.length === 0 ? (
             <div className="glass-panel" style={{ padding: '36px', textAlign: 'center', color: '#94A3B8' }}>
-              No members in Tenure {selectedSession} yet. Click "Add Board Member" above to create one.
+              Tenure {selectedSession} is currently empty. Click "Add Board Member" above when ready to list core members.
             </div>
           ) : (
             activeMembers.map((m, idx) => (
@@ -656,7 +1010,75 @@ export const ContentManager = () => {
         </div>
       )}
 
-      {/* SECTION 5: CONTACT & SOCIALS */}
+      {/* ===================== SECTION 6: FAQS ===================== */}
+      {activeSection === 'faqs' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.9rem', color: '#94A3B8' }}>Manage frequently asked questions on the homepage</span>
+            <button
+              onClick={() => {
+                const nextFaqs = [...(localData.faqs || []), { q: "New Question?", a: "Answer text here..." }];
+                setLocalData({ ...localData, faqs: nextFaqs });
+              }}
+              className="btn-secondary"
+              style={{ fontSize: '0.82rem', padding: '6px 12px' }}
+            >
+              <Plus className="w-4 h-4" /> Add FAQ
+            </button>
+          </div>
+
+          {(localData.faqs || []).map((faq, idx) => (
+            <div key={idx} className="glass-panel" style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="badge-sky">FAQ {idx + 1}</span>
+                <button
+                  onClick={() => {
+                    const next = localData.faqs.filter((_, i) => i !== idx);
+                    setLocalData({ ...localData, faqs: next });
+                  }}
+                  style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Question</label>
+                <input
+                  type="text"
+                  value={faq.q}
+                  onChange={(e) => {
+                    const next = [...localData.faqs];
+                    next[idx].q = e.target.value;
+                    setLocalData({ ...localData, faqs: next });
+                  }}
+                  className="input-field"
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Answer</label>
+                <textarea
+                  rows={2}
+                  value={faq.a}
+                  onChange={(e) => {
+                    const next = [...localData.faqs];
+                    next[idx].a = e.target.value;
+                    setLocalData({ ...localData, faqs: next });
+                  }}
+                  className="input-field"
+                />
+              </div>
+            </div>
+          ))}
+
+          <button onClick={handleSave} className="btn-primary" style={{ alignSelf: 'flex-start' }}>
+            <Save className="w-4 h-4" /> Save FAQs
+          </button>
+        </div>
+      )}
+
+      {/* ===================== SECTION 7: CONTACT & SOCIALS ===================== */}
       {activeSection === 'contact' && (
         <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1rem' }}>Official Contact & Social Links</h4>

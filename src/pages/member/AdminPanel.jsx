@@ -25,6 +25,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     deleteBooking,
     instrumentRequests, 
     updateInstrumentStatus, 
+    deleteInstrumentRequest,
     toggleAdmin,
     showToast,
     user,
@@ -44,6 +45,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedBand, setSelectedBand] = useState(null);
   const [selectedBookingIds, setSelectedBookingIds] = useState([]);
+  const [selectedInstIds, setSelectedInstIds] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
   const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
   const [selectedInstDetails, setSelectedInstDetails] = useState(null);
@@ -76,13 +78,9 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     setSelectedBand(null);
     setSelectedBookingDetails(null);
     setSelectedInstDetails(null);
+    setSelectedBookingIds([]);
+    setSelectedInstIds([]);
   }, [activeSection]);
-
-  const handleSectionSwitch = (secId) => {
-    if (onSectionChange) {
-      onSectionChange(secId);
-    }
-  };
 
   // ---------------- USER ACTIONS ----------------
   const toggleUserVerification = (userIdOrReg) => {
@@ -128,10 +126,10 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
   // ---------------- BOOKING ACTIONS ----------------
   const toggleSelectAllBookings = () => {
-    if (selectedBookingIds.length === bookings.length) {
+    if (selectedBookingIds.length === filteredBookings.length) {
       setSelectedBookingIds([]);
     } else {
-      setSelectedBookingIds(bookings.map(b => b.id));
+      setSelectedBookingIds(filteredBookings.map(b => b.id));
     }
   };
 
@@ -150,13 +148,36 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     showToast(`Deleted ${selectedBookingIds.length} booking(s)`, 'info');
   };
 
+  // ---------------- INSTRUMENT ACTIONS ----------------
+  const toggleSelectAllInst = () => {
+    if (selectedInstIds.length === instrumentRequests.length) {
+      setSelectedInstIds([]);
+    } else {
+      setSelectedInstIds(instrumentRequests.map(r => r.id));
+    }
+  };
+
+  const toggleSelectInst = (id) => {
+    setSelectedInstIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDeleteInst = () => {
+    if (selectedInstIds.length === 0) return;
+    selectedInstIds.forEach(id => {
+      if (deleteInstrumentRequest) deleteInstrumentRequest(id);
+    });
+    setSelectedInstIds([]);
+  };
+
   // Filter bookings by date
   const filteredBookings = dateFilter
     ? bookings.filter(b => b.date === dateFilter)
     : bookings;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Superuser Status Banner */}
       <div 
@@ -260,43 +281,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
         </div>
       )}
 
-      {/* Navigation Sub-Tabs (Strictly Synced with Parent Dashboard) */}
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', borderBottom: '1px solid var(--blue-border)', paddingBottom: '8px' }}>
-        {[
-          { id: 'manage-users', label: 'All Users', icon: UsersRound },
-          { id: 'manage-bands', label: 'All Bands', icon: Disc },
-          { id: 'manage-bookings', label: 'All Bookings', icon: Clock },
-          { id: 'manage-instruments', label: 'Instrument Requests', icon: Guitar },
-          { id: 'manage-content', label: 'Update Content', icon: FileEdit }
-        ].map(tab => {
-          const Icon = tab.icon;
-          const isAct = currentSection === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => handleSectionSwitch(tab.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                background: isAct ? 'var(--blue-primary)' : 'rgba(255,255,255,0.03)',
-                color: isAct ? '#fff' : '#94A3B8',
-                border: isAct ? '1px solid var(--blue-sky)' : '1px solid transparent',
-                fontWeight: 600,
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
       {/* ===================== 1. ALL BOOKINGS ===================== */}
       {currentSection === 'manage-bookings' && (
         <div>
@@ -374,15 +358,26 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                 >
                   <ChevronLeft className="w-4 h-4" /> Back
                 </button>
-                <button
-                  onClick={() => {
-                    updateBookingStatus(selectedBookingDetails.id, 'Declined');
-                    setSelectedBookingDetails(null);
-                  }}
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Decline Booking
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => {
+                      updateBookingStatus(selectedBookingDetails.id, 'Declined');
+                      setSelectedBookingDetails(null);
+                    }}
+                    style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Decline Booking
+                  </button>
+                  <button
+                    onClick={() => {
+                      deleteBooking(selectedBookingDetails.id);
+                      setSelectedBookingDetails(null);
+                    }}
+                    style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Delete Permanently
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -420,7 +415,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       cursor: selectedBookingIds.length > 0 ? 'pointer' : 'not-allowed'
                     }}
                   >
-                    DELETE
+                    DELETE ({selectedBookingIds.length})
                   </button>
                 </div>
               </div>
@@ -443,7 +438,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       <th style={{ padding: '12px 14px' }}>Slot</th>
                       <th style={{ padding: '12px 14px' }}>Mode</th>
                       <th style={{ padding: '12px 14px' }}>Status</th>
-                      <th style={{ padding: '12px 14px' }}>Action</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'right' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -490,14 +485,23 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                               </div>
                             )}
                           </td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <button
-                              onClick={() => setSelectedBookingDetails(b)}
-                              className="btn-secondary"
-                              style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                            >
-                              Details
-                            </button>
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '8px' }}>
+                              <button
+                                onClick={() => setSelectedBookingDetails(b)}
+                                className="btn-secondary"
+                                style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                              >
+                                Details
+                              </button>
+                              <button
+                                onClick={() => deleteBooking(b.id)}
+                                style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
+                                title="Delete booking"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -890,7 +894,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '8px', border: '1px solid var(--blue-border)', marginBottom: '24px' }}>
                 <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginBottom: '4px' }}>Borrow Schedule & Purpose</div>
                 <div style={{ color: '#F8FAFC', fontSize: '0.9rem', marginBottom: '6px' }}>
-                  <strong>Borrow:</strong> {selectedInstDetails.borrowDate} @ {selectedInstDetails.borrowTime} | <strong>Return:</strong> {selectedInstDetails.returnDate} @ {selectedInstDetails.returnTime}
+                  <strong>Borrow:</strong> {selectedInstDetails.borrowDate} @ {selectedInstDetails.borrowTime || '17:00'} | <strong>Return:</strong> {selectedInstDetails.returnDate} @ {selectedInstDetails.returnTime || '10:00'}
                 </div>
                 <div style={{ color: '#CBD5E1', fontSize: '0.85rem' }}>
                   <strong>Purpose:</strong> {selectedInstDetails.purpose}
@@ -940,22 +944,56 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                   >
                     Reject
                   </button>
+                  <button
+                    onClick={() => {
+                      deleteInstrumentRequest(selectedInstDetails.id);
+                      setSelectedInstDetails(null);
+                    }}
+                    style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Delete Permanently
+                  </button>
                 </div>
               </div>
             </div>
           ) : (
-            /* Instrument Requests Table View */
+            /* Instrument Requests Table View with Checkboxes & Bulk Delete */
             <div>
-              <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
                 <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC' }}>
                   GEAR REQUISITION REQUESTS
                 </h2>
+
+                <button
+                  onClick={handleBulkDeleteInst}
+                  disabled={selectedInstIds.length === 0}
+                  style={{
+                    background: selectedInstIds.length > 0 ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.03)',
+                    border: selectedInstIds.length > 0 ? '1px solid rgba(239,68,68,0.4)' : '1px solid var(--blue-border)',
+                    color: selectedInstIds.length > 0 ? '#f87171' : '#64748B',
+                    padding: '8px 18px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    cursor: selectedInstIds.length > 0 ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  DELETE ({selectedInstIds.length})
+                </button>
               </div>
 
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                   <thead>
                     <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '12px 14px', width: '40px' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedInstIds.length > 0 && selectedInstIds.length === instrumentRequests.length}
+                          onChange={toggleSelectAllInst}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </th>
                       <th style={{ padding: '12px 16px' }}>Req ID</th>
                       <th style={{ padding: '12px 16px' }}>Instrument</th>
                       <th style={{ padding: '12px 16px' }}>Code</th>
@@ -966,36 +1004,62 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     </tr>
                   </thead>
                   <tbody>
-                    {instrumentRequests.map((req, idx) => (
-                      <tr key={req.id} style={{ borderBottom: '1px solid var(--blue-border)', background: idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent' }}>
-                        <td style={{ padding: '12px 16px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{req.id}</td>
-                        <td style={{ padding: '12px 16px', color: '#F1F5F9', fontWeight: 600 }}>{req.instrumentName}</td>
-                        <td style={{ padding: '12px 16px', color: '#94A3B8', fontFamily: 'monospace' }}>{req.instrumentCode}</td>
-                        <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.borrowDate}</td>
-                        <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.requester}</td>
-                        <td style={{ padding: '12px 16px' }}>
-                          <span style={{
-                            padding: '3px 10px',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            background: req.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : (req.status === 'Pending' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(56, 189, 248, 0.15)'),
-                            color: req.status === 'Approved' ? '#22c55e' : (req.status === 'Pending' ? '#fbbf24' : '#38bdf8')
-                          }}>
-                            {req.status}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                          <button
-                            onClick={() => setSelectedInstDetails(req)}
-                            className="btn-secondary"
-                            style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
-                          >
-                            Details
-                          </button>
+                    {instrumentRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan="8" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                          No gear requisition requests found in database.
                         </td>
                       </tr>
-                    ))}
+                    ) : instrumentRequests.map((req, idx) => {
+                      const isSel = selectedInstIds.includes(req.id);
+                      return (
+                        <tr key={req.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
+                          <td style={{ padding: '12px 14px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isSel}
+                              onChange={() => toggleSelectInst(req.id)}
+                              style={{ cursor: 'pointer' }}
+                            />
+                          </td>
+                          <td style={{ padding: '12px 16px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{req.id}</td>
+                          <td style={{ padding: '12px 16px', color: '#F1F5F9', fontWeight: 600 }}>{req.instrumentName}</td>
+                          <td style={{ padding: '12px 16px', color: '#94A3B8', fontFamily: 'monospace' }}>{req.instrumentCode}</td>
+                          <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.borrowDate}</td>
+                          <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.requester}</td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span style={{
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              background: req.status === 'Approved' ? 'rgba(34, 197, 94, 0.15)' : (req.status === 'Pending' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(56, 189, 248, 0.15)'),
+                              color: req.status === 'Approved' ? '#22c55e' : (req.status === 'Pending' ? '#fbbf24' : '#38bdf8')
+                            }}>
+                              {req.status}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '8px' }}>
+                              <button
+                                onClick={() => setSelectedInstDetails(req)}
+                                className="btn-secondary"
+                                style={{ padding: '4px 14px', fontSize: '0.78rem', borderRadius: '20px' }}
+                              >
+                                Details
+                              </button>
+                              <button
+                                onClick={() => deleteInstrumentRequest(req.id)}
+                                style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
+                                title="Delete request"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1011,7 +1075,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
             Website Content & Tenure Manager
           </h3>
           <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginBottom: '20px' }}>
-            Update events, team rosters (2024-25, 2025-26, 2026-27 tenures), FAQs, hero announcements and stats.
+            Update events with poster images, about paragraphs, statistics, team tenures (2024-25, 2025-26, 2026-27), FAQs, and links.
           </p>
           <button
             onClick={() => onSectionChange ? onSectionChange('content-manager') : null}
