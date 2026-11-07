@@ -9,11 +9,14 @@ import {
 } from 'lucide-react';
 
 export const MemberInstruments = () => {
-  const { instrumentRequests, addInstrumentRequest } = useAuth();
+  const { instrumentRequests, addInstrumentRequest, instruments } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Use live database instruments, falling back to catalog if inventory is initially unpopulated
+  const activeInventory = (instruments && instruments.length > 0) ? instruments : AVAILABLE_INSTRUMENTS;
+
   // Form State
-  const [selectedInstId, setSelectedInstId] = useState(AVAILABLE_INSTRUMENTS[0].id);
+  const [selectedInstId, setSelectedInstId] = useState(() => activeInventory[0]?.id || 'inst-1');
   const [borrowDate, setBorrowDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -38,7 +41,7 @@ export const MemberInstruments = () => {
       return;
     }
 
-    const inst = AVAILABLE_INSTRUMENTS.find(i => i.id === selectedInstId);
+    const inst = activeInventory.find(i => i.id === selectedInstId);
 
     addInstrumentRequest({
       instrumentName: inst ? inst.name : 'Club Instrument',
@@ -96,7 +99,7 @@ export const MemberInstruments = () => {
             gap: '14px'
           }}
         >
-          {AVAILABLE_INSTRUMENTS.slice(0, 4).map((inst) => (
+          {activeInventory.slice(0, 6).map((inst) => (
             <div 
               key={inst.id}
               className="glass-panel"
@@ -318,9 +321,9 @@ export const MemberInstruments = () => {
                   onChange={(e) => setSelectedInstId(e.target.value)}
                   className="input-field"
                 >
-                  {AVAILABLE_INSTRUMENTS.map((inst) => (
+                  {activeInventory.map((inst) => (
                     <option key={inst.id} value={inst.id}>
-                      {inst.name} ({inst.code})
+                      {inst.name} ({inst.code}) - {inst.available ? 'Available' : 'In Use'}
                     </option>
                   ))}
                 </select>

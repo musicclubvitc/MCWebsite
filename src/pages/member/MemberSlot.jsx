@@ -44,10 +44,6 @@ function getSlotInfo(slot, dateStr, bookings) {
     reason: ''
   };
 
-  // Deterministic simulation for demo realism
-  const hash = (dateStr + slot).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  if (hash % 7 === 0) return { status: 'Not Available', booker: 'Demo Member', reason: '' };
-  if (hash % 9 === 0) return { status: 'Blocked',       booker: 'Admin',       reason: 'Maintenance' };
   return { status: 'Available', booker: null, reason: '' };
 }
 
@@ -124,6 +120,37 @@ export const MemberSlot = () => {
     const endTime   = endSlot.split(' - ')[1];
     const timeRange = `${startTime} - ${endTime}`;
 
+    let resolvedMembers = [];
+    if (bookingMode === 'Self') {
+      resolvedMembers = [{
+        name: user?.name || 'Club Member',
+        reg: user?.regNumber || '—'
+      }];
+    } else if (bookingMode === 'Bands') {
+      const selectedBandObj = bands.find(b => b.id === selectedBand);
+      if (selectedBandObj?.members && selectedBandObj.members.length > 0) {
+        resolvedMembers = selectedBandObj.members.map(m => ({
+          name: m.name || m.memberName,
+          reg: m.reg || m.registerNumber || m.regNumber || '—'
+        }));
+      } else if (selectedBandObj?.memberNames && selectedBandObj.memberNames.length > 0) {
+        resolvedMembers = selectedBandObj.memberNames.map((n, idx) => ({
+          name: n,
+          reg: selectedBandObj.registerNumbers?.[idx] || '—'
+        }));
+      } else {
+        resolvedMembers = [{
+          name: user?.name || 'Band Leader',
+          reg: user?.regNumber || '—'
+        }];
+      }
+    } else if (bookingMode === 'Manual') {
+      const validManual = manualMembers.filter(m => m.name.trim());
+      resolvedMembers = validManual.length > 0
+        ? validManual.map(m => ({ name: m.name.trim(), reg: m.reg.trim() || '—' }))
+        : [{ name: user?.name || 'Member', reg: user?.regNumber || '—' }];
+    }
+
     addBooking({
       date: selectedDate,
       day: new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' }),
@@ -134,7 +161,7 @@ export const MemberSlot = () => {
       blockReason: bookingMode === 'Block' ? blockReason.trim() : null,
       bandId:   bookingMode === 'Bands' ? selectedBand : null,
       bandName: bookingMode === 'Bands' ? (bands.find(b => b.id === selectedBand)?.name || '') : null,
-      members:  bookingMode === 'Manual' ? manualMembers.filter(m => m.name.trim()) : null,
+      membersInfo: resolvedMembers,
     });
 
     setSubmitting(true);

@@ -3,226 +3,68 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const AuthContext = createContext();
 
-const DEFAULT_MEMBER = {
-  id: "USR-VITC-2024",
-  name: "Michael Dias",
-  email: "michael.dias2024@vitstudent.ac.in",
-  regNumber: "24BCE5259",
-  role: "Creative Head / Guitarist",
-  instrument: "Lead Guitar & Production",
-  yearOfStudy: "2nd Year B.Tech",
-  joinedYear: "2024",
-  secretKey: "6911a3522c9c7646f3f5911e",
-  verified: true
-};
-
-const INITIAL_USER_BANDS = [
-  {
-    id: "user-band-1",
-    name: "Six Delusions",
-    genre: "Hard Rock & Funk",
-    leader: "Rheminth Simeon",
-    memberCount: 7,
-    memberNames: [
-      "Aarav Sharma",
-      "Rheminth Simeon",
-      "Anshul",
-      "Jerald Elias",
-      "Surya",
-      "Aurum",
-      "Mihir"
-    ],
-    registerNumbers: [
-      "22BCE1289",
-      "21BCE1402",
-      "21BCE2891",
-      "22BEE0412",
-      "21BME0911",
-      "22BCI0144",
-      "21BCE1980"
-    ],
-    status: "Approved",
-    createdAt: "2024-08-15"
-  },
-  {
-    id: "user-band-2",
-    name: "Velvet Groove",
-    genre: "Indie Pop & R&B",
-    leader: "Aarav Sharma",
-    memberCount: 4,
-    memberNames: [
-      "Aarav Sharma",
-      "Tara Menon",
-      "David John",
-      "Siddharth P"
-    ],
-    registerNumbers: [
-      "22BCE1289",
-      "22BCE0314",
-      "21BCE2210",
-      "22BME0344"
-    ],
-    status: "Approved",
-    createdAt: "2024-11-02"
-  }
-];
-
-const INITIAL_BOOKINGS = [
-  {
-    id: "BKG-1049",
-    date: "2026-10-31",
-    day: "Saturday",
-    timeSlot: "10:45 AM - 12:35 PM",
-    bookingMode: "Block",
-    bookerName: "Michael Dias",
-    bookerReg: "24BCE5259",
-    blockReason: "Event setup",
-    status: "Blocked",
-    createdAt: "2026-10-29"
-  },
-  {
-    id: "BKG-1048",
-    date: "2026-10-27",
-    day: "Tuesday",
-    timeSlot: "04:15 PM - 05:10 PM",
-    bookingMode: "Self",
-    bookerName: "Aarav Sharma",
-    bookerReg: "22BCE1289",
-    status: "Approved",
-    createdAt: "2026-10-25"
-  },
-  {
-    id: "BKG-1044",
-    date: "2026-10-11",
-    day: "Sunday",
-    timeSlot: "01:30 PM - 07:00 PM",
-    bookingMode: "Bands",
-    bandName: "Six Delusions",
-    bookerName: "Aarav Sharma",
-    bookerReg: "22BCE1289",
-    status: "Blocked",
-    createdAt: "2026-10-08"
-  },
-  {
-    id: "BKG-1043",
-    date: "2026-10-11",
-    day: "Sunday",
-    timeSlot: "10:45 AM - 12:35 PM",
-    bookingMode: "Self",
-    bookerName: "Aarav Sharma",
-    bookerReg: "22BCE1289",
-    status: "Blocked",
-    createdAt: "2026-10-08"
-  },
-  {
-    id: "BKG-1038",
-    date: "2026-08-26",
-    day: "Wednesday",
-    timeSlot: "09:50 AM - 11:40 AM",
-    bookingMode: "Bands",
-    bandName: "Six Delusions",
-    bookerName: "Aarav Sharma",
-    bookerReg: "22BCE1289",
-    status: "Approved",
-    createdAt: "2026-08-20"
-  },
-  {
-    id: "BKG-1031",
-    date: "2026-07-19",
-    day: "Sunday",
-    timeSlot: "03:20 PM - 06:05 PM",
-    bookingMode: "Self",
-    bookerName: "Aarav Sharma",
-    bookerReg: "22BCE1289",
-    status: "Approved",
-    createdAt: "2026-07-15"
-  }
-];
-
-const INITIAL_INSTRUMENT_REQUESTS = [
-  {
-    id: "REQ-8021",
-    instrumentName: "Fender Player Stratocaster (HSS)",
-    instrumentCode: "GTR-FEN-01",
-    borrowDate: "2026-11-10",
-    borrowTime: "17:30",
-    returnDate: "2026-11-11",
-    returnTime: "10:00",
-    purpose: "College Cultural Fest Band Showcase",
-    status: "Approved",
-    requester: "Aarav Sharma",
-    regNumber: "22BCE1289",
-    createdAt: "2026-11-01"
-  },
-  {
-    id: "REQ-8022",
-    instrumentName: "Roland XPS-30 Synthesizer",
-    instrumentCode: "KEY-ROL-01",
-    borrowDate: "2026-11-12",
-    borrowTime: "15:00",
-    returnDate: "2026-11-13",
-    returnTime: "18:00",
-    purpose: "Live Track Sequencing & Stage Audition",
-    status: "Pending",
-    requester: "Aarav Sharma",
-    regNumber: "22BCE1289",
-    createdAt: "2026-11-04"
-  },
-  {
-    id: "REQ-7994",
-    instrumentName: "Shure SM58 Dynamic Vocal Microphones (Set of 3)",
-    instrumentCode: "MIC-SHU-03",
-    borrowDate: "2026-10-25",
-    borrowTime: "14:00",
-    returnDate: "2026-10-26",
-    returnTime: "12:00",
-    purpose: "Acoustic Unplugged Evening Rehearsal",
-    status: "Returned",
-    requester: "Michael Dias",
-    regNumber: "24BCE5259",
-    createdAt: "2026-10-20"
-  }
-];
-
-const INITIAL_ADMIN_USERS = [
-  { id: 'usr-1', name: 'Sarvesh C', email: 'sarvesh.c2024@vitstudent.ac.in', regNumber: '24BCE5259', role: 'Developer', type: 'Admin', verified: 'Verified', secretKey: '68ff9228ab0faf069397bb24' },
-  { id: 'usr-2', name: 'Michael Dias', email: 'michael.dias2024@vitstudent.ac.in', regNumber: '24BCE5260', role: 'Creative Head', type: 'Admin', verified: 'Verified', secretKey: '6911a3522c9c7646f3f5911e' },
-  { id: 'usr-3', name: 'Aarav Sharma', email: 'aarav.sharma2022@vitstudent.ac.in', regNumber: '22BCE1289', role: 'Guitarist', type: 'User', verified: 'Verified', secretKey: '68ff920169754d9fb129e4a2' },
-  { id: 'usr-4', name: 'Dhivi Bommisetty', email: 'dhivi.b2024@vitstudent.ac.in', regNumber: '26BHC1062', role: 'Vocalist', type: 'User', verified: 'Unverified', secretKey: '68ff925280e2ebc5981e2330' },
-  { id: 'usr-5', name: 'Aravindakshan C J', email: 'aravind.cj2024@vitstudent.ac.in', regNumber: '26MIS1138', role: 'Drummer', type: 'User', verified: 'Unverified', secretKey: '6900e3ff6657a7fe8361a944' },
-  { id: 'usr-6', name: 'Shruthika P', email: 'shruthika.p2024@vitstudent.ac.in', regNumber: '26BBH1010', role: 'Keyboardist', type: 'User', verified: 'Verified', secretKey: '68ff92123456789abcdef012' },
-  { id: 'usr-7', name: 'Ajay', email: 'ajay2025@vitstudent.ac.in', regNumber: '25BMV1028', role: 'Bassist', type: 'User', verified: 'Unverified', secretKey: '68ff92987654321fedcba345' },
-];
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("vitc_music_user");
-    return saved ? JSON.parse(saved) : DEFAULT_MEMBER;
+    try {
+      const saved = localStorage.getItem("vitc_music_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
 
   const [isAdmin, setIsAdmin] = useState(() => {
-    const saved = localStorage.getItem("vitc_music_is_admin");
-    return saved ? JSON.parse(saved) : true;
+    try {
+      const saved = localStorage.getItem("vitc_music_is_admin");
+      return saved ? JSON.parse(saved) : false;
+    } catch {
+      return false;
+    }
   });
 
   const [bands, setBands] = useState(() => {
-    const saved = localStorage.getItem("vitc_music_bands");
-    return saved ? JSON.parse(saved) : INITIAL_USER_BANDS;
+    try {
+      const saved = localStorage.getItem("vitc_music_bands");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [bookings, setBookings] = useState(() => {
-    const saved = localStorage.getItem("vitc_music_bookings");
-    return saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
+    try {
+      const saved = localStorage.getItem("vitc_music_bookings");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [instrumentRequests, setInstrumentRequests] = useState(() => {
-    const saved = localStorage.getItem("vitc_music_instruments");
-    return saved ? JSON.parse(saved) : INITIAL_INSTRUMENT_REQUESTS;
+    try {
+      const saved = localStorage.getItem("vitc_music_instruments");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [instruments, setInstruments] = useState(() => {
+    try {
+      const saved = localStorage.getItem("vitc_music_instruments_inventory");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [allUsers, setAllUsers] = useState(() => {
-    const saved = localStorage.getItem("vitc_music_all_users");
-    return saved ? JSON.parse(saved) : INITIAL_ADMIN_USERS;
+    try {
+      const saved = localStorage.getItem("vitc_music_all_users");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [toast, setToast] = useState(null);
@@ -378,14 +220,48 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const fetchLiveInstruments = useCallback(async () => {
+    if (!isSupabaseConfigured || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('instruments')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.warn('[Supabase] instruments read error:', error.message);
+        return;
+      }
+
+      if (data) {
+        const formatted = data.map(i => ({
+          id: i.id,
+          name: i.name,
+          category: i.category,
+          code: i.code,
+          location: i.location || 'Music Room',
+          condition: i.condition || 'Good',
+          available: i.available !== false,
+          image: i.image || '',
+          createdAt: i.created_at?.split('T')[0] || ''
+        }));
+        setInstruments(formatted);
+        console.log(`%c[Supabase] Synced ${data.length} instruments`, 'color: #38bdf8');
+      }
+    } catch (err) {
+      console.error('[Supabase] instruments exception:', err);
+    }
+  }, []);
+
   const refreshAllLiveData = useCallback(async () => {
     await Promise.allSettled([
       fetchLiveBookings(),
       fetchLiveBands(),
       fetchLiveUsers(),
-      fetchLiveInstrumentRequests()
+      fetchLiveInstrumentRequests(),
+      fetchLiveInstruments()
     ]);
-  }, [fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests]);
+  }, [fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests, fetchLiveInstruments]);
 
   // Initial load and Realtime Subscriptions
   useEffect(() => {
@@ -427,13 +303,16 @@ export const AuthProvider = ({ children }) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'instrument_requests' }, () => {
         fetchLiveInstrumentRequests();
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'instruments' }, () => {
+        fetchLiveInstruments();
+      })
       .subscribe();
 
     return () => {
       authListener?.unsubscribe();
       supabase.removeChannel(channel);
     };
-  }, [refreshAllLiveData, fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests]);
+  }, [refreshAllLiveData, fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests, fetchLiveInstruments]);
 
   const loadUserProfile = async (userId) => {
     if (!supabase) return;
@@ -490,12 +369,15 @@ export const AuthProvider = ({ children }) => {
   }, [instrumentRequests]);
 
   useEffect(() => {
+    localStorage.setItem("vitc_music_instruments_inventory", JSON.stringify(instruments));
+  }, [instruments]);
+
+  useEffect(() => {
     localStorage.setItem("vitc_music_all_users", JSON.stringify(allUsers));
   }, [allUsers]);
 
   const loginAsDemo = () => {
-    setUser(DEFAULT_MEMBER);
-    showToast("Signed in as Demo Club Member (Michael Dias)");
+    showToast("Demo account is disabled for production deployment. Please sign in or register.", "info");
   };
 
   const loginWithCredentials = async (userData) => {
@@ -532,20 +414,22 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    // Offline / Demo fallback
+    // Offline / Local fallback with provided user data (not hardcoded)
     const newUser = {
       id: `USR-VITC-${Date.now().toString().slice(-4)}`,
       name: userData.name || "Club Member",
       email: userData.email,
-      regNumber: userData.regNumber || "24BCE5259",
+      regNumber: userData.regNumber || "",
       role: userData.role || "Active Member",
       instrument: "Musician",
       yearOfStudy: "B.Tech",
       joinedYear: new Date().getFullYear().toString(),
       secretKey: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2),
-      verified: true
+      verified: true,
+      isAdmin: false
     };
     setUser(newUser);
+    setIsAdmin(false);
     showToast(`Welcome to VITC Music Club, ${newUser.name}!`);
   };
 
@@ -554,6 +438,9 @@ export const AuthProvider = ({ children }) => {
       await supabase.auth.signOut();
     }
     setUser(null);
+    setIsAdmin(false);
+    localStorage.removeItem("vitc_music_user");
+    localStorage.removeItem("vitc_music_is_admin");
     showToast("Signed out of Member Portal", "info");
   };
 
@@ -665,7 +552,7 @@ export const AuthProvider = ({ children }) => {
             slot_date: newBooking.date,
             time_slot: newBooking.timeSlot,
             booker_name: newBooking.bookerName || user?.name || 'Member',
-            booker_reg: newBooking.bookerReg || user?.regNumber || '24BCE5259',
+            booker_reg: newBooking.bookerReg || user?.regNumber || '',
             band_name: newBooking.bandName || null,
             members_info: newBooking.membersInfo || [],
             status: isBlock ? 'Blocked' : 'Approved',
@@ -719,14 +606,85 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ---------------- INSTRUMENT ACTIONS ----------------
+  // ---------------- GEAR INVENTORY ACTIONS ----------------
+  const addInstrument = async (item) => {
+    const newInst = {
+      id: item.id || `INST-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: item.name,
+      category: item.category || 'Gear',
+      code: item.code || `GEAR-${Date.now().toString().slice(-4)}`,
+      location: item.location || 'Music Room',
+      condition: item.condition || 'Good',
+      available: item.available !== false,
+      image: item.image || ''
+    };
+    setInstruments(prev => [newInst, ...prev]);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase.from('instruments').insert({
+          id: newInst.id,
+          name: newInst.name,
+          category: newInst.category,
+          code: newInst.code,
+          location: newInst.location,
+          condition: newInst.condition,
+          available: newInst.available,
+          image: newInst.image
+        });
+        if (error) console.error("Error inserting gear into Supabase:", error);
+      } catch (err) {
+        console.error("Failed to add instrument to Supabase:", err);
+      }
+    }
+    showToast(`Added ${newInst.name} to gear inventory!`);
+    return newInst;
+  };
+
+  const updateInstrument = async (id, updates) => {
+    setInstruments(prev =>
+      prev.map(inst => (inst.id === id ? { ...inst, ...updates } : inst))
+    );
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('instruments')
+          .update(updates)
+          .eq('id', id);
+        if (error) console.error("Error updating gear in Supabase:", error);
+      } catch (err) {
+        console.error("Failed to update gear in Supabase:", err);
+      }
+    }
+    showToast("Gear inventory updated.");
+  };
+
+  const deleteInstrument = async (id) => {
+    setInstruments(prev => prev.filter(inst => inst.id !== id));
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('instruments')
+          .delete()
+          .eq('id', id);
+        if (error) console.error("Error deleting gear from Supabase:", error);
+      } catch (err) {
+        console.error("Failed to delete gear from Supabase:", err);
+      }
+    }
+    showToast("Equipment removed from inventory.", "info");
+  };
+
+  // ---------------- INSTRUMENT REQUISITION ACTIONS ----------------
   const addInstrumentRequest = async (newRequest) => {
     const reqRecord = {
       id: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
       ...newRequest,
       status: "Pending",
       requester: user ? user.name : "Club Member",
-      regNumber: user ? user.regNumber : "24BCE5259",
+      regNumber: user ? user.regNumber : "",
       createdAt: new Date().toISOString().split('T')[0]
     };
     setInstrumentRequests(prev => [reqRecord, ...prev]);
@@ -743,7 +701,7 @@ export const AuthProvider = ({ children }) => {
             return_date: newRequest.returnDate,
             event_name: newRequest.purpose,
             booker_name: user ? user.name : "Club Member",
-            booker_reg: user ? user.regNumber : "24BCE5259",
+            booker_reg: user ? user.regNumber : "",
             status: 'Pending'
           });
         if (error) console.error("Error creating instrument request in Supabase:", error);
@@ -873,6 +831,7 @@ export const AuthProvider = ({ children }) => {
         isAdmin,
         bands,
         bookings,
+        instruments,
         instrumentRequests,
         allUsers,
         toast,
@@ -885,6 +844,10 @@ export const AuthProvider = ({ children }) => {
         addBooking,
         updateBookingStatus,
         deleteBooking,
+        addInstrument,
+        updateInstrument,
+        deleteInstrument,
+        fetchLiveInstruments,
         addInstrumentRequest,
         updateInstrumentStatus,
         deleteInstrumentRequest,

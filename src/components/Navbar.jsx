@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 
 export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
-  const { user, isAdmin, toggleAdmin, logout, loginAsDemo } = useAuth();
+  const { user, isAdmin, toggleAdmin, logout } = useAuth();
   const { content } = useContent();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -284,23 +284,13 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
                 )}
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  onClick={loginAsDemo}
-                  className="btn-ghost"
-                  style={{ fontSize: '0.82rem', padding: '7px 14px' }}
-                >
-                  <Sparkles className="w-3.5 h-3.5" /> Demo Account
-                </button>
-
-                <button
-                  onClick={onOpenAuthModal}
-                  className="btn-primary"
-                  style={{ fontSize: '0.85rem', padding: '8px 18px' }}
-                >
-                  Member Login
-                </button>
-              </div>
+              <button
+                onClick={onOpenAuthModal}
+                className="btn-primary"
+                style={{ fontSize: '0.85rem', padding: '8px 20px', borderRadius: '20px' }}
+              >
+                Member Portal / Login
+              </button>
             )}
           </div>
 
@@ -510,18 +500,11 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
                   MEMBER PORTAL
                 </div>
                 <button
-                  onClick={() => { loginAsDemo(); setMobileMenuOpen(false); }}
-                  className="btn-ghost"
-                  style={{ justifyContent: 'center', padding: '10px' }}
-                >
-                  <Sparkles className="w-4 h-4" /> Try Demo Account
-                </button>
-                <button
                   onClick={() => { onOpenAuthModal(); setMobileMenuOpen(false); }}
                   className="btn-primary"
                   style={{ justifyContent: 'center', padding: '10px' }}
                 >
-                  Member Login
+                  Member Login / Register
                 </button>
               </div>
             )}

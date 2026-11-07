@@ -15,7 +15,7 @@ const CLUB_ROLES = [
 ];
 
 export const AuthModal = ({ isOpen, onClose }) => {
-  const { loginWithCredentials, loginAsDemo } = useAuth();
+  const { loginWithCredentials } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -114,33 +114,6 @@ export const AuthModal = ({ isOpen, onClose }) => {
           <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC', letterSpacing: '0.5px' }}>
             {isSignUp ? 'REGISTER YOURSELF' : 'LOGIN YOUR ACCOUNT'}
           </h2>
-        </div>
-
-        {/* Demo Login Pill */}
-        <div 
-          style={{
-            background: 'rgba(56, 189, 248, 0.08)',
-            border: '1px dashed rgba(56, 189, 248, 0.3)',
-            borderRadius: '10px',
-            padding: '8px 12px',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '10px'
-          }}
-        >
-          <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>Demo access as Michael Dias (Creative Head)</span>
-          <button
-            onClick={() => {
-              loginAsDemo();
-              onClose();
-            }}
-            className="btn-secondary"
-            style={{ fontSize: '0.75rem', padding: '4px 10px', flexShrink: 0 }}
-          >
-            <Sparkles className="w-3 h-3" /> Demo
-          </button>
         </div>
 
         {error && (

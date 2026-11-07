@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Clock, Info, X } from 'lucide-react';
+import { Clock, Info, X, Printer, Download } from 'lucide-react';
+import { BookingPrintSlip } from '../../components/BookingPrintSlip';
 
 export const MemberBookings = () => {
   const { bookings, user } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [printBooking, setPrintBooking] = useState(null);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -85,7 +87,22 @@ export const MemberBookings = () => {
                     </div>
                   )}
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={() => setPrintBooking(booking)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#38bdf8',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    title="Print Pass (PDF)"
+                  >
+                    <Printer className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => setSelectedBooking(booking)}
                     style={{
@@ -185,7 +202,7 @@ export const MemberBookings = () => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#94A3B8' }}>Booked By:</span>
-                <span style={{ color: '#F1F5F9', fontWeight: 600 }}>{selectedBooking.bookerName || user?.name || 'Michael Dias'}</span>
+                <span style={{ color: '#F1F5F9', fontWeight: 600 }}>{selectedBooking.bookerName || user?.name || 'Member'}</span>
               </div>
               {selectedBooking.status === 'Blocked' && selectedBooking.blockReason && (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -195,7 +212,46 @@ export const MemberBookings = () => {
               )}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+            {/* Allowed Attendees */}
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ fontSize: '0.78rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', marginBottom: '8px' }}>
+                Allowed Attendees:
+              </div>
+              <div style={{ background: 'rgba(255, 255, 255, 0.02)', borderRadius: '8px', border: '1px solid var(--blue-border)', overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#64748B', fontSize: '0.72rem' }}>
+                      <th style={{ padding: '6px 10px' }}>#</th>
+                      <th style={{ padding: '6px 10px' }}>Member Name</th>
+                      <th style={{ padding: '6px 10px' }}>Register Number</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      (selectedBooking.membersInfo && selectedBooking.membersInfo.length > 0)
+                        ? selectedBooking.membersInfo
+                        : (selectedBooking.bookerName ? [{ name: selectedBooking.bookerName, reg: selectedBooking.bookerReg || '—' }] : [])
+                    ).map((m, mIdx) => (
+                      <tr key={mIdx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                        <td style={{ padding: '8px 10px', color: '#64748B' }}>{mIdx + 1}</td>
+                        <td style={{ padding: '8px 10px', color: '#F1F5F9', fontWeight: 600 }}>{m.name || m.memberName}</td>
+                        <td style={{ padding: '8px 10px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{m.reg || m.registerNumber || m.regNumber || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', flexWrap: 'wrap', gap: '10px' }}>
+              <button
+                onClick={() => setPrintBooking(selectedBooking)}
+                className="btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.82rem' }}
+              >
+                <Printer className="w-4 h-4 text-sky-400" /> Save as PDF / Print Pass
+              </button>
+
               <button
                 onClick={() => setSelectedBooking(null)}
                 className="btn-primary"
@@ -206,6 +262,16 @@ export const MemberBookings = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Official Booking Slip Printout / Modal */}
+      {printBooking && (
+        <BookingPrintSlip
+          booking={printBooking}
+          onClose={() => setPrintBooking(null)}
+          approverName={user?.name || 'V.Mithra'}
+          approverRole={user?.role || 'Creative Head'}
+        />
       )}
 
     </div>

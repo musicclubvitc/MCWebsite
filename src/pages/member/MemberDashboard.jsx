@@ -69,7 +69,7 @@ const AdminGuard = ({ onToggleAdmin }) => (
 );
 
 export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
-  const { user, isAdmin, toggleAdmin, logout, loginAsDemo } = useAuth();
+  const { user, isAdmin, toggleAdmin, logout } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState(subTab);
 
   useEffect(() => {
@@ -119,19 +119,11 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '320px', margin: '0 auto' }}>
             <button
-              onClick={loginAsDemo}
-              className="btn-primary"
-              style={{ width: '100%', padding: '12px' }}
-            >
-              <Sparkles className="w-4 h-4" /> Try with Demo Member Account
-            </button>
-
-            <button
               onClick={onOpenAuthModal}
-              className="btn-secondary"
-              style={{ width: '100%', padding: '12px' }}
+              className="btn-primary"
+              style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}
             >
-              Sign In with VIT Email
+              Sign In or Register with VIT Email
             </button>
           </div>
         </div>

@@ -345,3 +345,47 @@ select.input-field option {
     display: block !important;
   }
 }
+
+/* Print styles for Official Music Room Passes / PDFs */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  body * {
+    visibility: hidden !important;
+  }
+
+  .no-print, header, nav, footer, button, .glass-panel, .desktop-nav, .mobile-toggle {
+    display: none !important;
+  }
+
+  #printable-booking-slip, #printable-booking-slip * {
+    visibility: visible !important;
+  }
+
+  #printable-booking-slip {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 24px 32px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-sizing: border-box !important;
+  }
+}
