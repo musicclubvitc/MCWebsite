@@ -33,7 +33,7 @@ export const MemberInstruments = () => {
     return nextDay.toISOString().split('T')[0];
   });
   const [returnTime, setReturnTime] = useState('10:00');
-  const [purpose, setPurpose] = useState('Campus Battle of Bands Rehearsal');
+  const [purpose, setPurpose] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -67,6 +67,8 @@ export const MemberInstruments = () => {
       purpose
     });
 
+    setPurpose('');
+    setAgreedToTerms(false);
     setIsModalOpen(false);
   };
 
@@ -377,9 +379,11 @@ export const MemberInstruments = () => {
                   <input
                     type="date"
                     required
+                    min={new Date().toISOString().split('T')[0]}
                     value={borrowDate}
                     onChange={(e) => setBorrowDate(e.target.value)}
                     className="input-field"
+                    style={{ colorScheme: 'dark', color: '#ffffff', cursor: 'pointer' }}
                   />
                 </div>
 
@@ -405,9 +409,11 @@ export const MemberInstruments = () => {
                   <input
                     type="date"
                     required
+                    min={borrowDate || new Date().toISOString().split('T')[0]}
                     value={returnDate}
                     onChange={(e) => setReturnDate(e.target.value)}
                     className="input-field"
+                    style={{ colorScheme: 'dark', color: '#ffffff', cursor: 'pointer' }}
                   />
                 </div>
 

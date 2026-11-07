@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Calendar, Clock, Plus, Minus } from 'lucide-react';
+import { Clock, Plus, Minus } from 'lucide-react';
 
 // Fixed time slots (55-min intervals) matching original site
 const TIME_SLOTS = [
@@ -246,23 +246,9 @@ export const MemberSlot = () => {
       {/* Date picker */}
       <div className="glass-panel" style={{ padding: '16px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', color: '#ffffff', fontWeight: 600, fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              background: 'rgba(255, 255, 255, 0.12)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-            }}>
-              <Calendar className="w-4 h-4 text-white" style={{ color: '#ffffff', stroke: '#ffffff' }} />
-            </div>
-            <span style={{ color: '#f8fafc', fontWeight: 600 }}>Choose Date :</span>
-          </div>
+          <span style={{ color: '#f8fafc', fontWeight: 600, fontSize: '0.95rem', whiteSpace: 'nowrap' }}>
+            Choose Date :
+          </span>
           <input
             type="date"
             min={todayStr()}
@@ -405,7 +391,30 @@ export const MemberSlot = () => {
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
                 Choose Date
               </label>
-              <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="input-field" required />
+              <input 
+                type="date" 
+                min={todayStr()} 
+                value={selectedDate} 
+                onClick={(e) => {
+                  try {
+                    if (typeof e.target.showPicker === 'function') {
+                      e.target.showPicker();
+                    }
+                  } catch (_) {}
+                }}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val && val < todayStr()) {
+                    showToast('Cannot select a date in the past.', 'error');
+                    setSelectedDate(todayStr());
+                    return;
+                  }
+                  setSelectedDate(val);
+                }} 
+                className="input-field booking-date-input" 
+                style={{ colorScheme: 'dark', color: '#ffffff', cursor: 'pointer' }}
+                required 
+              />
             </div>
           </div>
 
