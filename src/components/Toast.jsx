@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 export const Toast = () => {
-  const { toast } = useAuth();
+  const { toast, setToast } = useAuth();
 
   if (!toast) return null;
 
@@ -13,20 +13,29 @@ export const Toast = () => {
     info: <Info className="w-5 h-5 text-cyan-400 shrink-0" />
   };
 
-  const borders = {
-    success: 'border-emerald-500/40 shadow-emerald-950/50',
-    error: 'border-rose-500/40 shadow-rose-950/50',
-    info: 'border-cyan-500/40 shadow-cyan-950/50'
+  const borderColors = {
+    success: 'rgba(52, 211, 153, 0.4)',
+    error: 'rgba(248, 113, 113, 0.4)',
+    info: 'rgba(56, 189, 248, 0.4)'
+  };
+
+  const glowColors = {
+    success: 'rgba(52, 211, 153, 0.25)',
+    error: 'rgba(248, 113, 113, 0.25)',
+    info: 'rgba(56, 189, 248, 0.25)'
   };
 
   return (
     <div 
+      className="toast-container"
       style={{
         position: 'fixed',
-        bottom: '28px',
-        right: '28px',
-        zIndex: 99999,
-        maxWidth: '380px'
+        top: '84px',
+        right: '24px',
+        zIndex: 100000,
+        maxWidth: '420px',
+        width: 'calc(100% - 48px)',
+        pointerEvents: 'auto'
       }}
     >
       <div 
@@ -35,18 +44,40 @@ export const Toast = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          padding: '14px 20px',
-          backgroundColor: 'rgba(17, 26, 44, 0.95)',
-          border: '1.5px solid rgba(102, 217, 251, 0.4)',
-          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5), 0 0 20px rgba(102, 217, 251, 0.25)',
+          padding: '14px 18px',
+          backgroundColor: 'rgba(15, 23, 42, 0.96)',
+          border: `1.5px solid ${borderColors[toast.type] || borderColors.info}`,
+          boxShadow: `0 12px 36px rgba(0, 0, 0, 0.5), 0 0 20px ${glowColors[toast.type] || glowColors.info}`,
           borderRadius: '14px',
-          animation: 'fadeInUp 0.3s ease-out'
+          backdropFilter: 'blur(12px)',
+          animation: 'toastSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {icons[toast.type] || icons.success}
-        <div style={{ fontSize: '0.92rem', color: '#F8FAFC', fontWeight: 500, flex: 1 }}>
+        <div style={{ fontSize: '0.9rem', color: '#F8FAFC', fontWeight: 500, flex: 1, lineHeight: '1.4' }}>
           {toast.message}
         </div>
+        <button
+          onClick={() => setToast && setToast(null)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#94A3B8',
+            cursor: 'pointer',
+            padding: '2px',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'color 0.15s ease'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = '#F8FAFC'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#94A3B8'}
+          title="Dismiss notification"
+          aria-label="Close notification"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );

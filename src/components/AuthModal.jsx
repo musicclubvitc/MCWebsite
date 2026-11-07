@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Sparkles } from 'lucide-react';
+import { X, Sparkles, AlertCircle, Info } from 'lucide-react';
 
 const CLUB_ROLES = [
   'Select your role',
@@ -26,12 +26,15 @@ export const AuthModal = ({ isOpen, onClose }) => {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setInfoMessage('');
 
     if (isSignUp) {
       if (formData.password !== formData.confirmPassword) {
@@ -44,8 +47,29 @@ export const AuthModal = ({ isOpen, onClose }) => {
       }
     }
 
-    loginWithCredentials({ ...formData, isSignUp });
-    onClose();
+    setIsLoading(true);
+    try {
+      const res = await loginWithCredentials({ ...formData, isSignUp });
+      if (res?.error) {
+        setError(res.error);
+        setIsLoading(false);
+        return;
+      }
+      if (res?.pendingApproval) {
+        setInfoMessage('Account created! Your account is pending admin approval before you can log in.');
+        setIsLoading(false);
+        setTimeout(() => {
+          setIsSignUp(false);
+          setInfoMessage('Please wait for a board administrator to verify your account.');
+        }, 3000);
+        return;
+      }
+      onClose();
+    } catch (err) {
+      setError(err.message || 'An error occurred during authentication.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -117,8 +141,40 @@ export const AuthModal = ({ isOpen, onClose }) => {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '8px 12px', borderRadius: '8px', fontSize: '0.82rem', marginBottom: '12px' }}>
-            {error}
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.4)',
+            color: '#fca5a5',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            fontSize: '0.84rem',
+            marginBottom: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            lineHeight: '1.4'
+          }}>
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {infoMessage && (
+          <div style={{
+            background: 'rgba(56, 189, 248, 0.15)',
+            border: '1px solid rgba(56, 189, 248, 0.4)',
+            color: '#7dd3fc',
+            padding: '10px 14px',
+            borderRadius: '8px',
+            fontSize: '0.84rem',
+            marginBottom: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            lineHeight: '1.4'
+          }}>
+            <Info className="w-4 h-4 shrink-0 text-sky-400" />
+            <span>{infoMessage}</span>
           </div>
         )}
 
@@ -233,10 +289,18 @@ export const AuthModal = ({ isOpen, onClose }) => {
 
           <button
             type="submit"
+            disabled={isLoading}
             className="btn-primary"
-            style={{ width: '100%', marginTop: '6px', padding: '10px', fontSize: '0.92rem' }}
+            style={{
+              width: '100%',
+              marginTop: '6px',
+              padding: '10px',
+              fontSize: '0.92rem',
+              opacity: isLoading ? 0.7 : 1,
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }}
           >
-            {isSignUp ? 'Signup' : 'Login'}
+            {isLoading ? (isSignUp ? 'Creating account...' : 'Signing in...') : (isSignUp ? 'Signup' : 'Login')}
           </button>
         </form>
 

@@ -7,7 +7,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem("vitc_music_user");
-      return saved ? JSON.parse(saved) : null;
+      const parsed = saved ? JSON.parse(saved) : null;
+      if (parsed) {
+        const isVerified = Boolean(parsed.verified === true || parsed.verified === 'Verified' || parsed.is_verified);
+        const isAdmin = Boolean(parsed.isAdmin || parsed.is_admin || parsed.type === 'Admin');
+        if (!isVerified && !isAdmin) {
+          localStorage.removeItem("vitc_music_user");
+          return null;
+        }
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -264,13 +273,13 @@ export const AuthProvider = ({ children }) => {
     // Load user session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        loadUserProfile(session.user.id);
+        loadUserProfile(session.user.id, session.user.email);
       }
     });
 
     const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        loadUserProfile(session.user.id);
+        loadUserProfile(session.user.id, session.user.email);
       } else if (!localStorage.getItem("vitc_music_user")) {
         setUser(null);
       }
@@ -308,16 +317,36 @@ export const AuthProvider = ({ children }) => {
     };
   }, [refreshAllLiveData, fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests, fetchLiveInstruments]);
 
-  const loadUserProfile = async (userId) => {
+  const loadUserProfile = async (userId, userEmail) => {
     if (!supabase) return;
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      let query = supabase.from('profiles').select('*');
+      if (userEmail) {
+        query = query.or(`id.eq.${userId},user_id.eq.${userId},email.eq.${userEmail}`);
+      } else {
+        query = query.or(`id.eq.${userId},user_id.eq.${userId}`);
+      }
+      const { data, error } = await query.maybeSingle();
 
-      if (data && !error) {
+      if (error) {
+        console.warn("Could not load Supabase profile:", error);
+        return;
+      }
+
+      if (data) {
+        const isVerified = Boolean(data.is_verified);
+        const isAdmin = Boolean(data.is_admin);
+
+        // Non-verified, non-admin members cannot log in or maintain a session
+        if (!isVerified && !isAdmin) {
+          console.warn("Blocked unverified member session:", data.email);
+          await supabase.auth.signOut();
+          setUser(null);
+          localStorage.removeItem("vitc_music_user");
+          showToast("Your account is not yet verified. Please ask an admin for approval.", "error");
+          return;
+        }
+
         const profile = {
           id: data.id,
           name: data.name,
@@ -327,7 +356,7 @@ export const AuthProvider = ({ children }) => {
           instrument: data.instrument || 'Guitar / Vocals',
           secretKey: data.secret_key,
           verified: data.is_verified,
-          isAdmin: Boolean(data.is_admin)
+          isAdmin: isAdmin
         };
         setUser(profile);
       }
@@ -388,24 +417,90 @@ export const AuthProvider = ({ children }) => {
             }
           });
           if (error) throw error;
-          showToast("Account created! Please check your email for verification.");
-          return;
+
+          // Ensure unverified user is logged out immediately so they cannot enter portal
+          await supabase.auth.signOut();
+          setUser(null);
+          localStorage.removeItem("vitc_music_user");
+
+          showToast("Account created! Your account is pending admin approval before you can log in.", "info");
+          return { success: true, pendingApproval: true };
         } else {
           const { data, error } = await supabase.auth.signInWithPassword({
             email: userData.email,
             password: userData.password
           });
           if (error) throw error;
-          showToast(`Welcome back, ${data.user?.user_metadata?.name || 'Musician'}!`);
-          return;
+
+          // Check if user is verified in profiles table
+          let profile = null;
+          if (data?.user) {
+            const { data: profData } = await supabase
+              .from('profiles')
+              .select('*')
+              .or(`id.eq.${data.user.id},user_id.eq.${data.user.id},email.eq.${data.user.email}`)
+              .maybeSingle();
+            profile = profData;
+          }
+
+          const isVerified = Boolean(profile?.is_verified);
+          const isAdmin = Boolean(profile?.is_admin);
+
+          if (!profile || (!isVerified && !isAdmin)) {
+            // Reject unverified login immediately
+            await supabase.auth.signOut();
+            setUser(null);
+            localStorage.removeItem("vitc_music_user");
+            const unverifiedMsg = "Your account is not yet verified. Please ask an admin for approval.";
+            showToast(unverifiedMsg, "error");
+            return { error: unverifiedMsg };
+          }
+
+          const loadedUser = {
+            id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            regNumber: profile.reg_number,
+            role: profile.role || 'Musician',
+            instrument: profile.instrument || 'Guitar / Vocals',
+            secretKey: profile.secret_key,
+            verified: profile.is_verified,
+            isAdmin: isAdmin
+          };
+          setUser(loadedUser);
+          showToast(`Welcome back, ${loadedUser.name}!`);
+          return { success: true, user: loadedUser };
         }
       } catch (err) {
         showToast(err.message || "Authentication failed", "error");
-        return;
+        return { error: err.message || "Authentication failed" };
       }
     }
 
-    // Offline / Local fallback with provided user data (not hardcoded)
+    // Offline / Local fallback with provided user data
+    if (allUsers.length > 0) {
+      const existing = allUsers.find(u => 
+        u.email?.toLowerCase() === userData.email?.toLowerCase() || 
+        (userData.regNumber && u.regNumber === userData.regNumber)
+      );
+      if (existing) {
+        if (existing.verified !== 'Verified' && existing.type !== 'Admin') {
+          const unverifiedMsg = "Your account is not yet verified. Please ask an admin for approval.";
+          showToast(unverifiedMsg, "error");
+          return { error: unverifiedMsg };
+        }
+      } else if (!userData.isSignUp) {
+        const notFoundMsg = "Account not found or not yet approved. Please register or contact an admin.";
+        showToast(notFoundMsg, "error");
+        return { error: notFoundMsg };
+      }
+    }
+
+    if (userData.isSignUp) {
+      showToast("Account created! Please ask an admin for approval.", "info");
+      return { success: true, pendingApproval: true };
+    }
+
     const newUser = {
       id: `USR-VITC-${Date.now().toString().slice(-4)}`,
       name: userData.name || "Club Member",
@@ -421,6 +516,7 @@ export const AuthProvider = ({ children }) => {
     };
     setUser(newUser);
     showToast(`Welcome to VITC Music Club, ${newUser.name}!`);
+    return { success: true, user: newUser };
   };
 
   const logout = async () => {
@@ -820,6 +916,7 @@ export const AuthProvider = ({ children }) => {
         instrumentRequests,
         allUsers,
         toast,
+        setToast,
         loginAsDemo,
         loginWithCredentials,
         logout,
