@@ -7,10 +7,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
 dist
 dist-ssr
 *.local
+
+# Environment variables & secrets (NEVER commit real keys)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+!.env.example
+
+# Sensitive database migration/import dumps with real PII
+supabase/import_*.sql
+*.sql.bak
+supabase/dumps/
 
 # Editor directories and files
 .vscode/*

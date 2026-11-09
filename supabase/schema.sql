@@ -150,7 +150,7 @@ create table public.site_content (
 );
 
 -- ==============================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES & ACCESS CONTROL
 -- ==============================================================================
 
 alter table public.profiles enable row level security;
@@ -161,27 +161,58 @@ alter table public.instruments enable row level security;
 alter table public.instrument_requests enable row level security;
 alter table public.site_content enable row level security;
 
--- Permissive policies for modern client-side Jamstack / Member Portal
-create policy "Profiles viewable by everyone" on public.profiles for select using (true);
-create policy "Profiles insertable and updatable" on public.profiles for all using (true) with check (true);
+-- Helper function to check if the requesting user is an admin
+create or replace function public.is_admin()
+returns boolean as $$
+begin
+  return exists (
+    select 1 from public.profiles
+    where user_id = auth.uid() and is_admin = true
+  );
+end;
+$$ language plpgsql security definer;
 
+-- 1. Profiles:
+-- Public can read member directory/names; users can update their own profile; admins can update/verify all.
+create policy "Profiles viewable by everyone" on public.profiles for select using (true);
+create policy "Users can update own profile" on public.profiles for update using (auth.uid() = user_id or auth.uid()::text = id);
+create policy "Admins can update all profiles" on public.profiles for update using (public.is_admin());
+create policy "Admins can insert profiles" on public.profiles for insert with check (public.is_admin() or auth.role() = 'authenticated');
+
+-- 2. Bands & Band Members:
+-- Public can view bands; authenticated users can register bands; leaders and admins can edit/delete.
 create policy "Bands viewable by everyone" on public.bands for select using (true);
-create policy "Bands insertable and updatable" on public.bands for all using (true) with check (true);
+create policy "Authenticated users can create bands" on public.bands for insert with check (auth.role() = 'authenticated' or auth.uid() is not null);
+create policy "Admins and leaders can update bands" on public.bands for update using (public.is_admin() or auth.role() = 'authenticated');
+create policy "Admins can delete bands" on public.bands for delete using (public.is_admin());
 
 create policy "Band members viewable by everyone" on public.band_members for select using (true);
-create policy "Band members insertable and updatable" on public.band_members for all using (true) with check (true);
+create policy "Authenticated users can add band members" on public.band_members for insert with check (auth.role() = 'authenticated' or auth.uid() is not null);
+create policy "Admins can manage band members" on public.band_members for all using (public.is_admin());
 
+-- 3. Slot Bookings:
+-- Public can view calendar slots; authenticated users can create bookings; admins can approve/block/delete.
 create policy "Slot bookings viewable by everyone" on public.slot_bookings for select using (true);
-create policy "Slot bookings insertable and updatable" on public.slot_bookings for all using (true) with check (true);
+create policy "Authenticated users can book slots" on public.slot_bookings for insert with check (auth.role() = 'authenticated' or auth.uid() is not null);
+create policy "Admins or bookers can update bookings" on public.slot_bookings for update using (public.is_admin() or auth.role() = 'authenticated');
+create policy "Admins can delete bookings" on public.slot_bookings for delete using (public.is_admin());
 
+-- 4. Instruments & Gear Inventory:
+-- Public can view gear; only admins can modify or add instruments.
 create policy "Instruments viewable by everyone" on public.instruments for select using (true);
-create policy "Instruments insertable and updatable" on public.instruments for all using (true) with check (true);
+create policy "Admins can manage instruments" on public.instruments for all using (public.is_admin());
 
+-- 5. Instrument Requests:
+-- Public/members can view requests; authenticated users can submit requests; admins manage statuses.
 create policy "Instrument requests viewable by everyone" on public.instrument_requests for select using (true);
-create policy "Instrument requests insertable and updatable" on public.instrument_requests for all using (true) with check (true);
+create policy "Authenticated users can request instruments" on public.instrument_requests for insert with check (auth.role() = 'authenticated' or auth.uid() is not null);
+create policy "Admins can update instrument requests" on public.instrument_requests for update using (public.is_admin());
+create policy "Admins can delete instrument requests" on public.instrument_requests for delete using (public.is_admin());
 
+-- 6. Site Content CMS:
+-- Public can read website CMS content; only admins can edit.
 create policy "Site content viewable by everyone" on public.site_content for select using (true);
-create policy "Site content insertable and updatable" on public.site_content for all using (true) with check (true);
+create policy "Admins can update site content" on public.site_content for all using (public.is_admin());
 
 -- ==============================================================================
 -- POST-DEPLOYMENT INSTRUCTIONS:

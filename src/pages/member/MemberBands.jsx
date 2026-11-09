@@ -18,7 +18,7 @@ export const MemberBands = () => {
   const [creatorMode, setCreatorMode] = useState('Self'); // 'Self' or 'Others'
   const [bandName, setBandName] = useState('');
   const [members, setMembers] = useState([
-    { name: user ? user.name : 'Michael Dias', reg: user ? user.regNumber : '24BCE5259', key: user?.secretKey || '68ff9228ab0faf069397bb24' },
+    { name: user?.name || '', reg: user?.regNumber || '', key: user?.secretKey || user?.id || '' },
     { name: '', reg: '', key: '' },
     { name: '', reg: '', key: '' },
     { name: '', reg: '', key: '' },
@@ -45,9 +45,9 @@ export const MemberBands = () => {
       const updated = [...prev];
       if (mode === 'Self') {
         updated[0] = {
-          name: user ? user.name : 'Michael Dias',
-          reg: user ? user.regNumber : '24BCE5259',
-          key: user?.secretKey || '68ff9228ab0faf069397bb24'
+          name: user?.name || '',
+          reg: user?.regNumber || '',
+          key: user?.secretKey || user?.id || ''
         };
       } else {
         updated[0] = { name: '', reg: '', key: '' };
@@ -83,7 +83,7 @@ export const MemberBands = () => {
       name: bandName,
       genre: 'Official Lineup',
       leader: creatorMode === 'Self' ? (user ? user.name : members[0].name) : members[0].name,
-      madeBy: user ? user.name : 'Michael Dias',
+      madeBy: user?.name || members[0]?.name || 'Club Member',
       memberCount: memberCount,
       memberNames: members.map(m => m.name),
       registerNumbers: members.map(m => m.reg),
