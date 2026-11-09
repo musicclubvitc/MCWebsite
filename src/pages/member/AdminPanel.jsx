@@ -24,8 +24,10 @@ import {
   Package,
   Search,
   Filter,
-  Edit3
+  Edit3,
+  AlertTriangle
 } from 'lucide-react';
+import { getBookingDeltaInfo } from '../../lib/bookingUtils';
 
 const PaginationControls = ({ currentPage, totalPages, totalItems, pageSize, onPageChange }) => {
   if (totalItems <= pageSize && currentPage === 1) return null;
@@ -498,17 +500,49 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                 BOOKING DETAILS (<span style={{ color: selectedBookingDetails.status === 'Approved' ? '#22c55e' : (selectedBookingDetails.status === 'Blocked' ? '#fbbf24' : '#ef4444') }}>{selectedBookingDetails.status}</span>)
               </h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>BOOKING DATE</div>
-                  <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>{selectedBookingDetails.date?.split('-').reverse().join('-')}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>SLOT DATE</div>
+                  <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>
+                    {getBookingDeltaInfo(selectedBookingDetails.date, selectedBookingDetails.createdAt).formattedSlotDate}
+                  </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>BOOKING DAY</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>BOOKED ON</div>
+                  {(() => {
+                    const dInfo = getBookingDeltaInfo(selectedBookingDetails.date, selectedBookingDetails.createdAt);
+                    return (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }} title={dInfo.tooltip}>
+                        <span style={{ color: dInfo.isOverLimit ? '#fbbf24' : '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>
+                          {dInfo.formattedBookingDate}
+                        </span>
+                        {dInfo.isOverLimit && (
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: 'rgba(245, 158, 11, 0.15)',
+                            border: '1px solid rgba(245, 158, 11, 0.35)',
+                            color: '#fbbf24',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700
+                          }}>
+                            <AlertTriangle style={{ width: '12px', height: '12px' }} />
+                            +{dInfo.daysDelta}d (Advance booking limit exceeded)
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>SLOT DAY</div>
                   <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>{selectedBookingDetails.day}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>BOOKING TIME</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>SLOT TIME</div>
                   <div style={{ color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.95rem', fontFamily: 'monospace' }}>{selectedBookingDetails.timeSlot}</div>
                 </div>
               </div>
@@ -721,7 +755,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
               <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-                  <table style={{ width: '100%', minWidth: '880px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                  <table style={{ width: '100%', minWidth: '980px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
                       <tr style={{ background: 'rgba(15, 23, 42, 0.95)', borderBottom: '1px solid var(--blue-border)', color: 'var(--blue-sky)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
                         <th style={{ padding: '12px 14px', width: '40px' }}>
@@ -734,7 +768,8 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                         </th>
                         <th style={{ padding: '12px 14px' }}>S.No.</th>
                         <th style={{ padding: '12px 14px' }}>Booked By</th>
-                        <th style={{ padding: '12px 14px' }}>Date</th>
+                        <th style={{ padding: '12px 14px' }}>Slot Date</th>
+                        <th style={{ padding: '12px 14px' }}>Booked On</th>
                         <th style={{ padding: '12px 14px' }}>Day</th>
                         <th style={{ padding: '12px 14px' }}>Slot</th>
                         <th style={{ padding: '12px 14px' }}>Mode</th>
@@ -745,13 +780,14 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     <tbody>
                       {paginatedBookings.length === 0 ? (
                         <tr>
-                          <td colSpan="9" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
+                          <td colSpan="10" style={{ padding: '32px', textAlign: 'center', color: '#64748B' }}>
                             {filteredBookings.length === 0 ? 'No bookings found matching filters.' : 'No bookings on this page.'}
                           </td>
                         </tr>
                       ) : paginatedBookings.map((b, idx) => {
                         const globalIdx = (bookingPage - 1) * BOOKINGS_PAGE_SIZE + idx + 1;
                         const isSel = selectedBookingIds.includes(b.id);
+                        const deltaInfo = getBookingDeltaInfo(b.date, b.createdAt);
                         return (
                           <tr key={b.id} style={{ borderBottom: '1px solid var(--blue-border)', background: isSel ? 'rgba(37, 99, 235, 0.1)' : (idx % 2 === 0 ? 'rgba(15,23,42,0.5)' : 'transparent') }}>
                             <td style={{ padding: '12px 14px' }}>
@@ -767,7 +803,47 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                               <div style={{ color: '#F8FAFC', fontWeight: 600 }}>{b.bookerName || 'Member'}</div>
                               <div style={{ fontSize: '0.74rem', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{b.bookerReg || ''}</div>
                             </td>
-                            <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{b.date?.split('-').reverse().join('-')}</td>
+                            <td style={{ padding: '12px 14px', color: '#F1F5F9', fontWeight: 600 }}>{deltaInfo.formattedSlotDate}</td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <div
+                                title={deltaInfo.tooltip}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  cursor: 'help'
+                                }}
+                              >
+                                <span style={{
+                                  color: deltaInfo.isOverLimit ? '#fbbf24' : '#E2E8F0',
+                                  fontWeight: deltaInfo.isOverLimit ? 600 : 500,
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {deltaInfo.formattedBookingDate}
+                                </span>
+                                {deltaInfo.isOverLimit && (
+                                  <span
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px',
+                                      background: 'rgba(245, 158, 11, 0.15)',
+                                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                                      color: '#fbbf24',
+                                      padding: '2px 6px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                      whiteSpace: 'nowrap'
+                                    }}
+                                    title={`Warning: Booked ${deltaInfo.daysDelta} days in advance (exceeds 3-day limit)`}
+                                  >
+                                    <AlertTriangle style={{ width: '12px', height: '12px' }} />
+                                    +{deltaInfo.daysDelta}d
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>{b.day}</td>
                             <td style={{ padding: '12px 14px', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{b.timeSlot}</td>
                             <td style={{ padding: '12px 14px', color: '#CBD5E1' }}>

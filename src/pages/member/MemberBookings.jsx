@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Clock, Info, X, Printer, Download } from 'lucide-react';
+import { Clock, Info, X, Printer, Download, AlertTriangle } from 'lucide-react';
 import { BookingPrintSlip } from '../../components/BookingPrintSlip';
+import { getBookingDeltaInfo } from '../../lib/bookingUtils';
 
 export const MemberBookings = () => {
   const { bookings, user } = useAuth();
@@ -45,18 +46,18 @@ export const MemberBookings = () => {
         /* Responsive Table layout matching the original site */
         <div className="glass-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: '12px' }}>
           <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%' }}>
-            <div style={{ minWidth: '640px' }}>
+            <div style={{ minWidth: '780px' }}>
               {/* Table Header */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: '60px 1.2fr 1fr 1.5fr 1fr 100px',
+                gridTemplateColumns: '50px 1.1fr 1.3fr 0.9fr 1.3fr 1fr 90px',
                 background: 'rgba(15, 23, 42, 0.95)',
                 borderBottom: '1px solid var(--blue-border)',
                 padding: '14px 20px',
                 gap: '12px',
                 alignItems: 'center'
               }}>
-                {['S.No.', 'Date', 'Day', 'Time', 'Status', 'Action'].map(h => (
+                {['S.No.', 'Slot Date', 'Booked On', 'Day', 'Time', 'Status', 'Action'].map(h => (
                   <div key={h} style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: h === 'Action' ? 'right' : 'left' }}>
                     {h}
                   </div>
@@ -72,16 +73,14 @@ export const MemberBookings = () => {
                   Declined: '#ef4444',
                 };
                 const col = statusColors[booking.status] || '#94A3B8';
-                const dateLabel = booking.date
-                  ? booking.date.split('-').reverse().join('-')
-                  : '—';
+                const deltaInfo = getBookingDeltaInfo(booking.date, booking.createdAt);
 
                 return (
                   <div
                     key={booking.id || idx}
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: '60px 1.2fr 1fr 1.5fr 1fr 100px',
+                      gridTemplateColumns: '50px 1.1fr 1.3fr 0.9fr 1.3fr 1fr 90px',
                       padding: '14px 20px',
                       alignItems: 'center',
                       gap: '12px',
@@ -91,7 +90,47 @@ export const MemberBookings = () => {
                     }}
                   >
                     <div style={{ color: '#64748B', fontWeight: 600 }}>{idx + 1}</div>
-                    <div style={{ color: '#F1F5F9', fontWeight: 500 }}>{dateLabel}</div>
+                    <div style={{ color: '#F1F5F9', fontWeight: 500 }}>{deltaInfo.formattedSlotDate}</div>
+                    <div>
+                      <div
+                        title={deltaInfo.tooltip}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          cursor: 'help'
+                        }}
+                      >
+                        <span style={{
+                          color: deltaInfo.isOverLimit ? '#fbbf24' : '#E2E8F0',
+                          fontWeight: deltaInfo.isOverLimit ? 600 : 500,
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {deltaInfo.formattedBookingDate}
+                        </span>
+                        {deltaInfo.isOverLimit && (
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              background: 'rgba(245, 158, 11, 0.15)',
+                              border: '1px solid rgba(245, 158, 11, 0.35)',
+                              color: '#fbbf24',
+                              padding: '2px 6px',
+                              borderRadius: '6px',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              whiteSpace: 'nowrap'
+                            }}
+                            title={`Warning: Booked ${deltaInfo.daysDelta} days in advance (exceeds 3-day limit)`}
+                          >
+                            <AlertTriangle style={{ width: '12px', height: '12px' }} />
+                            +{deltaInfo.daysDelta}d
+                          </span>
+                        )}
+                      </div>
+                    </div>
                     <div style={{ color: '#CBD5E1' }}>{booking.day || '—'}</div>
                     <div style={{ color: '#CBD5E1', fontFamily: 'monospace', fontSize: '0.85rem' }}>{booking.timeSlot || '—'}</div>
                     <div>
@@ -206,30 +245,60 @@ export const MemberBookings = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255, 255, 255, 0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--blue-border)', fontSize: '0.88rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94A3B8' }}>Date:</span>
-                <strong style={{ color: '#F1F5F9' }}>{selectedBooking.date?.split('-').reverse().join('-')}</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94A3B8' }}>Day:</span>
-                <span style={{ color: '#F1F5F9' }}>{selectedBooking.day}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94A3B8' }}>Time:</span>
-                <span style={{ color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{selectedBooking.timeSlot}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#94A3B8' }}>Booked By:</span>
-                <span style={{ color: '#F1F5F9', fontWeight: 600 }}>{selectedBooking.bookerName || user?.name || 'Member'}</span>
-              </div>
-              {selectedBooking.status === 'Blocked' && selectedBooking.blockReason && (
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#fbbf24' }}>Reason:</span>
-                  <span style={{ color: '#fbbf24', fontWeight: 600 }}>{selectedBooking.blockReason}</span>
+            {(() => {
+              const detailsDelta = getBookingDeltaInfo(selectedBooking.date, selectedBooking.createdAt);
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255, 255, 255, 0.02)', padding: '16px', borderRadius: '10px', border: '1px solid var(--blue-border)', fontSize: '0.88rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#94A3B8' }}>Slot Date:</span>
+                    <strong style={{ color: '#F1F5F9' }}>{detailsDelta.formattedSlotDate}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#94A3B8' }}>Booked On:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title={detailsDelta.tooltip}>
+                      <strong style={{ color: detailsDelta.isOverLimit ? '#fbbf24' : '#F1F5F9' }}>
+                        {detailsDelta.formattedBookingDate}
+                      </strong>
+                      {detailsDelta.isOverLimit && (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          border: '1px solid rgba(245, 158, 11, 0.35)',
+                          color: '#fbbf24',
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          fontSize: '0.72rem',
+                          fontWeight: 700
+                        }}>
+                          <AlertTriangle style={{ width: '12px', height: '12px' }} />
+                          +{detailsDelta.daysDelta}d
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#94A3B8' }}>Day:</span>
+                    <span style={{ color: '#F1F5F9' }}>{selectedBooking.day}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#94A3B8' }}>Time:</span>
+                    <span style={{ color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{selectedBooking.timeSlot}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#94A3B8' }}>Booked By:</span>
+                    <span style={{ color: '#F1F5F9', fontWeight: 600 }}>{selectedBooking.bookerName || user?.name || 'Member'}</span>
+                  </div>
+                  {selectedBooking.status === 'Blocked' && selectedBooking.blockReason && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#fbbf24' }}>Reason:</span>
+                      <span style={{ color: '#fbbf24', fontWeight: 600 }}>{selectedBooking.blockReason}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* Allowed Attendees */}
             <div style={{ marginTop: '16px' }}>
