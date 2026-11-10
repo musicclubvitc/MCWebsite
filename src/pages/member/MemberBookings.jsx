@@ -5,7 +5,7 @@ import { BookingPrintSlip } from '../../components/BookingPrintSlip';
 import { getBookingDeltaInfo } from '../../lib/bookingUtils';
 
 export const MemberBookings = () => {
-  const { bookings, user, refreshLiveBookings, showToast } = useAuth();
+  const { bookings, user, myBookings, refreshLiveBookings, showToast } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [printBooking, setPrintBooking] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -18,19 +18,7 @@ export const MemberBookings = () => {
   };
 
   // Filter bookings belonging to the logged-in user or where user is in membersInfo
-  const userBookings = (bookings || []).filter(b => {
-    if (!b || !user) return false;
-    const matchesReg = user.regNumber && b.bookerReg && b.bookerReg.toLowerCase() === user.regNumber.toLowerCase();
-    const matchesName = user.name && b.bookerName && b.bookerName.toLowerCase() === user.name.toLowerCase();
-    
-    const isMemberOfBooking = Array.isArray(b.membersInfo) && b.membersInfo.some(m => {
-      const mReg = (m.reg || m.registerNumber || '').toLowerCase();
-      const mName = (m.name || m.memberName || '').toLowerCase();
-      return (user.regNumber && mReg === user.regNumber.toLowerCase()) || (user.name && mName === user.name.toLowerCase());
-    });
-
-    return matchesReg || matchesName || isMemberOfBooking;
-  });
+  const userBookings = myBookings || [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

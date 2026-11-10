@@ -4,12 +4,23 @@ import {
   Guitar, 
   Plus, 
   X, 
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 
 export const MemberInstruments = () => {
-  const { instrumentRequests, addInstrumentRequest, instruments } = useAuth();
+  const { myInstrumentRequests, addInstrumentRequest, instruments, refreshAllLiveData, showToast } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    if (refreshAllLiveData) await refreshAllLiveData();
+    setIsRefreshing(false);
+    if (showToast) showToast("Gear and requisitions refreshed!");
+  };
+
+  const userRequests = myInstrumentRequests || [];
 
   // Active inventory strictly from live database, no hardcoded fallbacks
   const activeInventory = instruments || [];
@@ -94,13 +105,37 @@ export const MemberInstruments = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="btn-primary"
-          style={{ fontSize: '0.88rem', padding: '9px 18px' }}
-        >
-          <Plus className="w-4 h-4" /> Request Instrument
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="btn-ghost"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              fontSize: '0.82rem',
+              borderRadius: '20px',
+              border: '1px solid var(--blue-border)',
+              color: 'var(--blue-sky)',
+              cursor: 'pointer',
+              background: 'rgba(56, 189, 248, 0.08)'
+            }}
+            title="Refresh gear and requests"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="btn-primary"
+            style={{ fontSize: '0.88rem', padding: '9px 18px' }}
+          >
+            <Plus className="w-4 h-4" /> Request Instrument
+          </button>
+        </div>
       </div>
 
       {/* Available Gear Inventory Preview */}
@@ -158,13 +193,13 @@ export const MemberInstruments = () => {
       {/* Active Requests List */}
       <div>
         <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', textTransform: 'uppercase', marginBottom: '12px' }}>
-          Requisition History
+          Your Requisition History ({userRequests.length})
         </div>
 
-        {instrumentRequests.length === 0 ? (
+        {userRequests.length === 0 ? (
           <div className="glass-panel" style={{ padding: '50px 20px', textAlign: 'center' }}>
             <Guitar className="w-10 h-10 text-slate-500" style={{ margin: '0 auto 12px auto' }} />
-            <h3 style={{ color: '#F1F5F9', fontWeight: 600, fontSize: '1.1rem' }}>No instrument requests</h3>
+            <h3 style={{ color: '#F1F5F9', fontWeight: 600, fontSize: '1.1rem' }}>No instrument requests yet</h3>
             <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: '4px' }}>Borrow guitars, synthesizers, or microphones for practice.</p>
             <button 
               onClick={() => setIsModalOpen(true)}
@@ -176,7 +211,7 @@ export const MemberInstruments = () => {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {instrumentRequests.map((req) => {
+            {userRequests.map((req) => {
               const statusBadges = {
                 Approved: 'badge-success',
                 Pending: 'badge-warning',

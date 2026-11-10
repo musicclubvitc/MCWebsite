@@ -1038,6 +1038,60 @@ export const AuthProvider = ({ children }) => {
     return bands.filter(b => isUserInBand(b, user));
   }, [bands, user]);
 
+  const isUserBooking = useCallback((b, currentUser) => {
+    if (!b || !currentUser) return false;
+    const uReg = (currentUser.regNumber || '').trim().toLowerCase();
+    const uName = (currentUser.name || '').trim().toLowerCase();
+
+    // Direct booker match
+    const matchesReg = uReg && b.bookerReg && b.bookerReg.trim().toLowerCase() === uReg;
+    const matchesName = uName && b.bookerName && b.bookerName.trim().toLowerCase() === uName;
+    if (matchesReg || matchesName) return true;
+
+    // Member listed in membersInfo array
+    if (Array.isArray(b.membersInfo) && b.membersInfo.some(m => {
+      const mReg = (m.regNumber || m.regNo || '').trim().toLowerCase();
+      const mName = (m.name || '').trim().toLowerCase();
+      return (uReg && mReg === uReg) || (uName && mName === uName);
+    })) {
+      return true;
+    }
+
+    // Band match if booked under one of the user's bands
+    if (b.bandName && bands.some(band => 
+      band.name && 
+      band.name.trim().toLowerCase() === b.bandName.trim().toLowerCase() && 
+      isUserInBand(band, currentUser)
+    )) {
+      return true;
+    }
+
+    return false;
+  }, [bands, isUserInBand]);
+
+  const isUserInstrumentRequest = useCallback((req, currentUser) => {
+    if (!req || !currentUser) return false;
+    const uReg = (currentUser.regNumber || '').trim().toLowerCase();
+    const uName = (currentUser.name || '').trim().toLowerCase();
+
+    const reqReg = (req.regNumber || req.bookerReg || req.booker_reg || '').trim().toLowerCase();
+    const reqName = (req.requester || req.bookerName || req.booker_name || '').trim().toLowerCase();
+
+    const matchesReg = uReg && reqReg && reqReg === uReg;
+    const matchesName = uName && reqName && reqName === uName;
+    return Boolean(matchesReg || matchesName);
+  }, []);
+
+  const myBookings = useMemo(() => {
+    if (!user) return [];
+    return bookings.filter(b => isUserBooking(b, user));
+  }, [bookings, user, isUserBooking]);
+
+  const myInstrumentRequests = useMemo(() => {
+    if (!user) return [];
+    return instrumentRequests.filter(req => isUserInstrumentRequest(req, user));
+  }, [instrumentRequests, user, isUserInstrumentRequest]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -1047,8 +1101,12 @@ export const AuthProvider = ({ children }) => {
         myBands,
         isUserInBand,
         bookings,
+        myBookings,
+        isUserBooking,
         instruments,
         instrumentRequests,
+        myInstrumentRequests,
+        isUserInstrumentRequest,
         allUsers,
         toast,
         setToast,
