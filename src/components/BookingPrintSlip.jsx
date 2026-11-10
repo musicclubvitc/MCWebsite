@@ -34,16 +34,39 @@ export const BookingPrintSlip = ({
     return dateStr;
   };
 
-  // Format approval date (e.g. August 26, 2026)
-  const displayApproverDate = approverDate || (booking.date ? new Date(booking.date + 'T00:00:00').toLocaleDateString('en-US', {
+  // Format approval date (e.g. November 10, 2026)
+  // Must reflect the day permission was granted/approved, NOT the future slot date.
+  const formatLongDate = (dateVal) => {
+    if (!dateVal) return null;
+    try {
+      const clean = String(dateVal).includes('T') ? String(dateVal).split('T')[0] : String(dateVal).split(' ')[0];
+      const parts = clean.split('-').map(Number);
+      if (parts.length === 3 && !parts.some(isNaN)) {
+        let year, month, day;
+        if (parts[0] > 1000) {
+          [year, month, day] = parts;
+        } else {
+          [day, month, year] = parts;
+        }
+        const d = new Date(year, month - 1, day);
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  };
+
+  const rawApprovalDate = approverDate || booking.approvedAt || booking.approved_at || booking.createdAt || booking.created_at;
+  const displayApproverDate = formatLongDate(rawApprovalDate) || new Date().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric'
-  }) : new Date().toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  }));
+  });
 
   // Resolve members strictly from booking info without any random placeholders
   const members = (booking.membersInfo && booking.membersInfo.length > 0)
@@ -55,37 +78,47 @@ export const BookingPrintSlip = ({
   return (
     <>
       {/* Screen Modal Overlay (hidden during window.print via CSS) */}
-      <div className="no-print" style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        backgroundColor: 'rgba(2, 6, 23, 0.85)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px'
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: '720px',
-          maxHeight: '92vh',
+      <div 
+        className="no-print" 
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 100000,
+          backgroundColor: 'rgba(2, 6, 23, 0.88)',
+          backdropFilter: 'blur(8px)',
           display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: '#0f172a',
-          border: '1px solid var(--blue-border)',
-          borderRadius: '16px',
-          overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
-        }}>
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          overflowY: 'auto'
+        }}
+        onClick={onClose}
+      >
+        <div 
+          style={{
+            width: '100%',
+            maxWidth: '740px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#0f172a',
+            border: '1.5px solid var(--blue-sky)',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85)',
+            position: 'relative'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Top modal bar */}
           <div style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            padding: '14px 20px',
+            borderBottom: '1px solid var(--blue-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'rgba(15,23,42,0.95)'
+            background: 'rgba(15, 23, 42, 0.98)',
+            flexShrink: 0
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Printer className="w-5 h-5 text-sky-400" />
@@ -120,12 +153,15 @@ export const BookingPrintSlip = ({
 
           {/* Modal Preview Body: Renders printable sheet preview */}
           <div style={{
-            flex: 1,
+            flex: '1 1 auto',
+            minHeight: 0,
             overflowY: 'auto',
-            padding: '30px 20px',
+            WebkitOverflowScrolling: 'touch',
+            padding: '28px 16px',
             background: '#0b1329',
             display: 'flex',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            alignItems: 'flex-start'
           }}>
             {/* Sheet wrapper for screen display */}
             <div style={{
@@ -133,8 +169,8 @@ export const BookingPrintSlip = ({
               maxWidth: '620px',
               backgroundColor: '#ffffff',
               color: '#0f172a',
-              borderRadius: '6px',
-              padding: '40px 45px',
+              borderRadius: '8px',
+              padding: '36px 40px',
               boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
               fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
             }}>

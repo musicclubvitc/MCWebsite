@@ -137,7 +137,10 @@ export const AuthProvider = ({ children }) => {
           blockReason: b.block_reason,
           membersInfo: b.members_info,
           status: b.status,
-          createdAt: b.created_at?.split('T')[0] || ''
+          createdAt: b.created_at?.split('T')[0] || '',
+          approvedAt: b.approved_at ? b.approved_at.split('T')[0] : (b.status === 'Approved' ? (b.created_at?.split('T')[0] || '') : ''),
+          approvedBy: b.approved_by || '',
+          approverRole: b.approver_role || ''
         }));
         setBookings(formatted);
         console.log(`%c[Supabase] Synced ${data.length} slot bookings`, 'color: #38bdf8');
@@ -657,11 +660,16 @@ export const AuthProvider = ({ children }) => {
       ? 'Blocked' 
       : (isAdmin ? (newBooking.status || 'Approved') : 'Pending');
 
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isDirectlyApproved = initialStatus === 'Approved';
     const bookingRecord = {
       id: `BKG-${Math.floor(1000 + Math.random() * 9000)}`,
       ...newBooking,
       status: initialStatus,
-      createdAt: new Date().toISOString().split('T')[0]
+      createdAt: todayStr,
+      approvedAt: isDirectlyApproved ? todayStr : '',
+      approvedBy: isDirectlyApproved ? (user?.name || 'V.Mithra') : '',
+      approverRole: isDirectlyApproved ? (user?.role || 'Creative Head') : ''
     };
     setBookings(prev => [bookingRecord, ...prev]);
 
@@ -704,15 +712,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateBookingStatus = async (id, newStatus) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const isNowApproved = newStatus === 'Approved';
+
     setBookings(prev =>
-      prev.map(b => (b.id === id ? { ...b, status: newStatus } : b))
+      prev.map(b => (b.id === id ? { 
+        ...b, 
+        status: newStatus,
+        ...(isNowApproved ? { 
+          approvedAt: todayStr,
+          approvedBy: user?.name || b.approvedBy || 'V.Mithra',
+          approverRole: user?.role || b.approverRole || 'Creative Head'
+        } : {})
+      } : b))
     );
 
     if (isSupabaseConfigured && supabase) {
       try {
+        const updatePayload = { status: newStatus };
+        if (isNowApproved) {
+          updatePayload.approved_at = new Date().toISOString();
+          if (user?.name) updatePayload.approved_by = user.name;
+          if (user?.role) updatePayload.approver_role = user.role;
+        }
         await supabase
           .from('slot_bookings')
-          .update({ status: newStatus })
+          .update(updatePayload)
           .eq('id', id);
       } catch (err) {
         console.error("Booking status sync error:", err);

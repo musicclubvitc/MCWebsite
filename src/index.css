@@ -347,10 +347,8 @@ select.input-field option {
 }
 
 /* Print styles for Official Music Room Passes / PDFs */
-@media screen {
-  .print-only {
-    display: none !important;
-  }
+.print-only {
+  display: none !important;
 }
 
 /* Toast Animations */
