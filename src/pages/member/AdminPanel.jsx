@@ -122,7 +122,8 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     bands,
     updateAdminBand,
     deleteAdminBand,
-    refreshAllLiveData
+    refreshAllLiveData,
+    refreshLiveBookings
   } = useAuth();
 
   const currentSection = activeSection || 'manage-bookings';
@@ -133,6 +134,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   const [selectedBookingIds, setSelectedBookingIds] = useState([]);
   const [selectedInstIds, setSelectedInstIds] = useState([]);
   const [dateFilter, setDateFilter] = useState('');
+  const [isRefreshingBookings, setIsRefreshingBookings] = useState(false);
   const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
   const [selectedInstDetails, setSelectedInstDetails] = useState(null);
   const [printBooking, setPrintBooking] = useState(null);
@@ -750,6 +752,35 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       </button>
                     )}
                   </div>
+
+                  {/* Manual Refresh Button */}
+                  <button
+                    onClick={async () => {
+                      setIsRefreshingBookings(true);
+                      if (refreshLiveBookings) await refreshLiveBookings();
+                      else if (refreshAllLiveData) await refreshAllLiveData();
+                      setIsRefreshingBookings(false);
+                      showToast("Bookings refreshed!");
+                    }}
+                    disabled={isRefreshingBookings}
+                    className="btn-ghost"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      borderRadius: '20px',
+                      border: '1px solid var(--blue-border)',
+                      color: 'var(--blue-sky)',
+                      cursor: 'pointer',
+                      background: 'rgba(56, 189, 248, 0.08)'
+                    }}
+                    title="Refresh bookings from server"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingBookings ? 'animate-spin' : ''}`} />
+                    {isRefreshingBookings ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
               </div>
 

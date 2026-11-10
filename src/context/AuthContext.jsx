@@ -34,6 +34,19 @@ export const isUserInBand = (band, user) => {
   return false;
 };
 
+// Cross-tab broadcast channel for instant multi-tab client synchronization
+const syncBroadcast = typeof window !== 'undefined' && 'BroadcastChannel' in window
+  ? new BroadcastChannel('vitc_music_club_sync')
+  : null;
+
+const notifyCrossTab = (type) => {
+  if (syncBroadcast) {
+    try {
+      syncBroadcast.postMessage({ type, timestamp: Date.now() });
+    } catch {}
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
@@ -136,7 +149,7 @@ export const AuthProvider = ({ children }) => {
           bookerReg: b.booker_reg,
           blockReason: b.block_reason,
           membersInfo: b.members_info,
-          status: b.status,
+          status: (b.status === 'Rejected' || b.status === 'Declined') ? 'Declined' : b.status,
           createdAt: b.created_at?.split('T')[0] || '',
           approvedAt: b.approved_at ? b.approved_at.split('T')[0] : (b.status === 'Approved' ? (b.created_at?.split('T')[0] || '') : ''),
           approvedBy: b.approved_by || '',
@@ -323,6 +336,30 @@ export const AuthProvider = ({ children }) => {
     // Initial fetch of all tables
     refreshAllLiveData();
 
+    // Cross-tab broadcast listener for instant sync
+    if (syncBroadcast) {
+      syncBroadcast.onmessage = (event) => {
+        if (event.data?.type === 'bookings') {
+          fetchLiveBookings();
+        } else {
+          refreshAllLiveData();
+        }
+      };
+    }
+
+    // Auto-refresh when user focuses window or switches back to tab
+    const handleFocus = () => {
+      fetchLiveBookings();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Periodic heartbeat polling every 12 seconds while page is visible
+    const pollInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchLiveBookings();
+      }
+    }, 12000);
+
     // Realtime listeners
     const channel = supabase
       .channel('schema_changes')
@@ -344,11 +381,15 @@ export const AuthProvider = ({ children }) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'instruments' }, () => {
         fetchLiveInstruments();
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.warn('[Supabase Realtime] subscription issue:', err);
+      });
 
     return () => {
       authListener?.unsubscribe();
       supabase.removeChannel(channel);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(pollInterval);
     };
   }, [refreshAllLiveData, fetchLiveBookings, fetchLiveBands, fetchLiveUsers, fetchLiveInstrumentRequests, fetchLiveInstruments]);
 
@@ -708,6 +749,8 @@ export const AuthProvider = ({ children }) => {
     } else {
       showToast("Practice slot booked successfully!");
     }
+
+    notifyCrossTab('bookings');
     return bookingRecord;
   };
 
@@ -735,15 +778,30 @@ export const AuthProvider = ({ children }) => {
           if (user?.name) updatePayload.approved_by = user.name;
           if (user?.role) updatePayload.approver_role = user.role;
         }
-        await supabase
+        const { error } = await supabase
           .from('slot_bookings')
           .update(updatePayload)
           .eq('id', id);
+
+        if (error) {
+          console.warn("[Supabase] Booking status update error:", error.message);
+          // If the DB check constraint rejects 'Declined', fallback to 'Rejected'
+          if (newStatus === 'Declined') {
+            const fallbackRes = await supabase
+              .from('slot_bookings')
+              .update({ ...updatePayload, status: 'Rejected' })
+              .eq('id', id);
+            if (!fallbackRes.error) {
+              console.log("[Supabase] Updated using 'Rejected' constraint fallback");
+            }
+          }
+        }
       } catch (err) {
         console.error("Booking status sync error:", err);
       }
     }
 
+    notifyCrossTab('bookings');
     showToast(`Booking marked as ${newStatus}`);
   };
 
@@ -757,6 +815,8 @@ export const AuthProvider = ({ children }) => {
         console.error("Delete booking error:", err);
       }
     }
+
+    notifyCrossTab('bookings');
   };
 
   // ---------------- GEAR INVENTORY ACTIONS ----------------
@@ -1013,7 +1073,8 @@ export const AuthProvider = ({ children }) => {
         deleteAdminUser,
         toggleAdmin,
         showToast,
-        refreshAllLiveData
+        refreshAllLiveData,
+        refreshLiveBookings: fetchLiveBookings
       }}
     >
       {children}

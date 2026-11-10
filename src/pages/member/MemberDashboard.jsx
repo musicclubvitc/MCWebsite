@@ -60,7 +60,7 @@ const AdminGuard = () => (
   </div>
 );
 
-export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
+export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal, onTabChange }) => {
   const { user, isAdmin, logout } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState(subTab);
 
@@ -69,6 +69,16 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
       setActiveSubTab(subTab);
     }
   }, [subTab]);
+
+  const handleSubTabSelect = (tabId) => {
+    setActiveSubTab(tabId);
+    const fullRoute = tabId.startsWith('manage-') ? tabId : `member-${tabId}`;
+    if (onTabChange) {
+      onTabChange(fullRoute);
+    } else if (typeof window !== 'undefined') {
+      window.location.hash = `#/${fullRoute}`;
+    }
+  };
 
   // Not logged in
   if (!user) {
@@ -151,22 +161,22 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
         case 'manage-bands':
         case 'manage-bookings':
         case 'manage-instruments':
-          return <AdminPanel activeSection={activeSubTab} onSectionChange={setActiveSubTab} />;
+          return <AdminPanel activeSection={activeSubTab} onSectionChange={handleSubTabSelect} />;
         case 'manage-content':
           return <ContentManager />;
         default:
-          return <AdminPanel activeSection={activeSubTab} onSectionChange={setActiveSubTab} />;
+          return <AdminPanel activeSection={activeSubTab} onSectionChange={handleSubTabSelect} />;
       }
     }
 
     // Member panels
     switch (activeSubTab) {
-      case 'profile':      return <MemberProfile setActiveMemberSubTab={setActiveSubTab} />;
+      case 'profile':      return <MemberProfile setActiveMemberSubTab={handleSubTabSelect} />;
       case 'bands':        return <MemberBands />;
       case 'bookings':     return <MemberBookings />;
       case 'slot':         return <MemberSlot />;
       case 'instruments':  return <MemberInstruments />;
-      default:             return <MemberProfile setActiveMemberSubTab={setActiveSubTab} />;
+      default:             return <MemberProfile setActiveMemberSubTab={handleSubTabSelect} />;
     }
   };
 
@@ -239,7 +249,7 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveSubTab(item.id)}
+                onClick={() => handleSubTabSelect(item.id)}
                 className={`portal-nav-btn ${isActive ? 'active' : ''}`}
                 style={{
                   background: isActive ? 'var(--blue-primary)' : 'rgba(255, 255, 255, 0.04)',
@@ -300,7 +310,7 @@ export const MemberDashboard = ({ subTab = 'profile', onOpenAuthModal }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveSubTab(item.id)}
+                  onClick={() => handleSubTabSelect(item.id)}
                   className={`portal-admin-btn ${isActive ? 'active' : ''}`}
                   style={{
                     background: isActive ? 'rgba(37, 99, 235, 0.35)' : 'rgba(37, 99, 235, 0.08)',

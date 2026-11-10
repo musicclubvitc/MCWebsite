@@ -109,7 +109,7 @@ create table public.slot_bookings (
   booker_reg text not null,
   band_name text,
   members_info jsonb default '[]'::jsonb,
-  status text default 'Approved' check (status in ('Approved', 'Blocked', 'Pending', 'Rejected')),
+  status text default 'Approved' check (status in ('Approved', 'Blocked', 'Pending', 'Declined', 'Rejected')),
   block_reason text,
   created_at timestamptz default now(),
   constraint unique_slot_schedule unique (slot_date, time_slot)
@@ -215,8 +215,23 @@ create policy "Site content viewable by everyone" on public.site_content for sel
 create policy "Admins can update site content" on public.site_content for all using (public.is_admin());
 
 -- ==============================================================================
+-- REALTIME BROADCASTING CONFIGURATION
+-- ==============================================================================
+-- Ensures all clients receive instant live updates for slot bookings, bands, and requests
+alter publication supabase_realtime add table public.slot_bookings;
+alter publication supabase_realtime add table public.bands;
+alter publication supabase_realtime add table public.band_members;
+alter publication supabase_realtime add table public.profiles;
+alter publication supabase_realtime add table public.instrument_requests;
+alter publication supabase_realtime add table public.instruments;
+alter publication supabase_realtime add table public.site_content;
+
+-- ==============================================================================
 -- POST-DEPLOYMENT INSTRUCTIONS:
 -- 1. Run this entire script in Supabase SQL Editor.
--- 2. When the club lead or admin signs up via the website, grant admin privileges:
+-- 2. If upgrading an existing database table for 'Declined' bookings without resetting:
+--    ALTER TABLE public.slot_bookings DROP CONSTRAINT IF EXISTS slot_bookings_status_check;
+--    ALTER TABLE public.slot_bookings ADD CONSTRAINT slot_bookings_status_check CHECK (status IN ('Approved', 'Blocked', 'Pending', 'Declined', 'Rejected'));
+-- 3. When the club lead or admin signs up via the website, grant admin privileges:
 --    UPDATE public.profiles SET is_admin = true, is_verified = true WHERE email = 'your.email@vitstudent.ac.in';
 -- ==============================================================================

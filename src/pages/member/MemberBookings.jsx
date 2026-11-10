@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Clock, Info, X, Printer, Download, AlertTriangle } from 'lucide-react';
+import { Clock, Info, X, Printer, Download, AlertTriangle, RefreshCw } from 'lucide-react';
 import { BookingPrintSlip } from '../../components/BookingPrintSlip';
 import { getBookingDeltaInfo } from '../../lib/bookingUtils';
 
 export const MemberBookings = () => {
-  const { bookings, user } = useAuth();
+  const { bookings, user, refreshLiveBookings, showToast } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [printBooking, setPrintBooking] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    if (refreshLiveBookings) await refreshLiveBookings();
+    setIsRefreshing(false);
+    if (showToast) showToast("Bookings refreshed!");
+  };
 
   // Filter bookings belonging to the logged-in user or where user is in membersInfo
   const userBookings = (bookings || []).filter(b => {
@@ -27,11 +35,32 @@ export const MemberBookings = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-      {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+      {/* Header with Manual Refresh */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
         <h2 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#93c5fd', letterSpacing: '1px' }}>
           YOUR BOOKINGS
         </h2>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="btn-ghost"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '7px',
+            fontSize: '0.82rem',
+            padding: '7px 16px',
+            borderRadius: '20px',
+            border: '1px solid var(--blue-border)',
+            color: 'var(--blue-sky)',
+            cursor: 'pointer',
+            background: 'rgba(56, 189, 248, 0.08)'
+          }}
+          title="Refresh bookings from server"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
       {userBookings.length === 0 ? (

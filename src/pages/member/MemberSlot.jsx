@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Clock, Plus, Minus } from 'lucide-react';
+import { Clock, Plus, Minus, RefreshCw } from 'lucide-react';
 
 // Fixed time slots (55-min intervals) matching original site
 const TIME_SLOTS = [
@@ -112,7 +112,7 @@ function todayStr() {
 }
 
 export const MemberSlot = () => {
-  const { isAdmin, addBooking, bookings, myBands, user, showToast } = useAuth();
+  const { isAdmin, addBooking, bookings, myBands, user, showToast, refreshLiveBookings } = useAuth();
 
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const [startSlot, setStartSlot] = useState('');
@@ -123,6 +123,14 @@ export const MemberSlot = () => {
   // Manual mode: array of { name, reg }
   const [manualMembers, setManualMembers] = useState([{ name: '', reg: '' }]);
   const [submitting, setSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshSlots = async () => {
+    setIsRefreshing(true);
+    if (refreshLiveBookings) await refreshLiveBookings();
+    setIsRefreshing(false);
+    if (showToast) showToast("Slot availability updated!");
+  };
 
   const modes = isAdmin ? ADMIN_MODES : BOOKING_MODES;
 
@@ -294,6 +302,29 @@ export const MemberSlot = () => {
               ({new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' })})
             </span>
           )}
+
+          <button
+            type="button"
+            onClick={handleRefreshSlots}
+            disabled={isRefreshing}
+            className="btn-ghost"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              fontSize: '0.82rem',
+              borderRadius: '20px',
+              border: '1px solid var(--blue-border)',
+              color: 'var(--blue-sky)',
+              cursor: 'pointer',
+              background: 'rgba(56, 189, 248, 0.08)'
+            }}
+            title="Check live slot availability"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh Slots'}
+          </button>
         </div>
       </div>
 
