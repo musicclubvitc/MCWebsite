@@ -427,63 +427,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
-      {/* Superuser Status Banner */}
-      <div 
-        className="glass-panel"
-        style={{
-          padding: '20px 24px',
-          background: 'rgba(37, 99, 235, 0.08)',
-          border: '1.5px solid var(--blue-border)',
-          borderRadius: '14px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '14px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img src="/logo.png" alt="Logo" style={{ width: '40px', height: '40px', borderRadius: '50%' }} />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h3 className="font-display font-bold text-lg" style={{ color: '#F8FAFC' }}>
-                Superuser / Admin Console
-              </h3>
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '3px 10px',
-                borderRadius: '20px',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                background: isSupabaseConfigured ? 'rgba(34,197,94,0.15)' : 'rgba(234,179,8,0.15)',
-                color: isSupabaseConfigured ? '#4ade80' : '#facc15',
-                border: isSupabaseConfigured ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(234,179,8,0.3)'
-              }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isSupabaseConfigured ? '#22c55e' : '#eab308' }} />
-                {isSupabaseConfigured ? 'Supabase Connected' : 'Demo / Offline Mode'}
-              </span>
-            </div>
-            <p style={{ color: '#94A3B8', fontSize: '0.85rem', marginTop: '2px' }}>
-              Manage users, registered bands, slot bookings, gear requests & database sync
-            </p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            onClick={handleRefreshData}
-            disabled={isRefreshing}
-            className="btn-secondary"
-            style={{ fontSize: '0.82rem', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing Data...' : 'Refresh Data'}
-          </button>
-        </div>
-      </div>
-
       {/* ===================== 1. ALL BOOKINGS ===================== */}
       {currentSection === 'manage-bookings' && (
         <div>
@@ -753,16 +696,10 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     )}
                   </div>
 
-                  {/* Manual Refresh Button */}
+                  {/* Refresh Button */}
                   <button
-                    onClick={async () => {
-                      setIsRefreshingBookings(true);
-                      if (refreshLiveBookings) await refreshLiveBookings();
-                      else if (refreshAllLiveData) await refreshAllLiveData();
-                      setIsRefreshingBookings(false);
-                      showToast("Bookings refreshed!");
-                    }}
-                    disabled={isRefreshingBookings}
+                    onClick={handleRefreshData}
+                    disabled={isRefreshing}
                     className="btn-ghost"
                     style={{
                       display: 'inline-flex',
@@ -776,10 +713,10 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       cursor: 'pointer',
                       background: 'rgba(56, 189, 248, 0.08)'
                     }}
-                    title="Refresh bookings from server"
+                    title="Refresh all data from server"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingBookings ? 'animate-spin' : ''}`} />
-                    {isRefreshingBookings ? 'Refreshing...' : 'Refresh'}
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
                   </button>
                 </div>
               </div>
@@ -1132,6 +1069,28 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       </button>
                     );
                   })}
+
+                  <button
+                    onClick={handleRefreshData}
+                    disabled={isRefreshing}
+                    className="btn-ghost"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      borderRadius: '20px',
+                      border: '1px solid var(--blue-border)',
+                      color: 'var(--blue-sky)',
+                      cursor: 'pointer',
+                      background: 'rgba(56, 189, 248, 0.08)'
+                    }}
+                    title="Refresh bands from server"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
               </div>
 
@@ -1365,6 +1324,28 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       </button>
                     );
                   })}
+
+                  <button
+                    onClick={handleRefreshData}
+                    disabled={isRefreshing}
+                    className="btn-ghost"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '5px 12px',
+                      fontSize: '0.78rem',
+                      borderRadius: '20px',
+                      border: '1px solid var(--blue-border)',
+                      color: 'var(--blue-sky)',
+                      cursor: 'pointer',
+                      background: 'rgba(56, 189, 248, 0.08)'
+                    }}
+                    title="Refresh members from server"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  </button>
                 </div>
               </div>
 
@@ -1464,42 +1445,66 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
       {currentSection === 'manage-instruments' && (
         <div>
           {/* Sub Navigation: Inventory vs Requisitions */}
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '22px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => { setGearSubTab('inventory'); setSelectedInstDetails(null); }}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  background: gearSubTab === 'inventory' ? 'var(--blue-royal)' : 'rgba(255,255,255,0.04)',
+                  color: gearSubTab === 'inventory' ? '#ffffff' : '#94A3B8',
+                  border: gearSubTab === 'inventory' ? '1px solid var(--blue-sky)' : '1px solid var(--blue-border)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Package className="w-4 h-4" /> Club Gear Inventory ({instruments.length})
+              </button>
+              <button
+                onClick={() => { setGearSubTab('requests'); setSelectedInstDetails(null); }}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  background: gearSubTab === 'requests' ? 'var(--blue-royal)' : 'rgba(255,255,255,0.04)',
+                  color: gearSubTab === 'requests' ? '#ffffff' : '#94A3B8',
+                  border: gearSubTab === 'requests' ? '1px solid var(--blue-sky)' : '1px solid var(--blue-border)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Guitar className="w-4 h-4" /> Member Requisitions ({instrumentRequests.length})
+              </button>
+            </div>
+
             <button
-              onClick={() => { setGearSubTab('inventory'); setSelectedInstDetails(null); }}
+              onClick={handleRefreshData}
+              disabled={isRefreshing}
+              className="btn-ghost"
               style={{
-                padding: '8px 20px',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                background: gearSubTab === 'inventory' ? 'var(--blue-royal)' : 'rgba(255,255,255,0.04)',
-                color: gearSubTab === 'inventory' ? '#ffffff' : '#94A3B8',
-                border: gearSubTab === 'inventory' ? '1px solid var(--blue-sky)' : '1px solid var(--blue-border)',
-                cursor: 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <Package className="w-4 h-4" /> Club Gear Inventory ({instruments.length})
-            </button>
-            <button
-              onClick={() => { setGearSubTab('requests'); setSelectedInstDetails(null); }}
-              style={{
-                padding: '8px 20px',
+                gap: '5px',
+                padding: '6px 14px',
+                fontSize: '0.82rem',
                 borderRadius: '20px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                background: gearSubTab === 'requests' ? 'var(--blue-royal)' : 'rgba(255,255,255,0.04)',
-                color: gearSubTab === 'requests' ? '#ffffff' : '#94A3B8',
-                border: gearSubTab === 'requests' ? '1px solid var(--blue-sky)' : '1px solid var(--blue-border)',
+                border: '1px solid var(--blue-border)',
+                color: 'var(--blue-sky)',
                 cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                background: 'rgba(56, 189, 248, 0.08)'
               }}
+              title="Refresh gear and requests from server"
             >
-              <Guitar className="w-4 h-4" /> Member Requisitions ({instrumentRequests.length})
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
 
