@@ -49,7 +49,8 @@ export const Contact = () => {
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '36px' }}>
         <div className="badge-sky" style={{ marginBottom: '8px' }}>
-          CONTACT
+          <Mail className="w-3.5 h-3.5" />
+          GET IN TOUCH
         </div>
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
           Get In Touch

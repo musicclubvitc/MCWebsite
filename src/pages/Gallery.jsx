@@ -70,7 +70,7 @@ export const Gallery = ({ setActiveTab }) => {
       
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div className="badge-sky" style={{ marginBottom: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <div className="badge-sky" style={{ marginBottom: '8px' }}>
           <Sparkles className="w-3.5 h-3.5" />
           MOMENTS & ARCHIVES
         </div>

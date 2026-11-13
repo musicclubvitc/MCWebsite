@@ -230,54 +230,51 @@ body {
 }
 
 /* Clean Badges */
-.badge-blue {
-  background: rgba(37, 99, 245, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(56, 189, 248, 0.25);
+.badge-blue,
+.badge-sky,
+.badge-success,
+.badge-warning,
+.badge-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  vertical-align: middle;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 600;
+  line-height: 1.2;
+}
+
+.badge-blue {
+  background: rgba(37, 99, 245, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .badge-sky {
   background: rgba(56, 189, 248, 0.12);
   color: #38bdf8;
   border: 1px solid rgba(56, 189, 248, 0.3);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
 }
 
 .badge-success {
   background: rgba(16, 185, 129, 0.12);
   color: #34d399;
   border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
 }
 
 .badge-warning {
   background: rgba(245, 158, 11, 0.12);
   color: #fbbf24;
   border: 1px solid rgba(245, 158, 11, 0.3);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
 }
 
 .badge-danger {
   background: rgba(239, 68, 68, 0.12);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.3);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
 }
 
 /* Form Controls */

@@ -24,6 +24,7 @@ export const Team = () => {
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <div className="badge-sky" style={{ marginBottom: '8px' }}>
+          <Users className="w-3.5 h-3.5" />
           CLUB COMMITTEE
         </div>
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>

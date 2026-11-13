@@ -5,7 +5,8 @@ import {
   Guitar, 
   Users, 
   ShieldAlert, 
-  CheckCircle2
+  CheckCircle2,
+  BookOpen
 } from 'lucide-react';
 
 export const Instructions = ({ setActiveTab }) => {
@@ -25,6 +26,7 @@ export const Instructions = ({ setActiveTab }) => {
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '36px' }}>
         <div className="badge-sky" style={{ marginBottom: '8px' }}>
+          <BookOpen className="w-3.5 h-3.5" />
           CLUB GUIDELINES
         </div>
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>

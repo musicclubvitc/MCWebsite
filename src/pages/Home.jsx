@@ -8,7 +8,8 @@ import {
   Disc, 
   Guitar,
   Sparkles,
-  Info
+  Info,
+  Music
 } from 'lucide-react';
 import { formatImageUrl } from '../lib/imageUtils';
 
@@ -202,6 +203,7 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
 
           <div>
             <div className="badge-sky" style={{ marginBottom: '10px' }}>
+              <Music className="w-3.5 h-3.5" />
               ABOUT THE CLUB
             </div>
             
@@ -231,8 +233,9 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
       {/* 4. OFFICIAL CLUB BANDS SHOWCASE */}
       <section className="container-custom">
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div className="badge-blue" style={{ marginBottom: '8px' }}>
-            ROSTER
+          <div className="badge-sky" style={{ marginBottom: '8px' }}>
+            <Disc className="w-3.5 h-3.5" />
+            OFFICIAL ROSTER
           </div>
           <h2 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#F8FAFC' }}>
             Official Club Bands
