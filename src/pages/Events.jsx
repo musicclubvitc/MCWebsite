@@ -10,6 +10,7 @@ import {
   X, 
   CheckCircle2
 } from 'lucide-react';
+import { formatImageUrl } from '../lib/imageUtils';
 
 export const Events = ({ setActiveTab }) => {
   const { content } = useContent();
@@ -174,7 +175,7 @@ export const Events = ({ setActiveTab }) => {
               {/* Event Image */}
               <div style={{ position: 'relative', height: '190px', overflow: 'hidden' }}>
                 <img 
-                  src={event.image} 
+                  src={formatImageUrl(event.image)} 
                   alt={event.name} 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
@@ -329,7 +330,7 @@ export const Events = ({ setActiveTab }) => {
             </h2>
 
             <img 
-              src={activeModalEvent.image} 
+              src={formatImageUrl(activeModalEvent.image)} 
               alt={activeModalEvent.name}
               style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '10px', marginBottom: '16px' }} 
             />

@@ -28,6 +28,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { getBookingDeltaInfo } from '../../lib/bookingUtils';
+import { formatImageUrl } from '../../lib/imageUtils';
 
 const PaginationControls = ({ currentPage, totalPages, totalItems, pageSize, onPageChange }) => {
   if (totalItems <= pageSize && currentPage === 1) return null;
@@ -1616,7 +1617,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                         <div>
                           {item.image && (
                             <img
-                              src={item.image}
+                              src={formatImageUrl(item.image)}
                               alt={item.name}
                               style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }}
                               onError={(e) => { e.target.style.display = 'none'; }}
@@ -2134,19 +2135,19 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
-                  Equipment Image URL
+                  Equipment Image URL <span style={{ color: '#38bdf8' }}>(Direct link or Google Drive link)</span>
                 </label>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://images.unsplash.com/... or Google Drive share link"
                   value={gearForm.image}
-                  onChange={(e) => setGearForm({ ...gearForm, image: e.target.value })}
+                  onChange={(e) => setGearForm({ ...gearForm, image: formatImageUrl(e.target.value) })}
                   className="input-field"
                 />
                 {gearForm.image && (
                   <div style={{ marginTop: '8px' }}>
                     <img
-                      src={gearForm.image}
+                      src={formatImageUrl(gearForm.image)}
                       alt="Preview"
                       style={{ width: '100%', height: '110px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--blue-border)' }}
                       onError={(e) => { e.target.style.display = 'none'; }}

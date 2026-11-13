@@ -10,6 +10,7 @@ import {
   Sparkles,
   Info
 } from 'lucide-react';
+import { formatImageUrl } from '../lib/imageUtils';
 
 export const Home = ({ setActiveTab, onOpenAuthModal }) => {
   const { content } = useContent();
@@ -187,7 +188,7 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
         >
           <div>
             <img 
-              src={about.image || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1000&q=80"} 
+              src={formatImageUrl(about.image) || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1000&q=80"} 
               alt="About Music Club VITCC"
               style={{
                 width: '100%',
@@ -339,7 +340,7 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
 
             <div>
               <img 
-                src={activeBand.image} 
+                src={formatImageUrl(activeBand.image)} 
                 alt={activeBand.name}
                 style={{
                   width: '100%',

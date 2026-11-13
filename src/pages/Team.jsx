@@ -7,6 +7,7 @@ import {
   User
 } from 'lucide-react';
 import { InstagramIcon, LinkedinIcon } from '../components/SocialIcons';
+import { formatImageUrl } from '../lib/imageUtils';
 
 export const Team = () => {
   const { content } = useContent();
@@ -109,7 +110,7 @@ export const Team = () => {
               {/* Member Photo (Allow photos, leave blank if not provided) */}
               {member.image ? (
                 <img 
-                  src={member.image} 
+                  src={formatImageUrl(member.image)} 
                   alt={member.name}
                   style={{
                     width: '96px',

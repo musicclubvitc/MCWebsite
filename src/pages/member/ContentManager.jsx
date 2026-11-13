@@ -339,13 +339,13 @@ export const ContentManager = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', alignItems: 'center' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '6px' }}>
-                  About Hero Image URL
+                  About Hero Image URL <span style={{ color: '#38bdf8' }}>(Direct link or Google Drive link)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="https://..."
+                  placeholder="https://... or Google Drive share link"
                   value={localData.about?.image || ''}
-                  onChange={(e) => updateField('about.image', e.target.value)}
+                  onChange={(e) => updateField('about.image', formatImageUrl(e.target.value))}
                   className="input-field"
                 />
               </div>
@@ -353,7 +353,7 @@ export const ContentManager = () => {
               {localData.about?.image && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img
-                    src={localData.about.image}
+                    src={formatImageUrl(localData.about.image)}
                     alt="About Preview"
                     style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--blue-border)' }}
                     onError={(e) => { e.target.style.display = 'none'; }}
@@ -652,15 +652,15 @@ export const ContentManager = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
-                      Poster Image URL
+                      Poster Image URL <span style={{ color: '#38bdf8' }}>(Direct link or Google Drive link)</span>
                     </label>
                     <input
                       type="text"
-                      placeholder="https://images.unsplash.com/..."
+                      placeholder="https://images.unsplash.com/... or Google Drive share link"
                       value={ev.image || ''}
                       onChange={(e) => {
                         const next = [...localData.events];
-                        next[idx].image = e.target.value;
+                        next[idx].image = formatImageUrl(e.target.value);
                         setLocalData({ ...localData, events: next });
                       }}
                       className="input-field"
@@ -701,7 +701,7 @@ export const ContentManager = () => {
                   }}>
                     {ev.image ? (
                       <img
-                        src={ev.image}
+                        src={formatImageUrl(ev.image)}
                         alt="Event poster"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         onError={(e) => { e.target.style.display = 'none'; }}
@@ -810,13 +810,16 @@ export const ContentManager = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Band Photo URL</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
+                    Band Photo URL <span style={{ color: '#38bdf8' }}>(Direct link or Google Drive link)</span>
+                  </label>
                   <input
                     type="text"
+                    placeholder="https://... or Google Drive share link"
                     value={b.image || ''}
                     onChange={(e) => {
                       const next = [...localData.bands];
-                      next[idx].image = e.target.value;
+                      next[idx].image = formatImageUrl(e.target.value);
                       setLocalData({ ...localData, bands: next });
                     }}
                     className="input-field"
@@ -974,12 +977,14 @@ export const ContentManager = () => {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Photo URL (Optional)</label>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
+                      Photo URL <span style={{ color: '#38bdf8' }}>(Direct link or Google Drive link)</span>
+                    </label>
                     <input
                       type="text"
-                      placeholder="Leave blank or paste image link"
+                      placeholder="Leave blank or paste image / Google Drive share link"
                       value={m.image || ''}
-                      onChange={(e) => handleUpdateMember(selectedSession, idx, 'image', e.target.value)}
+                      onChange={(e) => handleUpdateMember(selectedSession, idx, 'image', formatImageUrl(e.target.value))}
                       className="input-field"
                     />
                   </div>
@@ -1417,7 +1422,7 @@ export const ContentManager = () => {
                             <input
                               type="text"
                               value={photo.url || ''}
-                              onChange={(e) => handleUpdatePhoto(idx, 'url', e.target.value)}
+                              onChange={(e) => handleUpdatePhoto(idx, 'url', formatImageUrl(e.target.value))}
                               placeholder="https://drive.google.com/file/d/.../view or https://..."
                               className="input-field"
                             />

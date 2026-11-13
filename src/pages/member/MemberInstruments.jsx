@@ -7,6 +7,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
+import { formatImageUrl } from '../../lib/imageUtils';
 
 export const MemberInstruments = () => {
   const { myInstrumentRequests, addInstrumentRequest, instruments, refreshAllLiveData, showToast } = useAuth();
@@ -173,7 +174,7 @@ export const MemberInstruments = () => {
               >
                 {inst.image && (
                   <img 
-                    src={inst.image} 
+                    src={formatImageUrl(inst.image)} 
                     alt={inst.name}
                     style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover' }} 
                     onError={(e) => { e.target.style.display = 'none'; }}
