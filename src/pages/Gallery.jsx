@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useContent } from '../context/ContentContext';
-import { useAuth } from '../context/AuthContext';
 import { 
   Image as ImageIcon, 
   Search, 
-  RefreshCw, 
   ExternalLink, 
   Download, 
   X, 
@@ -13,220 +11,39 @@ import {
   Folder, 
   Calendar, 
   Sparkles,
-  Info,
   Maximize2
 } from 'lucide-react';
-
-// Preset sample photos shown when Google Apps Script URL has not been connected yet
-const PRESET_GALLERY_IMAGES = [
-  {
-    id: 'demo-1',
-    name: 'Battle of the Bands - Grand Finale',
-    album: 'Riviera Concerts',
-    created: '2026-03-14',
-    thumbUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a'
-  },
-  {
-    id: 'demo-2',
-    name: 'Acoustic Jam Night Under the Stars',
-    album: 'Acoustic Jams',
-    created: '2026-02-20',
-    thumbUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4'
-  },
-  {
-    id: 'demo-3',
-    name: 'Main Stage Headliner Performance',
-    album: 'Riviera Concerts',
-    created: '2026-03-15',
-    thumbUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745'
-  },
-  {
-    id: 'demo-4',
-    name: 'Sound Check & Guitar Tuning',
-    album: 'Behind The Scenes',
-    created: '2026-01-18',
-    thumbUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819'
-  },
-  {
-    id: 'demo-5',
-    name: 'Electrifying Synth & Keys Solo',
-    album: 'Acoustic Jams',
-    created: '2026-02-22',
-    thumbUrl: 'https://images.unsplash.com/photo-1520523839898-50712825e617?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1520523839898-50712825e617?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1520523839898-50712825e617'
-  },
-  {
-    id: 'demo-6',
-    name: 'Crowd Cheering at Outdoor Amphitheatre',
-    album: 'Behind The Scenes',
-    created: '2026-03-12',
-    thumbUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea'
-  },
-  {
-    id: 'demo-7',
-    name: 'Drum Kit Rhythm Section Practice',
-    album: 'Behind The Scenes',
-    created: '2026-01-10',
-    thumbUrl: 'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1519892300165-cb5542fb47c7'
-  },
-  {
-    id: 'demo-8',
-    name: 'Vocal Harmony Rehearsals',
-    album: 'Acoustic Jams',
-    created: '2026-02-14',
-    thumbUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=800&q=80',
-    fullUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=2000&q=90',
-    viewUrl: 'https://drive.google.com',
-    downloadUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7'
-  }
-];
+import { formatImageUrl, getHighResImageUrl } from '../lib/galleryUtils';
 
 export const Gallery = ({ setActiveTab }) => {
   const { content } = useContent();
-  const { isAdmin, showToast } = useAuth();
 
-  // Resolve Google Apps Script endpoint URL
-  const scriptUrl = useMemo(() => {
-    return (
-      content?.gallery?.appsScriptUrl ||
-      import.meta.env.VITE_GOOGLE_DRIVE_GALLERY_URL ||
-      localStorage.getItem('vitc_music_gallery_url') ||
-      ''
-    );
-  }, [content]);
+  const galleryConfig = content?.gallery || {};
+  const photos = useMemo(() => galleryConfig.photos || [], [galleryConfig.photos]);
 
-  const [images, setImages] = useState([]);
-  const [albums, setAlbums] = useState([]);
   const [selectedAlbum, setSelectedAlbum] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
-  const [isLiveConnected, setIsLiveConnected] = useState(false);
-
-  // Lightbox Modal State
   const [activePhotoIdx, setActivePhotoIdx] = useState(null);
 
-  // Fetch images from Google Apps Script Web App
-  const fetchGallery = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) setRefreshing(true);
-    else setLoading(true);
-    setError(null);
+  // Dynamically extract distinct albums from photos
+  const albums = useMemo(() => {
+    const list = Array.from(new Set(photos.map(p => p.album).filter(Boolean)));
+    return list;
+  }, [photos]);
 
-    // If no Google Apps Script Web App is connected yet, fall back gracefully to demo preset photos
-    if (!scriptUrl) {
-      setTimeout(() => {
-        setImages(PRESET_GALLERY_IMAGES);
-        const distinctAlbums = Array.from(new Set(PRESET_GALLERY_IMAGES.map(i => i.album).filter(Boolean)));
-        setAlbums(distinctAlbums);
-        setIsLiveConnected(false);
-        setLoading(false);
-        if (isManualRefresh) {
-          setRefreshing(false);
-          showToast("Sample gallery refreshed.");
-        }
-      }, 400);
-      return;
-    }
-
-    try {
-      const fetchTarget = isManualRefresh 
-        ? `${scriptUrl}${scriptUrl.includes('?') ? '&' : '?'}refresh=true&t=${Date.now()}`
-        : scriptUrl;
-
-      const res = await fetch(fetchTarget);
-      if (!res.ok) {
-        throw new Error(`Google Drive endpoint returned status ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      let list = [];
-      let foundAlbums = [];
-
-      if (Array.isArray(data)) {
-        list = data;
-      } else if (data && data.images && Array.isArray(data.images)) {
-        list = data.images;
-        foundAlbums = data.albums || [];
-      } else if (data && data.status === 'error') {
-        throw new Error(data.message || 'Google Apps Script reported an error');
-      }
-
-      if (list.length > 0) {
-        setImages(list);
-        if (foundAlbums.length === 0) {
-          foundAlbums = Array.from(new Set(list.map(i => i.album).filter(Boolean)));
-        }
-        setAlbums(foundAlbums);
-        setIsLiveConnected(true);
-        // Cache to sessionStorage for fast return
-        try {
-          sessionStorage.setItem('vitc_music_gallery_cache', JSON.stringify({ list, albums: foundAlbums, time: Date.now() }));
-        } catch (_) {}
-      } else {
-        setImages([]);
-      }
-
-      if (isManualRefresh) {
-        showToast("Live gallery photos synced from Google Drive!");
-      }
-    } catch (err) {
-      console.error('[Gallery] Fetch failed:', err);
-      setError(err.message || 'Failed to connect to Google Drive folder');
-      // If live fetch fails, load cache or presets
-      try {
-        const cached = sessionStorage.getItem('vitc_music_gallery_cache');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          setImages(parsed.list || []);
-          setAlbums(parsed.albums || []);
-          setIsLiveConnected(true);
-          return;
-        }
-      } catch (_) {}
-      setImages(PRESET_GALLERY_IMAGES);
-      setIsLiveConnected(false);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [scriptUrl, showToast]);
-
-  // Initial load
-  useEffect(() => {
-    fetchGallery(false);
-  }, [fetchGallery]);
-
-  // Filtered images by album and search
-  const filteredImages = useMemo(() => {
+  // Filtered photos
+  const filteredPhotos = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    return images.filter(img => {
-      const matchAlbum = selectedAlbum === 'All' || img.album === selectedAlbum;
-      const matchSearch = !q || (img.name && img.name.toLowerCase().includes(q)) || (img.album && img.album.toLowerCase().includes(q));
+    return photos.filter(photo => {
+      const matchAlbum = selectedAlbum === 'All' || photo.album === selectedAlbum;
+      const matchSearch = !q || 
+        (photo.title && photo.title.toLowerCase().includes(q)) || 
+        (photo.album && photo.album.toLowerCase().includes(q)) ||
+        (photo.caption && photo.caption.toLowerCase().includes(q)) ||
+        (photo.date && photo.date.toLowerCase().includes(q));
       return matchAlbum && matchSearch;
     });
-  }, [images, selectedAlbum, searchQuery]);
+  }, [photos, selectedAlbum, searchQuery]);
 
   // Lightbox keyboard navigation
   useEffect(() => {
@@ -236,17 +53,17 @@ export const Gallery = ({ setActiveTab }) => {
       if (e.key === 'Escape') {
         setActivePhotoIdx(null);
       } else if (e.key === 'ArrowRight') {
-        setActivePhotoIdx(prev => (prev + 1) % filteredImages.length);
+        setActivePhotoIdx(prev => (prev + 1) % filteredPhotos.length);
       } else if (e.key === 'ArrowLeft') {
-        setActivePhotoIdx(prev => (prev - 1 + filteredImages.length) % filteredImages.length);
+        setActivePhotoIdx(prev => (prev - 1 + filteredPhotos.length) % filteredPhotos.length);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activePhotoIdx, filteredImages.length]);
+  }, [activePhotoIdx, filteredPhotos.length]);
 
-  const activePhoto = activePhotoIdx !== null ? filteredImages[activePhotoIdx] : null;
+  const activePhoto = activePhotoIdx !== null ? filteredPhotos[activePhotoIdx] : null;
 
   return (
     <div className="container-custom" style={{ paddingTop: '36px', paddingBottom: '70px' }}>
@@ -258,14 +75,14 @@ export const Gallery = ({ setActiveTab }) => {
           MOMENTS & ARCHIVES
         </div>
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
-          {content?.gallery?.title || "Music Club Gallery"}
+          {galleryConfig.title || "Club Photo & Video Gallery"}
         </h1>
         <p style={{ color: '#94A3B8', maxWidth: '620px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
-          {content?.gallery?.subtitle || "Concerts, acoustic jams, auditions, and behind-the-scenes moments from the VIT Chennai Music Club."}
+          {galleryConfig.subtitle || "Concerts, acoustic jams, auditions, and behind-the-scenes moments from the VIT Chennai Music Club."}
         </p>
       </div>
 
-      {/* Sync Status Banner */}
+      {/* Info & Drive Link Bar */}
       <div 
         className="glass-panel"
         style={{
@@ -277,8 +94,8 @@ export const Gallery = ({ setActiveTab }) => {
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: '12px',
-          background: isLiveConnected ? 'rgba(34, 197, 94, 0.06)' : 'rgba(56, 189, 248, 0.06)',
-          border: isLiveConnected ? '1px solid rgba(34, 197, 94, 0.25)' : '1px solid var(--blue-border)'
+          background: 'rgba(56, 189, 248, 0.05)',
+          border: '1px solid var(--blue-border)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -286,56 +103,32 @@ export const Gallery = ({ setActiveTab }) => {
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            background: isLiveConnected ? '#22c55e' : '#38bdf8',
-            boxShadow: isLiveConnected ? '0 0 10px #22c55e' : '0 0 10px #38bdf8'
+            background: '#38bdf8',
+            boxShadow: '0 0 10px #38bdf8'
           }} />
-          <span style={{ fontSize: '0.85rem', color: isLiveConnected ? '#86efac' : '#bae6fd', fontWeight: 600 }}>
-            {isLiveConnected 
-              ? 'Connected to Live Google Drive Folder' 
-              : 'Google Drive Live Gallery (Preview Mode)'}
+          <span style={{ fontSize: '0.85rem', color: '#bae6fd', fontWeight: 600 }}>
+            Curated Club Moments
           </span>
           <span style={{ color: '#64748B', fontSize: '0.82rem' }}>
-            • {filteredImages.length} {filteredImages.length === 1 ? 'photo' : 'photos'}
+            • {filteredPhotos.length} {filteredPhotos.length === 1 ? 'photo' : 'photos'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {content?.gallery?.driveFolderUrl && (
-            <a 
-              href={content.gallery.driveFolderUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="btn-ghost"
-              style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Folder className="w-3.5 h-3.5 text-sky-400" />
-              Open Drive Folder
-            </a>
-          )}
-
-          <button
-            onClick={() => fetchGallery(true)}
-            disabled={refreshing || loading}
+        {galleryConfig.driveFolderUrl && (
+          <a 
+            href={galleryConfig.driveFolderUrl}
+            target="_blank"
+            rel="noreferrer"
             className="btn-ghost"
-            style={{
-              fontSize: '0.8rem',
-              padding: '6px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(56, 189, 248, 0.08)',
-              border: '1px solid var(--blue-border)',
-              color: 'var(--blue-sky)'
-            }}
-            title="Fetch latest photos from Google Drive"
+            style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? 'Syncing...' : 'Sync Drive'}
-          </button>
-        </div>
+            <Folder className="w-3.5 h-3.5 text-sky-400" />
+            Open Drive Folder
+          </a>
+        )}
       </div>
 
-      {/* Toolbar: Search and Album Filters */}
+      {/* Search & Album Filters */}
       <div 
         className="glass-panel"
         style={{
@@ -356,7 +149,7 @@ export const Gallery = ({ setActiveTab }) => {
             />
             <input
               type="text"
-              placeholder="Search photos by title, event, or album..."
+              placeholder="Search photos by title, album, date..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input-field"
@@ -387,11 +180,11 @@ export const Gallery = ({ setActiveTab }) => {
                 border: selectedAlbum === 'All' ? '1px solid var(--blue-sky)' : '1px solid rgba(255,255,255,0.08)'
               }}
             >
-              All Albums ({images.length})
+              All Photos ({photos.length})
             </button>
 
             {albums.map((alb) => {
-              const count = images.filter(i => i.album === alb).length;
+              const count = photos.filter(p => p.album === alb).length;
               const isActive = selectedAlbum === alb;
               return (
                 <button
@@ -416,32 +209,8 @@ export const Gallery = ({ setActiveTab }) => {
         </div>
       </div>
 
-      {/* Loading Skeleton */}
-      {loading && (
-        <div 
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '18px'
-          }}
-        >
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div 
-              key={i} 
-              className="glass-panel" 
-              style={{ 
-                height: '240px', 
-                borderRadius: '14px', 
-                animation: 'pulse 1.5s infinite ease-in-out',
-                background: 'rgba(255,255,255,0.03)' 
-              }} 
-            />
-          ))}
-        </div>
-      )}
-
       {/* Empty State */}
-      {!loading && filteredImages.length === 0 && (
+      {filteredPhotos.length === 0 && (
         <div className="glass-panel" style={{ padding: '60px 20px', textAlign: 'center', borderRadius: '16px' }}>
           <ImageIcon className="w-12 h-12 text-slate-500" style={{ margin: '0 auto 14px auto' }} />
           <h3 style={{ color: '#F8FAFC', fontWeight: 700, fontSize: '1.2rem', marginBottom: '6px' }}>
@@ -465,7 +234,7 @@ export const Gallery = ({ setActiveTab }) => {
       )}
 
       {/* Gallery Grid */}
-      {!loading && filteredImages.length > 0 && (
+      {filteredPhotos.length > 0 && (
         <div 
           style={{
             display: 'grid',
@@ -473,91 +242,87 @@ export const Gallery = ({ setActiveTab }) => {
             gap: '20px'
           }}
         >
-          {filteredImages.map((img, idx) => (
-            <div
-              key={img.id || idx}
-              onClick={() => setActivePhotoIdx(idx)}
-              className="glass-panel glass-panel-hover"
-              style={{
-                borderRadius: '14px',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-                border: '1px solid var(--blue-border)',
-                background: 'rgba(15, 23, 42, 0.7)',
-                transition: 'transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease'
-              }}
-            >
-              {/* Image Container */}
-              <div style={{ position: 'relative', width: '100%', height: '230px', overflow: 'hidden', backgroundColor: 'rgba(2,6,23,0.5)' }}>
-                <img
-                  src={img.thumbUrl || img.fullUrl}
-                  alt={img.name}
-                  loading="lazy"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    transition: 'transform 0.4s ease'
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                  onError={(e) => {
-                    // Fallback to Google user content direct link or placeholder
-                    if (img.id && !e.currentTarget.src.includes('lh3.googleusercontent.com/d/')) {
-                      e.currentTarget.src = `https://lh3.googleusercontent.com/d/${img.id}=w800`;
-                    }
-                  }}
-                />
+          {filteredPhotos.map((photo, idx) => {
+            const displayUrl = formatImageUrl(photo.url);
 
-                {/* Album Badge */}
-                {img.album && (
-                  <span 
+            return (
+              <div
+                key={photo.id || idx}
+                onClick={() => setActivePhotoIdx(idx)}
+                className="glass-panel glass-panel-hover"
+                style={{
+                  borderRadius: '14px',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  border: '1px solid var(--blue-border)',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  transition: 'transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease'
+                }}
+              >
+                {/* Image Container */}
+                <div style={{ position: 'relative', width: '100%', height: '230px', overflow: 'hidden', backgroundColor: 'rgba(2,6,23,0.5)' }}>
+                  <img
+                    src={displayUrl}
+                    alt={photo.title || 'Music Club Moment'}
+                    loading="lazy"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transition: 'transform 0.4s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  />
+
+                  {/* Album Badge */}
+                  {photo.album && (
+                    <span 
+                      style={{
+                        position: 'absolute',
+                        top: '10px',
+                        left: '10px',
+                        background: 'rgba(15, 23, 42, 0.85)',
+                        backdropFilter: 'blur(6px)',
+                        color: 'var(--blue-sky)',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(56, 189, 248, 0.3)'
+                      }}
+                    >
+                      {photo.album}
+                    </span>
+                  )}
+
+                  {/* Expand Icon */}
+                  <div 
                     style={{
                       position: 'absolute',
                       top: '10px',
-                      left: '10px',
-                      background: 'rgba(15, 23, 42, 0.85)',
-                      backdropFilter: 'blur(6px)',
-                      color: 'var(--blue-sky)',
-                      fontSize: '0.72rem',
-                      fontWeight: 700,
-                      padding: '4px 10px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(56, 189, 248, 0.3)'
+                      right: '10px',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'rgba(15, 23, 42, 0.7)',
+                      backdropFilter: 'blur(4px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff'
                     }}
+                    title="Click to view full photo"
                   >
-                    {img.album}
-                  </span>
-                )}
-
-                {/* Hover overlay hint */}
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'rgba(15, 23, 42, 0.7)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff'
-                  }}
-                  title="Click to expand"
-                >
-                  <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
+                    <Maximize2 className="w-3.5 h-3.5 text-sky-400" />
+                  </div>
                 </div>
-              </div>
 
-              {/* Photo Caption */}
-              <div style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ minWidth: 0 }}>
+                {/* Photo Caption */}
+                <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <div 
                     style={{
                       fontSize: '0.88rem',
@@ -567,20 +332,29 @@ export const Gallery = ({ setActiveTab }) => {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
                     }}
-                    title={img.name}
+                    title={photo.title}
                   >
-                    {img.name.replace(/\.[^/.]+$/, "")}
+                    {photo.title}
                   </div>
-                  {img.created && (
-                    <div style={{ fontSize: '0.74rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                      <Calendar className="w-3 h-3" />
-                      {new Date(img.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </div>
-                  )}
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748B' }}>
+                    {photo.date ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Calendar className="w-3 h-3" />
+                        {photo.date}
+                      </span>
+                    ) : <span />}
+
+                    {photo.caption && (
+                      <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {photo.caption}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -609,39 +383,23 @@ export const Gallery = ({ setActiveTab }) => {
                 {activePhoto.album || 'Gallery Photo'}
               </span>
               <span style={{ color: '#64748B', fontSize: '0.8rem', marginLeft: '10px' }}>
-                {activePhotoIdx + 1} of {filteredImages.length}
+                {activePhotoIdx + 1} of {filteredPhotos.length}
               </span>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              {activePhoto.downloadUrl && (
-                <a
-                  href={activePhoto.downloadUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                  className="btn-ghost"
-                  style={{ padding: '8px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  title="Download image"
-                >
-                  <Download className="w-4 h-4 text-sky-400" />
-                  <span className="hidden sm:inline">Download</span>
-                </a>
-              )}
-
-              {activePhoto.viewUrl && (
-                <a
-                  href={activePhoto.viewUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-ghost"
-                  style={{ padding: '8px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  title="View on Google Drive"
-                >
-                  <ExternalLink className="w-4 h-4 text-sky-400" />
-                  <span className="hidden sm:inline">Drive</span>
-                </a>
-              )}
+              <a
+                href={getHighResImageUrl(activePhoto.url)}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="btn-ghost"
+                style={{ padding: '8px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                title="Open original high-res photo"
+              >
+                <Download className="w-4 h-4 text-sky-400" />
+                <span className="hidden sm:inline">Original</span>
+              </a>
 
               <button
                 onClick={() => setActivePhotoIdx(null)}
@@ -670,9 +428,9 @@ export const Gallery = ({ setActiveTab }) => {
             }}
           >
             {/* Prev Arrow */}
-            {filteredImages.length > 1 && (
+            {filteredPhotos.length > 1 && (
               <button
-                onClick={() => setActivePhotoIdx(prev => (prev - 1 + filteredImages.length) % filteredImages.length)}
+                onClick={() => setActivePhotoIdx(prev => (prev - 1 + filteredPhotos.length) % filteredPhotos.length)}
                 className="btn-ghost"
                 style={{
                   position: 'absolute',
@@ -697,8 +455,8 @@ export const Gallery = ({ setActiveTab }) => {
 
             {/* High-Res Image */}
             <img
-              src={activePhoto.fullUrl || activePhoto.thumbUrl}
-              alt={activePhoto.name}
+              src={getHighResImageUrl(activePhoto.url)}
+              alt={activePhoto.title}
               style={{
                 maxHeight: 'calc(100vh - 160px)',
                 maxWidth: '92vw',
@@ -709,9 +467,9 @@ export const Gallery = ({ setActiveTab }) => {
             />
 
             {/* Next Arrow */}
-            {filteredImages.length > 1 && (
+            {filteredPhotos.length > 1 && (
               <button
-                onClick={() => setActivePhotoIdx(prev => (prev + 1) % filteredImages.length)}
+                onClick={() => setActivePhotoIdx(prev => (prev + 1) % filteredPhotos.length)}
                 className="btn-ghost"
                 style={{
                   position: 'absolute',
@@ -738,11 +496,16 @@ export const Gallery = ({ setActiveTab }) => {
           {/* Bottom Bar: Title & Caption */}
           <div style={{ textAlign: 'center', padding: '8px', zIndex: 10 }}>
             <h3 style={{ color: '#F8FAFC', fontSize: '1rem', fontWeight: 600, margin: 0 }}>
-              {activePhoto.name.replace(/\.[^/.]+$/, "")}
+              {activePhoto.title}
             </h3>
-            {activePhoto.created && (
-              <p style={{ color: '#94A3B8', fontSize: '0.78rem', margin: '4px 0 0 0' }}>
-                Captured on {new Date(activePhoto.created).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+            {activePhoto.caption && (
+              <p style={{ color: '#CBD5E1', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                {activePhoto.caption}
+              </p>
+            )}
+            {activePhoto.date && (
+              <p style={{ color: '#64748B', fontSize: '0.78rem', margin: '2px 0 0 0' }}>
+                {activePhoto.date}
               </p>
             )}
           </div>

@@ -18,8 +18,11 @@ import {
   AlertCircle,
   Image as ImageIcon,
   HelpCircle,
-  BarChart3
+  BarChart3,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
+import { formatImageUrl } from '../../lib/galleryUtils';
 
 const PRESET_EVENT_IMAGES = [
   { label: 'Concert Stage', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80' },
@@ -1122,91 +1125,343 @@ export const ContentManager = () => {
         </div>
       )}
 
-      {/* ===================== SECTION 8: GOOGLE DRIVE GALLERY ===================== */}
-      {activeSection === 'gallery' && (
-        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1rem', marginBottom: '4px' }}>
-              Google Drive Live Gallery Configuration
-            </h4>
-            <p style={{ color: '#94A3B8', fontSize: '0.85rem' }}>
-              Connect your Google Drive folder via Google Apps Script Web App. Any photos added or deleted in that folder will instantly sync to the website.
-            </p>
-          </div>
+      {/* ===================== SECTION 8: PHOTO GALLERY CMS ===================== */}
+      {activeSection === 'gallery' && (() => {
+        const photos = localData.gallery?.photos || [];
+        const existingAlbums = Array.from(new Set(photos.map(p => p.album).filter(Boolean)));
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>Gallery Page Title</label>
-              <input
-                type="text"
-                value={localData.gallery?.title || ''}
-                onChange={(e) => updateField('gallery.title', e.target.value)}
-                placeholder="Club Photo & Video Gallery"
-                className="input-field"
-              />
+        const handleAddPhoto = () => {
+          const newPhoto = {
+            id: `photo-${Date.now()}`,
+            title: "New Club Moment",
+            album: existingAlbums[0] || "Concerts",
+            url: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1600&q=80",
+            date: "2026",
+            caption: "Live stage performance at VIT Chennai."
+          };
+          const nextPhotos = [newPhoto, ...photos];
+          setLocalData({
+            ...localData,
+            gallery: {
+              ...(localData.gallery || {}),
+              photos: nextPhotos
+            }
+          });
+        };
+
+        const handleDeletePhoto = (idx) => {
+          const nextPhotos = photos.filter((_, i) => i !== idx);
+          setLocalData({
+            ...localData,
+            gallery: {
+              ...(localData.gallery || {}),
+              photos: nextPhotos
+            }
+          });
+        };
+
+        const handleUpdatePhoto = (idx, field, value) => {
+          const nextPhotos = [...photos];
+          nextPhotos[idx] = { ...nextPhotos[idx], [field]: value };
+          setLocalData({
+            ...localData,
+            gallery: {
+              ...(localData.gallery || {}),
+              photos: nextPhotos
+            }
+          });
+        };
+
+        const handleMovePhoto = (idx, direction) => {
+          const targetIdx = idx + direction;
+          if (targetIdx < 0 || targetIdx >= photos.length) return;
+          const nextPhotos = [...photos];
+          const temp = nextPhotos[idx];
+          nextPhotos[idx] = nextPhotos[targetIdx];
+          nextPhotos[targetIdx] = temp;
+          setLocalData({
+            ...localData,
+            gallery: {
+              ...(localData.gallery || {}),
+              photos: nextPhotos
+            }
+          });
+        };
+
+        return (
+          <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+              <div>
+                <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1.05rem', margin: 0 }}>
+                  Photo & Video Gallery Management
+                </h4>
+                <p style={{ color: '#94A3B8', fontSize: '0.82rem', margin: '3px 0 0 0' }}>
+                  Add direct image links or Google Drive share links. Google Drive file links are automatically converted to fast CDN photos.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button
+                  onClick={handleAddPhoto}
+                  className="btn-secondary"
+                  style={{ fontSize: '0.82rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Plus className="w-4 h-4" /> Add Photo
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="btn-primary"
+                  style={{ fontSize: '0.82rem', padding: '8px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Save className="w-4 h-4" /> Save Gallery
+                </button>
+              </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>Subtitle</label>
-              <input
-                type="text"
-                value={localData.gallery?.subtitle || ''}
-                onChange={(e) => updateField('gallery.subtitle', e.target.value)}
-                placeholder="Concerts, acoustic jams, auditions, and behind-the-scenes moments"
-                className="input-field"
-              />
+            {/* General Gallery Settings */}
+            <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--blue-border)', borderRadius: '12px', padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ fontWeight: 600, color: 'var(--blue-sky)', fontSize: '0.88rem' }}>Page Headers & Drive Folder</div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>Gallery Page Title</label>
+                  <input
+                    type="text"
+                    value={localData.gallery?.title || ''}
+                    onChange={(e) => updateField('gallery.title', e.target.value)}
+                    placeholder="Club Photo & Video Gallery"
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>Subtitle</label>
+                  <input
+                    type="text"
+                    value={localData.gallery?.subtitle || ''}
+                    onChange={(e) => updateField('gallery.subtitle', e.target.value)}
+                    placeholder="Concerts, acoustic jams, auditions, and behind-the-scenes moments"
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>
+                    Google Drive Folder Link (Optional shortcut button on page)
+                  </label>
+                  <input
+                    type="url"
+                    value={localData.gallery?.driveFolderUrl || ''}
+                    onChange={(e) => updateField('gallery.driveFolderUrl', e.target.value)}
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    className="input-field"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>
-                Google Apps Script Web App URL <span style={{ color: '#38bdf8' }}>(Method 1 Endpoint)</span>
-              </label>
-              <input
-                type="url"
-                value={localData.gallery?.appsScriptUrl || ''}
-                onChange={(e) => updateField('gallery.appsScriptUrl', e.target.value)}
-                placeholder="https://script.google.com/macros/s/.../exec"
-                className="input-field"
-              />
-              <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block', marginTop: '4px' }}>
-                Deploy your Google Apps Script as a Web App (access set to "Anyone") and paste the deployment URL here.
-              </span>
+            {/* Photos List */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.85rem', color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase' }}>
+                Photos List ({photos.length} total)
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                Tip: Paste any Google Drive share link (e.g. drive.google.com/file/d/...) and it will display instantly.
+              </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>
-                Public Google Drive Folder Link (Optional, for "Open Drive Folder" shortcut button)
-              </label>
-              <input
-                type="url"
-                value={localData.gallery?.driveFolderUrl || ''}
-                onChange={(e) => updateField('gallery.driveFolderUrl', e.target.value)}
-                placeholder="https://drive.google.com/drive/folders/..."
-                className="input-field"
-              />
-            </div>
-          </div>
+            {photos.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed var(--blue-border)' }}>
+                <ImageIcon className="w-10 h-10 text-slate-500" style={{ margin: '0 auto 10px auto' }} />
+                <div style={{ color: '#F1F5F9', fontWeight: 600 }}>No photos added to the gallery yet</div>
+                <button onClick={handleAddPhoto} className="btn-secondary" style={{ marginTop: '12px', fontSize: '0.82rem' }}>
+                  <Plus className="w-4 h-4" /> Add Your First Photo
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {photos.map((photo, idx) => {
+                  const previewSrc = formatImageUrl(photo.url);
 
-          <div style={{ background: 'rgba(56, 189, 248, 0.05)', border: '1px solid var(--blue-border)', borderRadius: '10px', padding: '16px' }}>
-            <h5 style={{ color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.88rem', marginBottom: '6px' }}>
-              Quick Google Apps Script Instructions
-            </h5>
-            <ol style={{ color: '#CBD5E1', fontSize: '0.82rem', paddingLeft: '20px', lineHeight: '1.6', margin: 0 }}>
-              <li>Open Google Drive with your club account and create/open your gallery folder.</li>
-              <li>Go to <a href="https://script.google.com" target="_blank" rel="noreferrer" style={{ color: '#38bdf8' }}>script.google.com</a> and click <strong>New Project</strong>.</li>
-              <li>Paste the doGet() script, set your folder ID, and click <strong>Deploy &gt; New deployment &gt; Web app</strong>.</li>
-              <li>Choose <strong>Execute as: Me</strong> and <strong>Who has access: Anyone</strong>.</li>
-              <li>Copy the Web App URL and paste it into the field above!</li>
-            </ol>
-          </div>
+                  return (
+                    <div 
+                      key={photo.id || idx} 
+                      className="glass-panel" 
+                      style={{ 
+                        padding: '18px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '14px', 
+                        border: '1px solid var(--blue-border)', 
+                        borderRadius: '12px',
+                        background: 'rgba(15, 23, 42, 0.75)'
+                      }}
+                    >
+                      {/* Top Row: Badge, Reorder, Delete */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span className="badge-sky">#{idx + 1}</span>
+                          <span style={{ color: '#F8FAFC', fontWeight: 700, fontSize: '0.95rem' }}>
+                            {photo.title || 'Untitled Photo'}
+                          </span>
+                          {photo.album && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--blue-sky)', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.25)', padding: '2px 8px', borderRadius: '10px' }}>
+                              {photo.album}
+                            </span>
+                          )}
+                        </div>
 
-          <button onClick={handleSave} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '6px' }}>
-            <Save className="w-4 h-4" /> Save Gallery Settings
-          </button>
-        </div>
-      )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            onClick={() => handleMovePhoto(idx, -1)}
+                            disabled={idx === 0}
+                            className="btn-ghost"
+                            style={{ padding: '5px 8px', fontSize: '0.75rem', opacity: idx === 0 ? 0.3 : 1 }}
+                            title="Move Up"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleMovePhoto(idx, 1)}
+                            disabled={idx === photos.length - 1}
+                            className="btn-ghost"
+                            style={{ padding: '5px 8px', fontSize: '0.75rem', opacity: idx === photos.length - 1 ? 0.3 : 1 }}
+                            title="Move Down"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePhoto(idx)}
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              color: '#f87171',
+                              padding: '5px 10px',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.75rem'
+                            }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Content Form & Live Preview */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 180px) 1fr', gap: '18px', alignItems: 'start' }}>
+                        {/* Live Image Preview */}
+                        <div 
+                          style={{ 
+                            width: '100%', 
+                            height: '140px', 
+                            borderRadius: '10px', 
+                            overflow: 'hidden', 
+                            background: 'rgba(2, 6, 23, 0.6)', 
+                            border: '1px solid var(--blue-border)',
+                            position: 'relative'
+                          }}
+                        >
+                          {previewSrc ? (
+                            <img 
+                              src={previewSrc} 
+                              alt="Preview" 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748B', fontSize: '0.75rem' }}>
+                              No URL
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Input Fields */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Photo Title</label>
+                            <input
+                              type="text"
+                              value={photo.title || ''}
+                              onChange={(e) => handleUpdatePhoto(idx, 'title', e.target.value)}
+                              placeholder="e.g. Battle of the Bands Finale"
+                              className="input-field"
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
+                              Album / Event Category
+                            </label>
+                            <input
+                              type="text"
+                              list={`albums-list-${idx}`}
+                              value={photo.album || ''}
+                              onChange={(e) => handleUpdatePhoto(idx, 'album', e.target.value)}
+                              placeholder="e.g. Riviera Concerts, Acoustic Jams"
+                              className="input-field"
+                            />
+                            <datalist id={`albums-list-${idx}`}>
+                              {existingAlbums.map(a => <option key={a} value={a} />)}
+                            </datalist>
+                          </div>
+
+                          <div style={{ gridColumn: '1 / -1' }}>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
+                              Image URL <span style={{ color: '#38bdf8' }}>(Direct image link OR Google Drive file link)</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={photo.url || ''}
+                              onChange={(e) => handleUpdatePhoto(idx, 'url', e.target.value)}
+                              placeholder="https://drive.google.com/file/d/.../view or https://..."
+                              className="input-field"
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Date / Year</label>
+                            <input
+                              type="text"
+                              value={photo.date || ''}
+                              onChange={(e) => handleUpdatePhoto(idx, 'date', e.target.value)}
+                              placeholder="e.g. March 2026, Riviera 2k26"
+                              className="input-field"
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Caption / Brief Note</label>
+                            <input
+                              type="text"
+                              value={photo.caption || ''}
+                              onChange={(e) => handleUpdatePhoto(idx, 'caption', e.target.value)}
+                              placeholder="Brief description of the moment..."
+                              className="input-field"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <button 
+              onClick={handleSave} 
+              className="btn-primary" 
+              style={{ alignSelf: 'flex-start', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Save className="w-4 h-4" /> Save Gallery Changes
+            </button>
+          </div>
+        );
+      })()}
 
     </div>
   );

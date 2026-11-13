@@ -30,8 +30,57 @@
   "gallery": {
     "title": "Photo & Video Gallery",
     "subtitle": "Concerts, acoustic jams, auditions, and behind-the-scenes moments from the VIT Chennai Music Club.",
-    "appsScriptUrl": "",
-    "driveFolderUrl": ""
+    "driveFolderUrl": "",
+    "photos": [
+      {
+        "id": "photo-1",
+        "title": "Battle of the Bands - Grand Finale",
+        "album": "Riviera Concerts",
+        "url": "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1600&q=80",
+        "date": "March 2026",
+        "caption": "Electrifying crowd at the annual intercollegiate rock showdown."
+      },
+      {
+        "id": "photo-2",
+        "title": "Acoustic Jam Night Under the Stars",
+        "album": "Acoustic Jams",
+        "url": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1600&q=80",
+        "date": "February 2026",
+        "caption": "Intimate unplugged session with acoustic guitars and harmonies."
+      },
+      {
+        "id": "photo-3",
+        "title": "Main Stage Headliner Performance",
+        "album": "Riviera Concerts",
+        "url": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1600&q=80",
+        "date": "March 2026",
+        "caption": "Headlining the pro-show evening with live rock and fusion tracks."
+      },
+      {
+        "id": "photo-4",
+        "title": "Sound Check & Guitar Tuning",
+        "album": "Behind The Scenes",
+        "url": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80",
+        "date": "January 2026",
+        "caption": "Backstage preparations and equipment soundcheck."
+      },
+      {
+        "id": "photo-5",
+        "title": "Electrifying Synth & Keys Solo",
+        "album": "Acoustic Jams",
+        "url": "https://images.unsplash.com/photo-1520523839898-50712825e617?auto=format&fit=crop&w=1600&q=80",
+        "date": "February 2026",
+        "caption": "Roland synthesizer solo in the soundproof practice room."
+      },
+      {
+        "id": "photo-6",
+        "title": "Outdoor Amphitheatre Crowd",
+        "album": "Behind The Scenes",
+        "url": "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=1600&q=80",
+        "date": "March 2026",
+        "caption": "Hundreds of music enthusiasts cheering under the night sky."
+      }
+    ]
   },
   "faqs": [
     {
