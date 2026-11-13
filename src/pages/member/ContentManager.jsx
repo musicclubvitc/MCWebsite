@@ -234,6 +234,7 @@ export const ContentManager = () => {
           { id: 'about', label: 'About & Stats' },
           { id: 'events', label: 'Events & Posters' },
           { id: 'bands', label: 'Bands Showcase' },
+          { id: 'gallery', label: 'Drive Gallery' },
           { id: 'team', label: 'Tenures & Team' },
           { id: 'faqs', label: 'FAQs' },
           { id: 'contact', label: 'Contact & Socials' }
@@ -1117,6 +1118,92 @@ export const ContentManager = () => {
 
           <button onClick={handleSave} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>
             <Save className="w-4 h-4" /> Save Contact Changes
+          </button>
+        </div>
+      )}
+
+      {/* ===================== SECTION 8: GOOGLE DRIVE GALLERY ===================== */}
+      {activeSection === 'gallery' && (
+        <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div>
+            <h4 style={{ color: '#38BDF8', fontWeight: 700, fontSize: '1rem', marginBottom: '4px' }}>
+              Google Drive Live Gallery Configuration
+            </h4>
+            <p style={{ color: '#94A3B8', fontSize: '0.85rem' }}>
+              Connect your Google Drive folder via Google Apps Script Web App. Any photos added or deleted in that folder will instantly sync to the website.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>Gallery Page Title</label>
+              <input
+                type="text"
+                value={localData.gallery?.title || ''}
+                onChange={(e) => updateField('gallery.title', e.target.value)}
+                placeholder="Club Photo & Video Gallery"
+                className="input-field"
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>Subtitle</label>
+              <input
+                type="text"
+                value={localData.gallery?.subtitle || ''}
+                onChange={(e) => updateField('gallery.subtitle', e.target.value)}
+                placeholder="Concerts, acoustic jams, auditions, and behind-the-scenes moments"
+                className="input-field"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>
+                Google Apps Script Web App URL <span style={{ color: '#38bdf8' }}>(Method 1 Endpoint)</span>
+              </label>
+              <input
+                type="url"
+                value={localData.gallery?.appsScriptUrl || ''}
+                onChange={(e) => updateField('gallery.appsScriptUrl', e.target.value)}
+                placeholder="https://script.google.com/macros/s/.../exec"
+                className="input-field"
+              />
+              <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block', marginTop: '4px' }}>
+                Deploy your Google Apps Script as a Web App (access set to "Anyone") and paste the deployment URL here.
+              </span>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '6px' }}>
+                Public Google Drive Folder Link (Optional, for "Open Drive Folder" shortcut button)
+              </label>
+              <input
+                type="url"
+                value={localData.gallery?.driveFolderUrl || ''}
+                onChange={(e) => updateField('gallery.driveFolderUrl', e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+                className="input-field"
+              />
+            </div>
+          </div>
+
+          <div style={{ background: 'rgba(56, 189, 248, 0.05)', border: '1px solid var(--blue-border)', borderRadius: '10px', padding: '16px' }}>
+            <h5 style={{ color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.88rem', marginBottom: '6px' }}>
+              Quick Google Apps Script Instructions
+            </h5>
+            <ol style={{ color: '#CBD5E1', fontSize: '0.82rem', paddingLeft: '20px', lineHeight: '1.6', margin: 0 }}>
+              <li>Open Google Drive with your club account and create/open your gallery folder.</li>
+              <li>Go to <a href="https://script.google.com" target="_blank" rel="noreferrer" style={{ color: '#38bdf8' }}>script.google.com</a> and click <strong>New Project</strong>.</li>
+              <li>Paste the doGet() script, set your folder ID, and click <strong>Deploy &gt; New deployment &gt; Web app</strong>.</li>
+              <li>Choose <strong>Execute as: Me</strong> and <strong>Who has access: Anyone</strong>.</li>
+              <li>Copy the Web App URL and paste it into the field above!</li>
+            </ol>
+          </div>
+
+          <button onClick={handleSave} className="btn-primary" style={{ alignSelf: 'flex-start', marginTop: '6px' }}>
+            <Save className="w-4 h-4" /> Save Gallery Settings
           </button>
         </div>
       )}

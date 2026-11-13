@@ -20,7 +20,8 @@ import {
   FileEdit,
   BookMarked,
   UsersRound,
-  Sparkles
+  Sparkles,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
@@ -36,6 +37,7 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
   const navLinks = [
     { id: 'home', label: 'Home', icon: Music },
     { id: 'events', label: 'Events', icon: Calendar },
+    { id: 'gallery', label: 'Gallery', icon: ImageIcon },
     { id: 'team', label: 'Team', icon: Users },
     { id: 'instructions', label: 'Instructions', icon: BookOpen },
     { id: 'contact', label: 'Contact Us', icon: Mail },

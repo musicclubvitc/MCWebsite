@@ -8,6 +8,7 @@ import { AuthModal } from './components/AuthModal';
 
 import { Home } from './pages/Home';
 import { Events } from './pages/Events';
+import { Gallery } from './pages/Gallery';
 import { Instructions } from './pages/Instructions';
 import { Contact } from './pages/Contact';
 import { Team } from './pages/Team';
@@ -75,6 +76,8 @@ export function AppContent() {
         return <Home setActiveTab={setActiveTab} onOpenAuthModal={() => setAuthModalOpen(true)} />;
       case 'events':
         return <Events setActiveTab={setActiveTab} />;
+      case 'gallery':
+        return <Gallery setActiveTab={setActiveTab} />;
       case 'instructions':
         return <Instructions setActiveTab={setActiveTab} />;
       case 'team':

@@ -27,6 +27,12 @@
     "instagram": "https://www.instagram.com/vitcmusicclub",
     "youtube": "https://www.youtube.com/@MusicClubVITChennai"
   },
+  "gallery": {
+    "title": "Photo & Video Gallery",
+    "subtitle": "Concerts, acoustic jams, auditions, and behind-the-scenes moments from the VIT Chennai Music Club.",
+    "appsScriptUrl": "",
+    "driveFolderUrl": ""
+  },
   "faqs": [
     {
       "q": "When are auditions held for freshers?",
