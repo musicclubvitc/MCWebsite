@@ -8,7 +8,8 @@ import {
   Ticket, 
   Search, 
   X, 
-  CheckCircle2
+  CheckCircle2,
+  ExternalLink
 } from 'lucide-react';
 import { formatImageUrl } from '../lib/imageUtils';
 
@@ -173,19 +174,63 @@ export const Events = ({ setActiveTab }) => {
                 borderRadius: '14px'
               }}
             >
-              {/* Event Image */}
-              <div style={{ position: 'relative', height: '190px', overflow: 'hidden' }}>
-                <img 
-                  src={formatImageUrl(event.image)} 
-                  alt={event.name} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
+              {/* Event Poster Container (Native Aspect Ratio preserved with ambient aura) */}
+              <div 
+                style={{ 
+                  position: 'relative', 
+                  width: '100%', 
+                  height: '240px', 
+                  backgroundColor: '#030712', 
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setActiveModalEvent(event)}
+              >
+                {/* Ambient Blurred Backdrop */}
+                {event.image && (
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      inset: '-12px',
+                      backgroundImage: `url(${formatImageUrl(event.image)})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      filter: 'blur(16px) brightness(0.28)',
+                      opacity: 0.85
+                    }} 
+                  />
+                )}
                 
-                <div style={{ position: 'absolute', top: '12px', left: '12px' }}>
+                {/* Native Poster Image */}
+                {event.image ? (
+                  <img 
+                    src={formatImageUrl(event.image)} 
+                    alt={event.name} 
+                    style={{ 
+                      position: 'relative',
+                      maxWidth: '100%', 
+                      maxHeight: '100%', 
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      borderRadius: '4px',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.45)',
+                      transition: 'transform 0.3s ease'
+                    }} 
+                  />
+                ) : (
+                  <div style={{ color: '#64748B', fontSize: '0.85rem' }}>No Poster Available</div>
+                )}
+                
+                {/* Overlay Badges */}
+                <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 2 }}>
                   <span className="badge-sky">{event.type}</span>
                 </div>
 
-                <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
+                <div style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2 }}>
                   <span className={event.status === 'Upcoming' ? 'badge-success' : 'badge-blue'}>
                     {event.status}
                   </span>
@@ -287,12 +332,12 @@ export const Events = ({ setActiveTab }) => {
             className="glass-panel"
             style={{
               width: '100%',
-              maxWidth: '620px',
+              maxWidth: '720px',
               backgroundColor: 'rgba(15, 23, 42, 0.98)',
               border: '1px solid var(--blue-sky)',
               borderRadius: '16px',
-              padding: '28px',
-              maxHeight: '90vh',
+              padding: 'clamp(20px, 3.5vw, 28px)',
+              maxHeight: '92vh',
               overflowY: 'auto',
               position: 'relative'
             }}
@@ -308,13 +353,15 @@ export const Events = ({ setActiveTab }) => {
                 border: 'none',
                 color: '#94A3B8',
                 borderRadius: '50%',
-                width: '30px',
-                height: '30px',
+                width: '32px',
+                height: '32px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                zIndex: 10
               }}
+              title="Close modal"
             >
               <X className="w-4 h-4" />
             </button>
@@ -326,15 +373,87 @@ export const Events = ({ setActiveTab }) => {
               </span>
             </div>
 
-            <h2 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC', marginBottom: '14px' }}>
+            <h2 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#F8FAFC', marginBottom: '16px' }}>
               {activeModalEvent.name}
             </h2>
 
-            <img 
-              src={formatImageUrl(activeModalEvent.image)} 
-              alt={activeModalEvent.name}
-              style={{ width: '100%', height: '220px', objectFit: 'cover', borderRadius: '10px', marginBottom: '16px' }} 
-            />
+            {/* Native Aspect Ratio Poster Showcase with Ambient Aura */}
+            {activeModalEvent.image && (
+              <div 
+                style={{ 
+                  position: 'relative', 
+                  width: '100%', 
+                  backgroundColor: '#020617', 
+                  borderRadius: '12px', 
+                  overflow: 'hidden', 
+                  border: '1px solid var(--blue-border)', 
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '260px',
+                  maxHeight: '62vh',
+                  padding: '12px'
+                }}
+              >
+                {/* Ambient glow aura */}
+                <div 
+                  style={{
+                    position: 'absolute',
+                    inset: '-20px',
+                    backgroundImage: `url(${formatImageUrl(activeModalEvent.image)})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(24px) brightness(0.24)',
+                    opacity: 0.85
+                  }} 
+                />
+
+                {/* Uncropped Native Poster */}
+                <img 
+                  src={formatImageUrl(activeModalEvent.image)} 
+                  alt={activeModalEvent.name}
+                  style={{ 
+                    position: 'relative',
+                    maxWidth: '100%', 
+                    maxHeight: '58vh', 
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.7)'
+                  }} 
+                />
+
+                {/* Full Resolution Link */}
+                <a
+                  href={formatImageUrl(activeModalEvent.image)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn-ghost"
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    right: '12px',
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid var(--blue-border)',
+                    padding: '6px 12px',
+                    fontSize: '0.78rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: 'var(--blue-sky)',
+                    borderRadius: '20px',
+                    textDecoration: 'none'
+                  }}
+                  title="Open full resolution poster in a new tab"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  View Full Size
+                </a>
+              </div>
+            )}
 
             <div 
               style={{
