@@ -30,7 +30,7 @@ export const Team = () => {
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
           The Core Board
         </h1>
-        <p style={{ color: '#94A3B8', maxWidth: '580px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
+        <p style={{ color: '#94A3B8', maxWidth: '800px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
           The students orchestrating events, directing sound production, and driving the music culture at VIT Chennai.
         </p>
       </div>

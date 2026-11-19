@@ -61,7 +61,7 @@ export const Events = ({ setActiveTab }) => {
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
           Club Events & Concerts
         </h1>
-        <p style={{ color: '#94A3B8', maxWidth: '600px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
+        <p style={{ color: '#94A3B8', maxWidth: '800px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
           Annual battle of the bands, acoustic open mics, and inter-collegiate music fests.
         </p>
       </div>
@@ -159,7 +159,7 @@ export const Events = ({ setActiveTab }) => {
         <div 
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 400px))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 380px))',
             gap: '24px',
             justifyContent: 'start'
           }}
@@ -174,7 +174,7 @@ export const Events = ({ setActiveTab }) => {
                 overflow: 'hidden',
                 borderRadius: '14px',
                 width: '100%',
-                maxWidth: '320px'
+                maxWidth: '380px'
               }}
             >
               {/* Event Poster Container (Native Aspect Ratio preserved with ambient aura) */}

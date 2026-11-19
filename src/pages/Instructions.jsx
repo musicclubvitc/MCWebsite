@@ -217,7 +217,7 @@ export const Instructions = ({ setActiveTab }) => {
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
           Instructions & Rules
         </h1>
-        <p style={{ color: '#94A3B8', maxWidth: '600px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
+        <p style={{ color: '#94A3B8', maxWidth: '800px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
           Standard operating rules for verified musicians regarding registration, music room slots, and equipment custody.
         </p>
       </div>
