@@ -80,7 +80,7 @@ export const Team = () => {
             style={{
               gridColumn: '1 / -1',
               textAlign: 'center',
-              padding: '64px 20px',
+              padding: '20px 20px',
               borderRadius: '16px',
               border: '1px dashed var(--blue-border)',
               backgroundColor: 'rgba(15, 23, 42, 0.4)'
@@ -104,7 +104,7 @@ export const Team = () => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 textAlign: 'center',
-                padding: '28px 20px',
+                padding: '20px 10px 0px 10px',
                 borderRadius: '16px'
               }}
             >
@@ -114,8 +114,8 @@ export const Team = () => {
                   src={formatImageUrl(member.image)} 
                   alt={member.name}
                   style={{
-                    width: '96px',
-                    height: '96px',
+                    width: '150px',
+                    height: '150px',
                     borderRadius: '50%',
                     objectFit: 'cover',
                     border: '2px solid var(--blue-border)',
@@ -129,8 +129,8 @@ export const Team = () => {
               ) : (
                 <div 
                   style={{
-                    width: '96px',
-                    height: '96px',
+                    width: '150px',
+                    height: '150px',
                     borderRadius: '50%',
                     border: '2px dashed rgba(56, 189, 248, 0.3)',
                     backgroundColor: 'rgba(15, 23, 42, 0.6)',
@@ -168,7 +168,6 @@ export const Team = () => {
                   marginTop: 'auto',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
                   paddingTop: '12px',
                   borderTop: '1px solid var(--blue-border)',
                   width: '100%',

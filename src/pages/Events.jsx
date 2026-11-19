@@ -159,7 +159,7 @@ export const Events = ({ setActiveTab }) => {
         <div 
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 320px))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 400px))',
             gap: '24px',
             justifyContent: 'start'
           }}
