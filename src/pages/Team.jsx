@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useContent } from '../context/ContentContext';
 import { TEAM_SESSIONS } from '../data/clubData';
+import { getOrderedTenures } from '../lib/teamUtils';
 import { 
   Users, 
   Music,
@@ -13,8 +14,21 @@ export const Team = () => {
   const { content } = useContent();
   const allSessions = content?.team || TEAM_SESSIONS;
 
-  const sessionKeys = Object.keys(allSessions);
-  const [selectedSession, setSelectedSession] = useState(sessionKeys[0] || "2024-25");
+  const sessionKeys = useMemo(() => {
+    return getOrderedTenures(allSessions, content?.teamOrder);
+  }, [allSessions, content?.teamOrder]);
+
+  const [selectedSession, setSelectedSession] = useState(sessionKeys[0] || "2026-27");
+  const [userSelected, setUserSelected] = useState(false);
+
+  // Default to the latest tenure session when opened / loaded
+  useEffect(() => {
+    if (sessionKeys.length > 0) {
+      if (!userSelected || !sessionKeys.includes(selectedSession)) {
+        setSelectedSession(sessionKeys[0]);
+      }
+    }
+  }, [sessionKeys, userSelected, selectedSession]);
 
   const currentMembers = allSessions[selectedSession] || [];
 
@@ -48,7 +62,10 @@ export const Team = () => {
         {sessionKeys.map((sess) => (
           <button
             key={sess}
-            onClick={() => setSelectedSession(sess)}
+            onClick={() => {
+              setSelectedSession(sess);
+              setUserSelected(true);
+            }}
             style={{
               background: selectedSession === sess ? 'var(--blue-primary)' : 'rgba(15, 23, 42, 0.7)',
               color: selectedSession === sess ? '#ffffff' : '#CBD5E1',

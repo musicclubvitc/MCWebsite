@@ -1,209 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useContent } from '../context/ContentContext';
+import { DEFAULT_INSTRUCTIONS, getInstructionIcon } from '../data/instructionData';
 import { 
-  UserCheck, 
-  Clock, 
-  Guitar, 
-  Users, 
-  ShieldAlert, 
   CheckCircle2,
   BookOpen,
   Info,
-  AlertTriangle,
   ArrowRight
 } from 'lucide-react';
 
 export const Instructions = ({ setActiveTab }) => {
-  const [activeTab, setActiveInstructionTab] = useState('account');
+  const { content } = useContent();
+  const instructionsData = content?.instructions || DEFAULT_INSTRUCTIONS;
+  const tabs = Array.isArray(instructionsData.tabs) && instructionsData.tabs.length > 0
+    ? instructionsData.tabs 
+    : DEFAULT_INSTRUCTIONS.tabs;
 
-  const instructionTabs = [
-    { id: 'account', label: '1. Account Setup', icon: UserCheck },
-    { id: 'booking', label: '2. Music Room Booking', icon: Clock },
-    { id: 'instruments', label: '3. Instrument Policy', icon: Guitar },
-    { id: 'bands', label: '4. Band Guidelines', icon: Users },
-    { id: 'safety', label: '5. Studio Etiquette', icon: ShieldAlert }
-  ];
+  const [activeTabId, setActiveTabId] = useState(tabs[0]?.id || 'account');
 
-  // Tab definitions with unified data structure
-  const tabContents = {
-    account: {
-      icon: UserCheck,
-      title: "Member Registration & Verification",
-      subtitle: "Official authentication and profile activation steps for club musicians",
-      items: [
-        {
-          num: "01",
-          title: "Access the Member Portal",
-          desc: "Click on 'Member Login' in the navigation bar to sign in or initiate registration for club membership."
-        },
-        {
-          num: "02",
-          title: "VIT Student Email Required",
-          desc: "Sign up using your official institutional email (e.g. name2024@vitstudent.ac.in). External domains are restricted."
-        },
-        {
-          num: "03",
-          title: "Registration Number Validation",
-          desc: "Enter your 9-character VIT registration number (e.g. 24BCE5259) and declare your primary instruments or vocal roles."
-        },
-        {
-          num: "04",
-          title: "Spam & Inbox Verification",
-          desc: "Check your Outlook inbox for the confirmation email. If not visible immediately, check the Junk/Spam folder."
-        },
-        {
-          num: "05",
-          title: "Full Member Privileges Unlocked",
-          desc: "Once verified, you have complete access to book soundproof slots, register official bands, and request gear."
-        }
-      ],
-      notice: "Club auditions are conducted every academic year right after the Freshers' Talent Hunt. Verified members receive notifications for all internal jam sessions.",
-      actionText: "Open Member Portal",
-      actionTarget: "member-dashboard"
-    },
-    booking: {
-      icon: Clock,
-      title: "Music Room & Slot Reservation",
-      subtitle: "Advance reservation rules, duration limits, and studio scheduling policies",
-      items: [
-        {
-          num: "01",
-          title: "Advance Booking Window",
-          desc: "Practice slots open up to 7 days ahead. Reservations must be requested at least 12 hours prior to practice."
-        },
-        {
-          num: "02",
-          title: "Slot Duration Limits",
-          desc: "Standard rehearsal sessions are 55 to 110 minutes per band per day. Extended sessions for fests require board approval."
-        },
-        {
-          num: "03",
-          title: "Cancellation Courtesy",
-          desc: "Cancel at least 4 hours ahead if your group is unable to attend to free up the room for fellow club musicians."
-        },
-        {
-          num: "04",
-          title: "Equipment Power Shutdown",
-          desc: "Always switch off guitar amplifier heads, Roland synthesizers, and PA mixers immediately after your session."
-        },
-        {
-          num: "05",
-          title: "Studio Cleanliness Standard",
-          desc: "Coil audio cables, return mic stands to the corner, and ensure no bottles or trash are left in the sound room."
-        }
-      ],
-      notice: "Slot hoarding across multiple accounts of the same band is monitored by club admins and may result in temporary booking suspensions.",
-      actionText: "Book a Practice Slot",
-      actionTarget: "member-slot"
-    },
-    instruments: {
-      icon: Guitar,
-      title: "Instrument Requisition Policy",
-      subtitle: "Borrowing electric guitars, synthesizers, drum hardware, and stage audio gear",
-      items: [
-        {
-          num: "01",
-          title: "Verified Member Eligibility",
-          desc: "Only registered club members in good standing may borrow club guitars, synthesizers, and stage hardware."
-        },
-        {
-          num: "02",
-          title: "Same-Day Return Schedule",
-          desc: "Equipment borrowed for on-campus rehearsals must be returned to the music room inventory by 9:00 PM on the same day."
-        },
-        {
-          num: "03",
-          title: "External Fest Clearance",
-          desc: "Taking club instruments off campus for intercollegiate fests requires written approval from the Faculty Coordinator."
-        },
-        {
-          num: "04",
-          title: "Borrower Accountability",
-          desc: "Physical damage, dropped microphones, or missing power adapters will be billed to the borrower's registration number."
-        },
-        {
-          num: "05",
-          title: "Pre-Issue Cable Inspection",
-          desc: "Test all guitar jacks, XLR cables, and power adapters with a club board member before signing out any equipment."
-        }
-      ],
-      notice: "Guitar picks, spare patch cords, drum keys, and vocal mic sanitizing wipes are available in the equipment cabinet upon request.",
-      actionText: "Request Club Instruments",
-      actionTarget: "member-instruments"
-    },
-    bands: {
-      icon: Users,
-      title: "Official Band Formation Guidelines",
-      subtitle: "Roster composition limits, band leadership, and collegiate competition rules",
-      items: [
-        {
-          num: "01",
-          title: "Lineup Size Requirements",
-          desc: "An official club band must consist of at least 3 active student musicians and cannot exceed 9 members."
-        },
-        {
-          num: "02",
-          title: "Designated Band Leader",
-          desc: "Every band must designate a leader responsible for slot bookings, equipment custody, and fest coordination."
-        },
-        {
-          num: "03",
-          title: "Dual-Roster Participation",
-          desc: "Musicians may participate in up to two official club bands, provided rehearsal schedules and fest competitions do not conflict."
-        },
-        {
-          num: "04",
-          title: "Credential Authentication",
-          desc: "Every member in your lineup must confirm their inclusion using their registration number and secret key credential."
-        },
-        {
-          num: "05",
-          title: "Collegiate Fest Representation",
-          desc: "Only approved, verified bands may officially compete under the VIT Chennai Music Club banner at national fests."
-        }
-      ],
-      notice: "Looking for musicians to complete your lineup? Drop a message in the official club WhatsApp group to connect with vocalists and instrumentalists.",
-      actionText: "Register Your Band",
-      actionTarget: "member-bands"
-    },
-    safety: {
-      icon: ShieldAlert,
-      title: "Studio Etiquette & Noise Regulations",
-      subtitle: "Sound isolation protocols, equipment safety, and campus curfew compliance",
-      items: [
-        {
-          num: "01",
-          title: "Soundproof Double Doors",
-          desc: "Both acoustic doors of the music room must remain securely latched during all amplified guitar, synth, and drum sessions."
-        },
-        {
-          num: "02",
-          title: "Strict Beverage & Liquid Ban",
-          desc: "Open drinks, water bottles, and tea/coffee cups are strictly prohibited on or near amplifiers, pedalboards, and synthesizers."
-        },
-        {
-          num: "03",
-          title: "Hostel In-Time Curfew",
-          desc: "Evening rehearsals conclude promptly by 8:30 PM on weekdays in adherence to VIT Chennai hostel curfew guidelines."
-        },
-        {
-          num: "04",
-          title: "Acoustic Volume Calibration",
-          desc: "Keep master stage amplifiers and drum monitors below 85 dB to prevent sound spill into adjacent academic blocks."
-        },
-        {
-          num: "05",
-          title: "Punctuality & Transition",
-          desc: "Arrive on time, wrap up playing 5 minutes before your slot ends, and leave the rehearsal room clean for the incoming band."
-        }
-      ],
-      notice: "Failure to adhere to studio etiquette, hostel curfew, or equipment safety guidelines will result in temporary suspension of music room booking rights.",
-      actionText: "Check Rehearsal Schedule",
-      actionTarget: "member-slot"
+  // Sync active tab if tabs change or get reordered
+  useEffect(() => {
+    if (tabs.length > 0 && !tabs.some((t) => t.id === activeTabId)) {
+      setActiveTabId(tabs[0].id);
     }
-  };
+  }, [tabs, activeTabId]);
 
-  const currentContent = tabContents[activeTab] || tabContents.account;
-  const TabIcon = currentContent.icon;
+  const currentTab = tabs.find((t) => t.id === activeTabId) || tabs[0] || {};
+  const TabIcon = getInstructionIcon(currentTab.icon);
+  const items = Array.isArray(currentTab.items) ? currentTab.items : [];
 
   return (
     <div className="container-custom" style={{ paddingTop: '36px', paddingBottom: '60px' }}>
@@ -212,13 +35,13 @@ export const Instructions = ({ setActiveTab }) => {
       <div style={{ textAlign: 'center', marginBottom: '36px' }}>
         <div className="badge-sky" style={{ marginBottom: '8px' }}>
           <BookOpen className="w-3.5 h-3.5" />
-          CLUB GUIDELINES
+          {instructionsData.badge || 'CLUB GUIDELINES'}
         </div>
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
-          Instructions & Rules
+          {instructionsData.title || 'Instructions & Rules'}
         </h1>
         <p style={{ color: '#94A3B8', maxWidth: '800px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
-          Standard operating rules for verified musicians regarding registration, music room slots, and equipment custody.
+          {instructionsData.subtitle || 'Standard operating rules for verified musicians regarding registration, music room slots, and equipment custody.'}
         </p>
       </div>
 
@@ -233,13 +56,13 @@ export const Instructions = ({ setActiveTab }) => {
           scrollbarWidth: 'none'
         }}
       >
-        {instructionTabs.map((t) => {
-          const Icon = t.icon;
-          const isSelected = activeTab === t.id;
+        {tabs.map((t) => {
+          const Icon = getInstructionIcon(t.icon);
+          const isSelected = activeTabId === t.id;
           return (
             <button
               key={t.id}
-              onClick={() => setActiveInstructionTab(t.id)}
+              onClick={() => setActiveTabId(t.id)}
               style={{
                 background: isSelected ? 'var(--blue-royal)' : 'rgba(15, 23, 42, 0.7)',
                 color: isSelected ? '#ffffff' : '#CBD5E1',
@@ -283,21 +106,23 @@ export const Instructions = ({ setActiveTab }) => {
             </div>
             <div>
               <h3 className="font-display font-bold text-xl md:text-2xl" style={{ color: '#F8FAFC', margin: 0 }}>
-                {currentContent.title}
+                {currentTab.title}
               </h3>
-              <p style={{ color: '#94A3B8', fontSize: '0.86rem', margin: '4px 0 0 0' }}>
-                {currentContent.subtitle}
-              </p>
+              {currentTab.subtitle && (
+                <p style={{ color: '#94A3B8', fontSize: '0.86rem', margin: '4px 0 0 0' }}>
+                  {currentTab.subtitle}
+                </p>
+              )}
             </div>
           </div>
 
-          {currentContent.actionTarget && (
+          {currentTab.actionTarget && currentTab.actionText && (
             <button
-              onClick={() => setActiveTab(currentContent.actionTarget)}
+              onClick={() => setActiveTab(currentTab.actionTarget)}
               className="btn-primary"
               style={{ fontSize: '0.84rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {currentContent.actionText} <ArrowRight className="w-3.5 h-3.5" />
+              {currentTab.actionText} <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -310,7 +135,7 @@ export const Instructions = ({ setActiveTab }) => {
             gap: '16px'
           }}
         >
-          {currentContent.items.map((item, idx) => (
+          {items.map((item, idx) => (
             <div
               key={idx}
               className="glass-panel-hover"
@@ -338,7 +163,7 @@ export const Instructions = ({ setActiveTab }) => {
                     borderRadius: '6px'
                   }}
                 >
-                  RULE #{item.num}
+                  RULE #{item.num || (idx + 1 < 10 ? `0${idx + 1}` : idx + 1)}
                 </span>
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               </div>
@@ -353,6 +178,32 @@ export const Instructions = ({ setActiveTab }) => {
             </div>
           ))}
         </div>
+
+        {/* Official Notice Callout */}
+        {currentTab.notice && (
+          <div 
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(56, 189, 248, 0.06)',
+              border: '1px solid rgba(56, 189, 248, 0.25)',
+              marginTop: '4px'
+            }}
+          >
+            <Info className="w-5 h-5 text-sky-400 shrink-0" style={{ marginTop: '2px' }} />
+            <div>
+              <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
+                Official Notice & Advice
+              </span>
+              <p style={{ color: '#CBD5E1', fontSize: '0.86rem', lineHeight: '1.5', margin: 0 }}>
+                {currentTab.notice}
+              </p>
+            </div>
+          </div>
+        )}
 
       </div>
 
