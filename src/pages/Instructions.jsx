@@ -354,27 +354,6 @@ export const Instructions = ({ setActiveTab }) => {
           ))}
         </div>
 
-        {/* Important Notice Callout Box */}
-        {currentContent.notice && (
-          <div 
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px',
-              padding: '14px 18px',
-              background: 'rgba(56, 189, 248, 0.05)',
-              border: '1px solid var(--blue-border)',
-              borderRadius: '10px'
-            }}
-          >
-            <Info className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
-            <div style={{ color: '#CBD5E1', fontSize: '0.85rem', lineHeight: '1.5' }}>
-              <strong style={{ color: 'var(--blue-sky)' }}>Official Note: </strong>
-              {currentContent.notice}
-            </div>
-          </div>
-        )}
-
       </div>
 
     </div>

@@ -346,7 +346,7 @@ export const Gallery = ({ setActiveTab }) => {
                     ) : <span />}
 
                     {photo.caption && (
-                      <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {photo.caption}
                       </span>
                     )}
