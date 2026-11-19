@@ -25,7 +25,7 @@ export const Events = ({ setActiveTab }) => {
   const [activeModalEvent, setActiveModalEvent] = useState(null);
   const [registeredEvents, setRegisteredEvents] = useState({});
 
-  const categories = ['All', 'Performances', 'Western Battle of Bands', 'Eastern Battle of Bands', 'Competition', 'Western Solo', 'Open Mic', 'Intercollege Fest'];
+  const categories = ['All', 'Performance', 'Competition', 'Workshop', 'Open Mic', 'Intercollege Fest'];
 
   const filteredEvents = events.filter((event) => {
     const matchesSearch = 
