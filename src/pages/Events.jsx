@@ -159,8 +159,9 @@ export const Events = ({ setActiveTab }) => {
         <div 
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px'
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 320px))',
+            gap: '24px',
+            justifyContent: 'start'
           }}
         >
           {filteredEvents.map((event) => (
@@ -171,7 +172,9 @@ export const Events = ({ setActiveTab }) => {
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
-                borderRadius: '14px'
+                borderRadius: '14px',
+                width: '100%',
+                maxWidth: '320px'
               }}
             >
               {/* Event Poster Container (Native Aspect Ratio preserved with ambient aura) */}
