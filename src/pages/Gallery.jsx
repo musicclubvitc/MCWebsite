@@ -75,7 +75,7 @@ export const Gallery = ({ setActiveTab }) => {
           MOMENTS & ARCHIVES
         </div>
         <h1 className="font-display font-bold text-3xl md:text-4xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
-          {galleryConfig.title || "Club Photo & Video Gallery"}
+          {galleryConfig.title || "Club Photo Gallery"}
         </h1>
         <p style={{ color: '#94A3B8', maxWidth: '800px', margin: '0 auto', fontSize: '0.95rem', lineHeight: '1.6' }}>
           {galleryConfig.subtitle || "Concerts, acoustic jams, auditions, and behind-the-scenes moments from the VIT Chennai Music Club."}

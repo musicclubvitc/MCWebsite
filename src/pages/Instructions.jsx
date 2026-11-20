@@ -179,32 +179,6 @@ export const Instructions = ({ setActiveTab }) => {
           ))}
         </div>
 
-        {/* Official Notice Callout */}
-        {currentTab.notice && (
-          <div 
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '12px',
-              padding: '16px 20px',
-              borderRadius: '12px',
-              backgroundColor: 'rgba(56, 189, 248, 0.06)',
-              border: '1px solid rgba(56, 189, 248, 0.25)',
-              marginTop: '4px'
-            }}
-          >
-            <Info className="w-5 h-5 text-sky-400 shrink-0" style={{ marginTop: '2px' }} />
-            <div>
-              <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
-                Official Notice & Advice
-              </span>
-              <p style={{ color: '#CBD5E1', fontSize: '0.86rem', lineHeight: '1.5', margin: 0 }}>
-                {currentTab.notice}
-              </p>
-            </div>
-          </div>
-        )}
-
       </div>
 
     </div>

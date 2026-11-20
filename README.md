@@ -9,16 +9,6 @@
 
 ---
 
-## 🎸 Why We Built This
-
-Running a college music club sounds all fun and rock 'n' roll until you're juggling 10+ student bands fighting over time in the campus sound room, borrowing expensive electric guitars and synthesizers on scrap paper, or asking in chaotic WhatsApp groups who booked Room 412 between 4:00 PM and 6:00 PM.
-
-This website was built to solve all of that in one beautiful, reliable place. It acts as both our **public face** to the university (announcing fests, archiving jam photos, showcasing official bands) and an **internal backstage studio engine** where verified club members reserve jam slots, borrow gear, and collaborate.
-
-Best of all, it includes an in-browser **No-Code CMS**, meaning future Core Boards don't need a computer science degree just to add new band photos, announce annual auditions, or update the club guidelines.
-
----
-
 ## ✨ Features at a Glance
 
 ### 🌐 The Public Experience
