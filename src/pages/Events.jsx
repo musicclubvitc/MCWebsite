@@ -173,8 +173,7 @@ export const Events = ({ setActiveTab }) => {
                 flexDirection: 'column',
                 overflow: 'hidden',
                 borderRadius: '14px',
-                width: '100%',
-                maxWidth: '380px'
+                width: '100%'
               }}
             >
               {/* Event Poster Container (Native Aspect Ratio preserved with ambient aura) */}
