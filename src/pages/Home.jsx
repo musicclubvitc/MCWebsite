@@ -9,7 +9,10 @@ import {
   Guitar,
   Sparkles,
   Info,
-  Music
+  Music,
+  ChevronLeft,
+  ChevronRight,
+  Users
 } from 'lucide-react';
 import { formatImageUrl } from '../lib/imageUtils';
 
@@ -21,8 +24,38 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
   const bands = content?.bands || [];
   const about = content?.about || {};
 
-  const [selectedBand, setSelectedBand] = useState(null);
-  const activeBand = selectedBand || (bands.length > 0 ? bands[0] : null);
+  const [currentBandIndex, setCurrentBandIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  const safeIndex = bands.length > 0 ? ((currentBandIndex % bands.length) + bands.length) % bands.length : 0;
+  const activeBand = bands[safeIndex] || null;
+
+  const handlePrevBand = () => {
+    if (bands.length <= 1) return;
+    setCurrentBandIndex((prev) => (prev === 0 ? bands.length - 1 : prev - 1));
+  };
+
+  const handleNextBand = () => {
+    if (bands.length <= 1) return;
+    setCurrentBandIndex((prev) => (prev === bands.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        handleNextBand();
+      } else {
+        handlePrevBand();
+      }
+    }
+    setTouchStartX(null);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '64px' }}>
@@ -230,7 +263,7 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
         </div>
       </section>
 
-      {/* 4. OFFICIAL CLUB BANDS SHOWCASE */}
+      {/* 4. OFFICIAL CLUB BANDS SHOWCASE (CAROUSEL) */}
       <section className="container-custom">
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div className="badge-sky" style={{ marginBottom: '8px' }}>
@@ -245,115 +278,244 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
           </p>
         </div>
 
-        {/* Bands Selector Pills */}
-        <div 
-          style={{
-            display: 'flex',
-            gap: '8px',
-            overflowX: 'auto',
-            paddingBottom: '12px',
-            marginBottom: '20px',
-            scrollbarWidth: 'none'
-          }}
-        >
-          {bands.map((band) => (
-            <button
-              key={band.id}
-              onClick={() => setSelectedBand(band)}
+        {bands.length === 0 ? (
+          <div className="glass-panel" style={{ padding: '36px', textAlign: 'center', color: '#94A3B8' }}>
+            No official bands showcased at the moment.
+          </div>
+        ) : (
+          <div 
+            style={{ position: 'relative' }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Carousel Main Card */}
+            <div 
+              className="glass-panel"
               style={{
-                background: activeBand?.id === band.id ? 'var(--blue-primary)' : 'rgba(15, 23, 42, 0.7)',
-                color: activeBand?.id === band.id ? '#ffffff' : '#CBD5E1',
-                border: activeBand?.id === band.id ? 'none' : '1px solid var(--blue-border)',
-                padding: '9px 18px',
-                borderRadius: '8px',
-                fontWeight: 600,
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease'
+                position: 'relative',
+                padding: 'clamp(20px, 3.5vw, 36px)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gap: '32px',
+                alignItems: 'center',
+                overflow: 'hidden',
+                borderRadius: '16px',
+                border: '1px solid var(--blue-border)',
+                minHeight: '380px'
               }}
             >
-              {band.name}
-            </button>
-          ))}
-        </div>
+              {/* Left Column: Band Details */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 1 }}>
+                
+                {/* Badges & Counter Strip */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span className="badge-blue">
+                    {activeBand.status || 'Active Roster'}
+                  </span>
+                  {activeBand.genre && (
+                    <span className="badge-sky">
+                      <Music className="w-3 h-3" />
+                      {activeBand.genre}
+                    </span>
+                  )}
+                  {bands.length > 1 && (
+                    <span 
+                      style={{
+                        marginLeft: 'auto',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        color: '#94A3B8',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                      }}
+                    >
+                      {safeIndex + 1} / {bands.length}
+                    </span>
+                  )}
+                </div>
 
-        {/* Selected Band Feature Card */}
-        {activeBand && (
-          <div 
-            className="glass-panel"
-            style={{
-              padding: 'clamp(20px, 3vw, 36px)',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '32px',
-              alignItems: 'center'
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                <span className="badge-blue">{activeBand.status || 'Active Roster'}</span>
+                {/* Band Name */}
+                <h3 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#F8FAFC', margin: 0 }}>
+                  {activeBand.name}
+                </h3>
+
+                {/* Band Description */}
+                {activeBand.description && (
+                  <p style={{ color: '#94A3B8', fontSize: '0.94rem', lineHeight: '1.65', margin: 0 }}>
+                    {activeBand.description}
+                  </p>
+                )}
+
+                {/* Members Lineup (if available) */}
+                {Array.isArray(activeBand.members) && activeBand.members.length > 0 && (
+                  <div style={{ marginTop: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                      <Users className="w-3.5 h-3.5" />
+                      Lineup ({activeBand.members.length} Members)
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                      {activeBand.members.map((m, idx) => (
+                        <div 
+                          key={idx}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--blue-border)',
+                            borderRadius: '8px',
+                            padding: '6px 10px'
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, color: '#F8FAFC', fontSize: '0.84rem' }}>{m.name}</div>
+                          <div style={{ fontSize: '0.74rem', color: '#94A3B8' }}>{m.role}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Follow Link CTA */}
+                {(activeBand.instagram || activeBand.followUrl || activeBand.link) && (
+                  <div style={{ marginTop: '8px' }}>
+                    <a 
+                      href={activeBand.instagram || activeBand.followUrl || activeBand.link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-secondary"
+                      style={{ fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" /> Follow {activeBand.name}
+                    </a>
+                  </div>
+                )}
               </div>
 
-              <h3 className="font-display font-bold text-2xl" style={{ color: '#F8FAFC', marginBottom: '10px' }}>
-                {activeBand.name}
-              </h3>
-
-              <p style={{ color: '#94A3B8', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '20px' }}>
-                {activeBand.description}
-              </p>
-
-              {/* Members Roster */}
-              {activeBand.members && activeBand.members.length > 0 && (
-                <div style={{ marginBottom: '20px' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--blue-sky)', textTransform: 'uppercase', marginBottom: '8px' }}>
-                    Lineup ({activeBand.members.length} Members)
+              {/* Right Column: Band Image Showcase */}
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {activeBand.image ? (
+                  <div 
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '320px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      border: '1px solid var(--blue-border)',
+                      boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5)'
+                    }}
+                  >
+                    {/* Ambient Glow */}
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        inset: '-10px',
+                        backgroundImage: `url(${formatImageUrl(activeBand.image)})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        filter: 'blur(20px) brightness(0.3)',
+                        opacity: 0.7
+                      }}
+                    />
+                    <img 
+                      src={formatImageUrl(activeBand.image)} 
+                      alt={activeBand.name}
+                      style={{
+                        position: 'relative',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }} 
+                    />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '8px' }}>
-                    {activeBand.members.map((m, idx) => (
-                      <div 
-                        key={idx}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          border: '1px solid var(--blue-border)',
-                          borderRadius: '8px',
-                          padding: '7px 10px'
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, color: '#F8FAFC', fontSize: '0.85rem' }}>{m.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{m.role}</div>
-                      </div>
-                    ))}
+                ) : (
+                  <div 
+                    style={{
+                      width: '100%',
+                      height: '260px',
+                      borderRadius: '12px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px dashed var(--blue-border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#64748B',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    No Photo Uploaded
                   </div>
-                </div>
-              )}
-
-              {activeBand.instagram && (
-                <a 
-                  href={activeBand.instagram}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-secondary"
-                  style={{ fontSize: '0.82rem' }}
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> Follow Band
-                </a>
-              )}
+                )}
+              </div>
             </div>
 
-            <div>
-              <img 
-                src={formatImageUrl(activeBand.image)} 
-                alt={activeBand.name}
+            {/* Carousel Navigation Controls (Arrows + Dots) */}
+            {bands.length > 1 && (
+              <div 
                 style={{
-                  width: '100%',
-                  height: '320px',
-                  objectFit: 'cover',
-                  borderRadius: '12px',
-                  border: '1px solid var(--blue-border)'
-                }} 
-              />
-            </div>
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginTop: '16px',
+                  paddingInline: '4px'
+                }}
+              >
+                {/* Prev Button */}
+                <button
+                  onClick={handlePrevBand}
+                  className="btn-secondary"
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    borderRadius: '8px'
+                  }}
+                  title="Previous Band"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Previous
+                </button>
+
+                {/* Dot Indicators */}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {bands.map((b, idx) => (
+                    <button
+                      key={b.id || idx}
+                      onClick={() => setCurrentBandIndex(idx)}
+                      title={`Jump to ${b.name}`}
+                      style={{
+                        width: safeIndex === idx ? '24px' : '8px',
+                        height: '8px',
+                        borderRadius: '4px',
+                        background: safeIndex === idx ? 'var(--blue-sky)' : 'rgba(255, 255, 255, 0.2)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        transition: 'all 0.25s ease'
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={handleNextBand}
+                  className="btn-secondary"
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    borderRadius: '8px'
+                  }}
+                  title="Next Band"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>

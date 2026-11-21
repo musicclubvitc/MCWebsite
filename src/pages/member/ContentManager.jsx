@@ -922,26 +922,74 @@ export const ContentManager = () => {
           </div>
 
           {(localData.bands || []).map((b, idx) => (
-            <div key={b.id || idx} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div key={b.id || idx} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="badge-sky">Band {idx + 1}</span>
-                <button
-                  onClick={() => {
-                    const next = localData.bands.filter((_, i) => i !== idx);
-                    setLocalData({ ...localData, bands: next });
-                  }}
-                  style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="badge-sky">Band {idx + 1}</span>
+                  <span style={{ fontSize: '0.85rem', color: '#F1F5F9', fontWeight: 600 }}>{b.name || 'Unnamed Band'}</span>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    onClick={() => {
+                      if (idx === 0) return;
+                      const next = [...localData.bands];
+                      const [moved] = next.splice(idx, 1);
+                      next.splice(idx - 1, 0, moved);
+                      setLocalData({ ...localData, bands: next });
+                    }}
+                    disabled={idx === 0}
+                    title="Move band up in carousel order"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: idx === 0 ? '#475569' : '#94A3B8',
+                      cursor: idx === 0 ? 'default' : 'pointer',
+                      padding: '2px 4px'
+                    }}
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (idx === (localData.bands || []).length - 1) return;
+                      const next = [...localData.bands];
+                      const [moved] = next.splice(idx, 1);
+                      next.splice(idx + 1, 0, moved);
+                      setLocalData({ ...localData, bands: next });
+                    }}
+                    disabled={idx === (localData.bands || []).length - 1}
+                    title="Move band down in carousel order"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: idx === (localData.bands || []).length - 1 ? '#475569' : '#94A3B8',
+                      cursor: idx === (localData.bands || []).length - 1 ? 'default' : 'pointer',
+                      padding: '2px 4px'
+                    }}
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const next = localData.bands.filter((_, i) => i !== idx);
+                      setLocalData({ ...localData, bands: next });
+                    }}
+                    title="Delete band"
+                    style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Band Name</label>
                   <input
                     type="text"
-                    value={b.name}
+                    value={b.name || ''}
+                    placeholder="e.g. Six Delusions"
                     onChange={(e) => {
                       const next = [...localData.bands];
                       next[idx].name = e.target.value;
@@ -955,7 +1003,8 @@ export const ContentManager = () => {
                   <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>Genre</label>
                   <input
                     type="text"
-                    value={b.genre}
+                    value={b.genre || ''}
+                    placeholder="e.g. Hard Rock & Funk"
                     onChange={(e) => {
                       const next = [...localData.bands];
                       next[idx].genre = e.target.value;
@@ -981,6 +1030,40 @@ export const ContentManager = () => {
                     className="input-field"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
+                  Band Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Describe the band's musical style, influences, history, and stage highlights..."
+                  value={b.description || ''}
+                  onChange={(e) => {
+                    const next = [...localData.bands];
+                    next[idx].description = e.target.value;
+                    setLocalData({ ...localData, bands: next });
+                  }}
+                  className="input-field"
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', color: '#CBD5E1', marginBottom: '4px' }}>
+                  Follow Link / Social URL <span style={{ color: '#94a3b8' }}>(Instagram, Spotify, YouTube, or Linktree URL)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://www.instagram.com/bandname"
+                  value={b.instagram || b.followUrl || b.link || ''}
+                  onChange={(e) => {
+                    const next = [...localData.bands];
+                    next[idx].instagram = e.target.value;
+                    setLocalData({ ...localData, bands: next });
+                  }}
+                  className="input-field"
+                />
               </div>
             </div>
           ))}
