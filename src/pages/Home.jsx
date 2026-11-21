@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useContent } from '../context/ContentContext';
 import { Equalizer } from '../components/Equalizer';
 import { 
@@ -24,20 +24,80 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
   const bands = content?.bands || [];
   const about = content?.about || {};
 
-  const [currentBandIndex, setCurrentBandIndex] = useState(0);
+  // Bands Infinite Peek Carousel Setup
+  const bandCount = bands.length;
+  const repeatMultiplier = bandCount >= 4 ? 3 : Math.max(3, Math.ceil(9 / (bandCount || 1)));
+
+  const extendedBands = useMemo(() => {
+    if (bandCount === 0) return [];
+    const list = [];
+    for (let r = 0; r < repeatMultiplier; r++) {
+      bands.forEach((b, originalIndex) => {
+        list.push({ 
+          ...b, 
+          __originalIndex: originalIndex, 
+          __uniqueKey: `${b.id || originalIndex}-${r}` 
+        });
+      });
+    }
+    return list;
+  }, [bands, repeatMultiplier, bandCount]);
+
+  const middleSegmentStartIndex = Math.floor(repeatMultiplier / 2) * bandCount;
+  const [carouselIndex, setCarouselIndex] = useState(middleSegmentStartIndex);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [noTransition, setNoTransition] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
 
-  const safeIndex = bands.length > 0 ? ((currentBandIndex % bands.length) + bands.length) % bands.length : 0;
-  const activeBand = bands[safeIndex] || null;
+  // Sync index if bands array changes
+  useEffect(() => {
+    setNoTransition(true);
+    setCarouselIndex(middleSegmentStartIndex);
+  }, [bandCount, middleSegmentStartIndex]);
 
   const handlePrevBand = () => {
-    if (bands.length <= 1) return;
-    setCurrentBandIndex((prev) => (prev === 0 ? bands.length - 1 : prev - 1));
+    if (bandCount <= 1 || isTransitioning) return;
+    setNoTransition(false);
+    setIsTransitioning(true);
+    setCarouselIndex((prev) => prev - 1);
   };
 
   const handleNextBand = () => {
-    if (bands.length <= 1) return;
-    setCurrentBandIndex((prev) => (prev === bands.length - 1 ? 0 : prev + 1));
+    if (bandCount <= 1 || isTransitioning) return;
+    setNoTransition(false);
+    setIsTransitioning(true);
+    setCarouselIndex((prev) => prev + 1);
+  };
+
+  const handleTransitionEnd = () => {
+    setIsTransitioning(false);
+    // Seamlessly normalize when stepping out of the middle segment
+    if (carouselIndex < bandCount) {
+      setNoTransition(true);
+      setCarouselIndex(carouselIndex + bandCount);
+    } else if (carouselIndex >= bandCount * (repeatMultiplier - 1)) {
+      setNoTransition(true);
+      setCarouselIndex(carouselIndex - bandCount);
+    }
+  };
+
+  const activeRealIndex = bandCount > 0 ? ((carouselIndex % bandCount) + bandCount) % bandCount : 0;
+
+  const handleJumpToDot = (targetRealIdx) => {
+    if (isTransitioning || targetRealIdx === activeRealIndex) return;
+    let diff = targetRealIdx - activeRealIndex;
+    if (diff > bandCount / 2) diff -= bandCount;
+    if (diff < -bandCount / 2) diff += bandCount;
+    setNoTransition(false);
+    setIsTransitioning(true);
+    setCarouselIndex((prev) => prev + diff);
+  };
+
+  const handleCardClick = (slideIdx) => {
+    if (slideIdx === carouselIndex || isTransitioning) return;
+    setNoTransition(false);
+    setIsTransitioning(true);
+    setCarouselIndex(slideIdx);
   };
 
   const handleTouchStart = (e) => {
@@ -263,9 +323,9 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
         </div>
       </section>
 
-      {/* 4. OFFICIAL CLUB BANDS SHOWCASE (CAROUSEL) */}
-      <section className="container-custom">
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+      {/* 4. OFFICIAL CLUB BANDS SHOWCASE (PEEK COVERFLOW CAROUSEL) */}
+      <section style={{ width: '100%', overflow: 'hidden', padding: '16px 0 24px 0' }}>
+        <div className="container-custom" style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div className="badge-sky" style={{ marginBottom: '8px' }}>
             <Disc className="w-3.5 h-3.5" />
             OFFICIAL ROSTER
@@ -279,241 +339,326 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
         </div>
 
         {bands.length === 0 ? (
-          <div className="glass-panel" style={{ padding: '36px', textAlign: 'center', color: '#94A3B8' }}>
-            No official bands showcased at the moment.
+          <div className="container-custom">
+            <div className="glass-panel" style={{ padding: '36px', textAlign: 'center', color: '#94A3B8' }}>
+              No official bands showcased at the moment.
+            </div>
           </div>
         ) : (
           <div 
-            style={{ position: 'relative' }}
+            style={{ 
+              position: 'relative',
+              width: '100%',
+              maxWidth: '100vw',
+              overflow: 'hidden',
+              padding: '16px 0',
+              '--card-w': 'clamp(310px, 72vw, 840px)',
+              '--card-gap': '20px',
+              '--idx': carouselIndex
+            }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            {/* Carousel Main Card */}
+            {/* Sliding Track with Physical Movement Animation */}
             <div 
-              className="glass-panel"
+              onTransitionEnd={handleTransitionEnd}
               style={{
-                position: 'relative',
-                padding: 'clamp(20px, 3.5vw, 36px)',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '32px',
-                alignItems: 'center',
-                overflow: 'hidden',
-                borderRadius: '16px',
-                border: '1px solid var(--blue-border)',
-                minHeight: '380px'
+                display: 'flex',
+                alignItems: 'stretch',
+                transform: 'translateX(calc(50% - (var(--card-w) / 2) - (var(--idx) * (var(--card-w) + var(--card-gap)))))',
+                transition: noTransition ? 'none' : 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+                willChange: 'transform'
               }}
             >
-              {/* Left Column: Band Details */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 1 }}>
-                
-                {/* Badges & Counter Strip */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span className="badge-blue">
-                    {activeBand.status || 'Active Roster'}
-                  </span>
-                  {activeBand.genre && (
-                    <span className="badge-sky">
-                      <Music className="w-3 h-3" />
-                      {activeBand.genre}
-                    </span>
-                  )}
-                  {bands.length > 1 && (
-                    <span 
-                      style={{
-                        marginLeft: 'auto',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        color: '#94A3B8',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        padding: '3px 10px',
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255, 255, 255, 0.1)'
-                      }}
-                    >
-                      {safeIndex + 1} / {bands.length}
-                    </span>
-                  )}
-                </div>
+              {extendedBands.map((band, slideIdx) => {
+                const isCenter = slideIdx === carouselIndex;
+                const followLink = band.instagram || band.followUrl || band.link;
 
-                {/* Band Name */}
-                <h3 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#F8FAFC', margin: 0 }}>
-                  {activeBand.name}
-                </h3>
-
-                {/* Band Description */}
-                {activeBand.description && (
-                  <p style={{ color: '#94A3B8', fontSize: '0.94rem', lineHeight: '1.65', margin: 0 }}>
-                    {activeBand.description}
-                  </p>
-                )}
-
-                {/* Members Lineup (if available) */}
-                {Array.isArray(activeBand.members) && activeBand.members.length > 0 && (
-                  <div style={{ marginTop: '4px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                      <Users className="w-3.5 h-3.5" />
-                      Lineup ({activeBand.members.length} Members)
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
-                      {activeBand.members.map((m, idx) => (
-                        <div 
-                          key={idx}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            border: '1px solid var(--blue-border)',
-                            borderRadius: '8px',
-                            padding: '6px 10px'
-                          }}
-                        >
-                          <div style={{ fontWeight: 600, color: '#F8FAFC', fontSize: '0.84rem' }}>{m.name}</div>
-                          <div style={{ fontSize: '0.74rem', color: '#94A3B8' }}>{m.role}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Follow Link CTA */}
-                {(activeBand.instagram || activeBand.followUrl || activeBand.link) && (
-                  <div style={{ marginTop: '8px' }}>
-                    <a 
-                      href={activeBand.instagram || activeBand.followUrl || activeBand.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="btn-secondary"
-                      style={{ fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" /> Follow {activeBand.name}
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column: Band Image Showcase */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {activeBand.image ? (
-                  <div 
+                return (
+                  <div
+                    key={band.__uniqueKey || slideIdx}
+                    onClick={() => handleCardClick(slideIdx)}
                     style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '320px',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      border: '1px solid var(--blue-border)',
-                      boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5)'
+                      flex: '0 0 var(--card-w)',
+                      width: 'var(--card-w)',
+                      marginRight: 'var(--card-gap)',
+                      boxSizing: 'border-box',
+                      cursor: isCenter ? 'default' : 'pointer',
+                      userSelect: 'none'
                     }}
                   >
-                    {/* Ambient Glow */}
                     <div 
-                      style={{
-                        position: 'absolute',
-                        inset: '-10px',
-                        backgroundImage: `url(${formatImageUrl(activeBand.image)})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: 'blur(20px) brightness(0.3)',
-                        opacity: 0.7
-                      }}
-                    />
-                    <img 
-                      src={formatImageUrl(activeBand.image)} 
-                      alt={activeBand.name}
+                      className="glass-panel"
                       style={{
                         position: 'relative',
-                        width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
-                        display: 'block'
-                      }} 
-                    />
+                        minHeight: '380px',
+                        padding: 'clamp(20px, 3.5vw, 36px)',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: 'clamp(20px, 3vw, 32px)',
+                        alignItems: 'center',
+                        borderRadius: '16px',
+                        backgroundColor: isCenter ? 'rgba(15, 23, 42, 0.94)' : 'rgba(15, 23, 42, 0.65)',
+                        border: isCenter ? '1.5px solid var(--blue-sky)' : '1px solid var(--blue-border)',
+                        boxShadow: isCenter ? '0 16px 48px rgba(0, 0, 0, 0.6), 0 0 24px rgba(56, 189, 248, 0.15)' : 'none',
+                        transform: isCenter ? 'scale(1)' : 'scale(0.92)',
+                        opacity: isCenter ? 1 : 0.45,
+                        filter: isCenter ? 'none' : 'brightness(0.75)',
+                        transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {/* Left Column: Band Text & Details */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 1 }}>
+                        
+                        {/* Status & Genre Badges */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span className="badge-blue">
+                            {band.status || 'Active Roster'}
+                          </span>
+                          {band.genre && (
+                            <span className="badge-sky">
+                              <Music className="w-3 h-3" />
+                              {band.genre}
+                            </span>
+                          )}
+                          <span 
+                            style={{
+                              marginLeft: 'auto',
+                              fontSize: '0.76rem',
+                              fontWeight: 600,
+                              color: '#94A3B8',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              border: '1px solid rgba(255, 255, 255, 0.1)'
+                            }}
+                          >
+                            {band.__originalIndex + 1} / {bandCount}
+                          </span>
+                        </div>
+
+                        {/* Band Name */}
+                        <h3 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#F8FAFC', margin: 0 }}>
+                          {band.name}
+                        </h3>
+
+                        {/* Band Description */}
+                        {band.description && (
+                          <p style={{ color: '#94A3B8', fontSize: '0.92rem', lineHeight: '1.65', margin: 0 }}>
+                            {band.description}
+                          </p>
+                        )}
+
+                        {/* Members Lineup (if available) */}
+                        {Array.isArray(band.members) && band.members.length > 0 && (
+                          <div style={{ marginTop: '2px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', fontWeight: 700, color: 'var(--blue-sky)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                              <Users className="w-3.5 h-3.5" />
+                              Lineup ({band.members.length} Members)
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                              {band.members.map((m, mIdx) => (
+                                <div 
+                                  key={mIdx}
+                                  style={{
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    border: '1px solid var(--blue-border)',
+                                    borderRadius: '8px',
+                                    padding: '6px 10px'
+                                  }}
+                                >
+                                  <div style={{ fontWeight: 600, color: '#F8FAFC', fontSize: '0.82rem' }}>{m.name}</div>
+                                  <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{m.role}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Follow Link CTA */}
+                        {followLink && (
+                          <div style={{ marginTop: '6px' }}>
+                            <a 
+                              href={followLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-secondary"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ fontSize: '0.84rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" /> Follow {band.name}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right Column: Band Image */}
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {band.image ? (
+                          <div 
+                            style={{
+                              position: 'relative',
+                              width: '100%',
+                              height: 'clamp(220px, 28vw, 320px)',
+                              borderRadius: '12px',
+                              overflow: 'hidden',
+                              border: '1px solid var(--blue-border)',
+                              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5)'
+                            }}
+                          >
+                            {/* Ambient Glow */}
+                            <div 
+                              style={{
+                                position: 'absolute',
+                                inset: '-10px',
+                                backgroundImage: `url(${formatImageUrl(band.image)})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                filter: 'blur(20px) brightness(0.3)',
+                                opacity: 0.75
+                              }}
+                            />
+                            <img 
+                              src={formatImageUrl(band.image)} 
+                              alt={band.name}
+                              style={{
+                                position: 'relative',
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                display: 'block'
+                              }} 
+                            />
+                          </div>
+                        ) : (
+                          <div 
+                            style={{
+                              width: '100%',
+                              height: '240px',
+                              borderRadius: '12px',
+                              background: 'rgba(255, 255, 255, 0.02)',
+                              border: '1px dashed var(--blue-border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#64748B',
+                              fontSize: '0.88rem'
+                            }}
+                          >
+                            No Photo Available
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div 
-                    style={{
-                      width: '100%',
-                      height: '260px',
-                      borderRadius: '12px',
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      border: '1px dashed var(--blue-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#64748B',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    No Photo Uploaded
-                  </div>
-                )}
-              </div>
+                );
+              })}
             </div>
 
-            {/* Carousel Navigation Controls (Arrows + Dots) */}
-            {bands.length > 1 && (
+            {/* Circular Floating Arrow Navigation Buttons (Matching Reference Design) */}
+            {bandCount > 1 && (
+              <>
+                <button
+                  onClick={handlePrevBand}
+                  title="Previous Band"
+                  style={{
+                    position: 'absolute',
+                    left: 'clamp(12px, 4vw, 32px)',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--blue-sky)',
+                    color: '#030712',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 20px rgba(56, 189, 248, 0.45), 0 2px 8px rgba(0, 0, 0, 0.5)',
+                    transition: 'all 0.2s ease',
+                    zIndex: 10
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
+                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(56, 189, 248, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(56, 189, 248, 0.45), 0 2px 8px rgba(0, 0, 0, 0.5)';
+                  }}
+                >
+                  <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                </button>
+
+                <button
+                  onClick={handleNextBand}
+                  title="Next Band"
+                  style={{
+                    position: 'absolute',
+                    right: 'clamp(12px, 4vw, 32px)',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--blue-sky)',
+                    color: '#030712',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 20px rgba(56, 189, 248, 0.45), 0 2px 8px rgba(0, 0, 0, 0.5)',
+                    transition: 'all 0.2s ease',
+                    zIndex: 10
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
+                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(56, 189, 248, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(56, 189, 248, 0.45), 0 2px 8px rgba(0, 0, 0, 0.5)';
+                  }}
+                >
+                  <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                </button>
+              </>
+            )}
+
+            {/* Bottom Dot Indicators */}
+            {bandCount > 1 && (
               <div 
                 style={{
                   display: 'flex',
+                  justifyContent: 'center',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: '16px',
-                  paddingInline: '4px'
+                  gap: '8px',
+                  marginTop: '22px'
                 }}
               >
-                {/* Prev Button */}
-                <button
-                  onClick={handlePrevBand}
-                  className="btn-secondary"
-                  style={{
-                    padding: '8px 14px',
-                    fontSize: '0.85rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    borderRadius: '8px'
-                  }}
-                  title="Previous Band"
-                >
-                  <ChevronLeft className="w-4 h-4" /> Previous
-                </button>
-
-                {/* Dot Indicators */}
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  {bands.map((b, idx) => (
-                    <button
-                      key={b.id || idx}
-                      onClick={() => setCurrentBandIndex(idx)}
-                      title={`Jump to ${b.name}`}
-                      style={{
-                        width: safeIndex === idx ? '24px' : '8px',
-                        height: '8px',
-                        borderRadius: '4px',
-                        background: safeIndex === idx ? 'var(--blue-sky)' : 'rgba(255, 255, 255, 0.2)',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 0,
-                        transition: 'all 0.25s ease'
-                      }}
-                    />
-                  ))}
-                </div>
-
-                {/* Next Button */}
-                <button
-                  onClick={handleNextBand}
-                  className="btn-secondary"
-                  style={{
-                    padding: '8px 14px',
-                    fontSize: '0.85rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    borderRadius: '8px'
-                  }}
-                  title="Next Band"
-                >
-                  Next <ChevronRight className="w-4 h-4" />
-                </button>
+                {bands.map((b, bIdx) => (
+                  <button
+                    key={b.id || bIdx}
+                    onClick={() => handleJumpToDot(bIdx)}
+                    title={`Jump to ${b.name}`}
+                    style={{
+                      width: activeRealIndex === bIdx ? '28px' : '9px',
+                      height: '9px',
+                      borderRadius: '5px',
+                      background: activeRealIndex === bIdx ? 'var(--blue-sky)' : 'rgba(255, 255, 255, 0.2)',
+                      boxShadow: activeRealIndex === bIdx ? '0 0 10px rgba(56, 189, 248, 0.6)' : 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      transition: 'all 0.3s ease'
+                    }}
+                  />
+                ))}
               </div>
             )}
           </div>
