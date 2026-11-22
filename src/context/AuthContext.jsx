@@ -115,6 +115,12 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [toast, setToast] = useState(null);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+    }
+    return false;
+  });
 
   const showToast = (message, type = "success") => {
     setToast({ message, type, id: Date.now() });
@@ -325,7 +331,10 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription: authListener } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryMode(true);
+      }
       if (session?.user) {
         loadUserProfile(session.user.id, session.user.email);
       } else if (!localStorage.getItem("vitc_music_user")) {
@@ -603,6 +612,60 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("vitc_music_user");
     localStorage.removeItem("vitc_music_is_admin");
     showToast("Signed out of Member Portal", "info");
+  };
+
+  const sendPasswordResetEmail = async (email) => {
+    if (!email || !email.trim()) {
+      showToast("Please enter your registered email address.", "error");
+      return { error: "Please enter your registered email address." };
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const redirectOrigin = typeof window !== 'undefined' ? `${window.location.origin}/` : undefined;
+        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: redirectOrigin
+        });
+        if (error) throw error;
+        showToast("Password reset link sent! Check your inbox.", "info");
+        return { success: true };
+      } catch (err) {
+        console.error("Password reset error:", err);
+        showToast(err.message || "Failed to send reset email", "error");
+        return { error: err.message || "Failed to send reset email" };
+      }
+    } else {
+      const offlineMsg = "Supabase is not configured. Password reset is only available when connected to database.";
+      showToast(offlineMsg, "error");
+      return { error: offlineMsg };
+    }
+  };
+
+  const updateUserPassword = async (newPassword) => {
+    if (!newPassword || newPassword.length < 6) {
+      const msg = "Password must be at least 6 characters long.";
+      showToast(msg, "error");
+      return { error: msg };
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase.auth.updateUser({
+          password: newPassword
+        });
+        if (error) throw error;
+        setIsRecoveryMode(false);
+        showToast("Password updated successfully! You can now log in.", "info");
+        return { success: true };
+      } catch (err) {
+        console.error("Update password error:", err);
+        showToast(err.message || "Failed to update password", "error");
+        return { error: err.message || "Failed to update password" };
+      }
+    } else {
+      showToast("Supabase is not configured.", "error");
+      return { error: "Supabase is not configured." };
+    }
   };
 
   // ---------------- BANDS ACTIONS ----------------
@@ -1131,6 +1194,10 @@ export const AuthProvider = ({ children }) => {
         deleteAdminUser,
         toggleAdmin,
         showToast,
+        isRecoveryMode,
+        setIsRecoveryMode,
+        sendPasswordResetEmail,
+        updateUserPassword,
         refreshAllLiveData,
         refreshLiveBookings: fetchLiveBookings
       }}

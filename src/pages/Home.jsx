@@ -414,9 +414,6 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
                         
                         {/* Status & Genre Badges */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <span className="badge-blue">
-                            {band.status || 'Active Roster'}
-                          </span>
                           {band.genre && (
                             <span className="badge-sky">
                               <Music className="w-3 h-3" />

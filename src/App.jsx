@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ContentProvider } from './context/ContentContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -33,6 +33,7 @@ const normalizeTab = (raw) => {
 };
 
 export function AppContent() {
+  const { isRecoveryMode } = useAuth();
   const [activeTab, setActiveTabState] = useState(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
       return normalizeTab(window.location.hash);
@@ -40,6 +41,13 @@ export function AppContent() {
     return 'home';
   });
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Automatically open auth modal when user lands on password recovery link
+  useEffect(() => {
+    if (isRecoveryMode) {
+      setAuthModalOpen(true);
+    }
+  }, [isRecoveryMode]);
 
   const setActiveTab = (tab) => {
     const nextTab = normalizeTab(tab);
