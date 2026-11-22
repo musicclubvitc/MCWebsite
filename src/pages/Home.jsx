@@ -352,7 +352,7 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
               maxWidth: '100vw',
               overflow: 'hidden',
               padding: '16px 0',
-              '--card-w': 'clamp(310px, 72vw, 840px)',
+              '--card-w': 'clamp(310px, 75vw, 880px)',
               '--card-gap': '20px',
               '--idx': carouselIndex
             }}
@@ -388,16 +388,12 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
                     }}
                   >
                     <div 
-                      className="glass-panel"
+                      className="glass-panel band-showcase-grid"
                       style={{
                         position: 'relative',
                         height: '100%',
-                        minHeight: '380px',
+                        minHeight: '340px',
                         padding: 'clamp(20px, 3.5vw, 36px)',
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                        gap: 'clamp(20px, 3vw, 32px)',
-                        alignItems: 'center',
                         borderRadius: '16px',
                         backgroundColor: isCenter ? 'rgba(15, 23, 42, 0.94)' : 'rgba(15, 23, 42, 0.65)',
                         border: isCenter ? '1.5px solid var(--blue-sky)' : '1px solid var(--blue-border)',
@@ -410,36 +406,22 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
                       }}
                     >
                       {/* Left Column: Band Text & Details */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', zIndex: 1 }}>
+                      <div className="band-showcase-text">
                         
-                        {/* Status & Genre Badges */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          {band.genre && (
+                        {/* Genre Badge */}
+                        {band.genre && (
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
                             <span className="badge-sky">
                               <Music className="w-3 h-3" />
                               {band.genre}
                             </span>
-                          )}
-                          <span 
-                            style={{
-                              marginLeft: 'auto',
-                              fontSize: '0.76rem',
-                              fontWeight: 600,
-                              color: '#94A3B8',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              border: '1px solid rgba(255, 255, 255, 0.1)'
-                            }}
-                          >
-                            {band.__originalIndex + 1} / {bandCount}
-                          </span>
-                        </div>
+                          </div>
+                        )}
 
                         {/* Band Name */}
-                        <h3 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#F8FAFC', margin: 0 }}>
+                        <h2 className="font-display font-bold text-2xl md:text-3xl" style={{ color: '#F8FAFC', margin: 0, lineHeight: 1.25 }}>
                           {band.name}
-                        </h3>
+                        </h2>
 
                         {/* Band Description */}
                         {band.description && (
@@ -492,19 +474,9 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
                       </div>
 
                       {/* Right Column: Band Image */}
-                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div className="band-showcase-image-col">
                         {band.image ? (
-                          <div 
-                            style={{
-                              position: 'relative',
-                              width: '100%',
-                              height: 'clamp(220px, 28vw, 320px)',
-                              borderRadius: '12px',
-                              overflow: 'hidden',
-                              border: '1px solid var(--blue-border)',
-                              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.5)'
-                            }}
-                          >
+                          <div className="band-showcase-image-wrapper">
                             {/* Ambient Glow */}
                             <div 
                               style={{
@@ -531,17 +503,16 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
                           </div>
                         ) : (
                           <div 
+                            className="band-showcase-image-wrapper"
                             style={{
-                              width: '100%',
-                              height: '240px',
-                              borderRadius: '12px',
                               background: 'rgba(255, 255, 255, 0.02)',
                               border: '1px dashed var(--blue-border)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               color: '#64748B',
-                              fontSize: '0.88rem'
+                              fontSize: '0.88rem',
+                              boxShadow: 'none'
                             }}
                           >
                             No Photo Available
