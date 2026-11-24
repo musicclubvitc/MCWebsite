@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { BookingPrintSlip } from '../../components/BookingPrintSlip';
+import { InstrumentPrintSlip } from '../../components/InstrumentPrintSlip';
 import { 
   ShieldCheck, 
   Clock, 
@@ -139,9 +140,10 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
   const [selectedInstDetails, setSelectedInstDetails] = useState(null);
   const [printBooking, setPrintBooking] = useState(null);
+  const [printInstRequest, setPrintInstRequest] = useState(null);
 
   // Gear Inventory Management States
-  const [gearSubTab, setGearSubTab] = useState('inventory'); // 'inventory' | 'requests'
+  const [gearSubTab, setGearSubTab] = useState('requests'); // 'requests' | 'inventory'
   const [gearSearch, setGearSearch] = useState('');
   const [gearCategory, setGearCategory] = useState('All');
   const [showAddGearModal, setShowAddGearModal] = useState(false);
@@ -1449,24 +1451,6 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <button
-                onClick={() => { setGearSubTab('inventory'); setSelectedInstDetails(null); }}
-                style={{
-                  padding: '8px 20px',
-                  borderRadius: '20px',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  background: gearSubTab === 'inventory' ? 'var(--blue-royal)' : 'rgba(255,255,255,0.04)',
-                  color: gearSubTab === 'inventory' ? '#ffffff' : '#94A3B8',
-                  border: gearSubTab === 'inventory' ? '1px solid var(--blue-sky)' : '1px solid var(--blue-border)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Package className="w-4 h-4" /> Club Gear Inventory ({instruments.length})
-              </button>
-              <button
                 onClick={() => { setGearSubTab('requests'); setSelectedInstDetails(null); }}
                 style={{
                   padding: '8px 20px',
@@ -1483,6 +1467,24 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                 }}
               >
                 <Guitar className="w-4 h-4" /> Member Requisitions ({instrumentRequests.length})
+              </button>
+              <button
+                onClick={() => { setGearSubTab('inventory'); setSelectedInstDetails(null); }}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: '20px',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  background: gearSubTab === 'inventory' ? 'var(--blue-royal)' : 'rgba(255,255,255,0.04)',
+                  color: gearSubTab === 'inventory' ? '#ffffff' : '#94A3B8',
+                  border: gearSubTab === 'inventory' ? '1px solid var(--blue-sky)' : '1px solid var(--blue-border)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Package className="w-4 h-4" /> Club Gear Inventory ({instruments.length})
               </button>
             </div>
 
@@ -1725,12 +1727,23 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>{selectedInstDetails.id}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>GEAR CODE</div>
+                      <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>GEAR CODE(S)</div>
                       <div style={{ color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.95rem', fontFamily: 'monospace' }}>{selectedInstDetails.instrumentCode}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>REQUESTER</div>
-                      <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>{selectedInstDetails.requester} ({selectedInstDetails.regNumber})</div>
+                      <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>
+                        {selectedInstDetails.requesterName || selectedInstDetails.requester}
+                        {selectedInstDetails.regNumber ? ` (${selectedInstDetails.regNumber})` : ''}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>CLUB / ORGANIZATION</div>
+                      <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.95rem' }}>{selectedInstDetails.requesterClub || 'VITC Music Club'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>CONTACT NUMBER</div>
+                      <div style={{ color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.95rem', fontFamily: 'monospace' }}>{selectedInstDetails.contactNumber || '—'}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.75rem', color: '#94A3B8', fontWeight: 700, textTransform: 'uppercase' }}>CURRENT STATUS</div>
@@ -1750,7 +1763,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                     <button
                       onClick={() => setSelectedInstDetails(null)}
                       className="btn-ghost"
@@ -1759,7 +1772,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       <ChevronLeft className="w-4 h-4" /> Back
                     </button>
 
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      {selectedInstDetails.status === 'Approved' && (
+                        <button
+                          onClick={() => setPrintInstRequest(selectedInstDetails)}
+                          className="btn-secondary"
+                          style={{ padding: '8px 20px', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <Printer className="w-4 h-4" /> Print Pass (PDF)
+                        </button>
+                      )}
                       {selectedInstDetails.status !== 'Approved' && (
                         <button
                           onClick={() => {
@@ -1931,7 +1953,14 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                                 <td style={{ padding: '12px 16px', color: '#F1F5F9', fontWeight: 600 }}>{req.instrumentName}</td>
                                 <td style={{ padding: '12px 16px', color: '#94A3B8', fontFamily: 'monospace' }}>{req.instrumentCode}</td>
                                 <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.borrowDate}</td>
-                                <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>{req.requester}</td>
+                                <td style={{ padding: '12px 16px', color: '#CBD5E1' }}>
+                                  <div>{req.requesterName || req.requester}</div>
+                                  {(req.requesterClub || req.contactNumber) && (
+                                    <div style={{ fontSize: '0.74rem', color: '#94A3B8' }}>
+                                      {[req.requesterClub, req.contactNumber].filter(Boolean).join(' • ')}
+                                    </div>
+                                  )}
+                                </td>
                                 <td style={{ padding: '12px 16px' }}>
                                   <span style={{
                                     padding: '3px 10px',
@@ -1945,7 +1974,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                                   </span>
                                 </td>
                                 <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                                  <div style={{ display: 'inline-flex', gap: '8px' }}>
+                                  <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                                    {req.status === 'Approved' && (
+                                      <button
+                                        onClick={() => setPrintInstRequest(req)}
+                                        style={{ background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.3)', color: '#38bdf8', cursor: 'pointer', padding: '5px 8px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center' }}
+                                        title="Print Official Requisition Pass"
+                                      >
+                                        <Printer className="w-4 h-4" />
+                                      </button>
+                                    )}
                                     <button
                                       onClick={() => setSelectedInstDetails(req)}
                                       className="btn-secondary"
@@ -2199,6 +2237,17 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
           approverName={printBooking?.approvedBy || user?.name || 'V.Mithra'}
           approverRole={printBooking?.approverRole || user?.role || 'Creative Head'}
           approverDate={printBooking?.approvedAt || printBooking?.createdAt}
+        />
+      )}
+
+      {/* ===================== PRINT INSTRUMENT REQUISITION PASS (PDF) ===================== */}
+      {printInstRequest && (
+        <InstrumentPrintSlip
+          request={printInstRequest}
+          onClose={() => setPrintInstRequest(null)}
+          approverName={printInstRequest?.approvedBy || user?.name || 'V.Mithra'}
+          approverRole={printInstRequest?.approverRole || user?.role || 'Creative Head'}
+          approverDate={printInstRequest?.approvedAt || printInstRequest?.createdAt}
         />
       )}
 

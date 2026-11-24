@@ -5,14 +5,18 @@ import {
   Plus, 
   X, 
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Printer,
+  Check
 } from 'lucide-react';
 import { formatImageUrl } from '../../lib/imageUtils';
+import { InstrumentPrintSlip } from '../../components/InstrumentPrintSlip';
 
 export const MemberInstruments = () => {
-  const { myInstrumentRequests, addInstrumentRequest, instruments, refreshAllLiveData, showToast } = useAuth();
+  const { user, myInstrumentRequests, addInstrumentRequest, instruments, refreshAllLiveData, showToast } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [printRequest, setPrintRequest] = useState(null);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -27,13 +31,23 @@ export const MemberInstruments = () => {
   const activeInventory = instruments || [];
 
   // Form State
-  const [selectedInstId, setSelectedInstId] = useState('');
+  const [selectedInstIds, setSelectedInstIds] = useState([]);
+  const [requesterName, setRequesterName] = useState(user?.name || '');
+  const [requesterClub, setRequesterClub] = useState('VITC Music Club');
+  const [contactNumber, setContactNumber] = useState('');
 
   useEffect(() => {
-    if (activeInventory.length > 0 && (!selectedInstId || !activeInventory.find(i => i.id === selectedInstId))) {
-      setSelectedInstId(activeInventory[0].id);
+    if (user?.name && !requesterName) {
+      setRequesterName(user.name);
     }
-  }, [activeInventory, selectedInstId]);
+  }, [user?.name]);
+
+  const toggleInstrumentSelection = (id) => {
+    setSelectedInstIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   const [borrowDate, setBorrowDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -58,27 +72,55 @@ export const MemberInstruments = () => {
       return;
     }
 
+    if (selectedInstIds.length === 0) {
+      setFormError('Please select at least one instrument from the inventory.');
+      return;
+    }
+
+    if (!requesterName.trim()) {
+      setFormError('Please enter the requester name.');
+      return;
+    }
+
+    if (!requesterClub.trim()) {
+      setFormError('Please enter the requester club or organization.');
+      return;
+    }
+
+    if (!contactNumber.trim()) {
+      setFormError('Please enter a valid contact number.');
+      return;
+    }
+
     if (!agreedToTerms) {
       setFormError('Please accept the club equipment safety policy before requesting.');
       return;
     }
 
-    const inst = activeInventory.find(i => i.id === selectedInstId);
-    if (!inst) {
-      setFormError('Please select a valid instrument from the inventory.');
+    const selectedInstruments = activeInventory
+      .filter(i => selectedInstIds.includes(i.id))
+      .map(i => ({ id: i.id, name: i.name, code: i.code }));
+
+    if (selectedInstruments.length === 0) {
+      setFormError('Please select valid instruments from the inventory.');
       return;
     }
 
     addInstrumentRequest({
-      instrumentName: inst.name,
-      instrumentCode: inst.code,
+      instruments: selectedInstruments,
+      instrumentName: selectedInstruments.map(i => i.name).join(', '),
+      instrumentCode: selectedInstruments.map(i => i.code).join(', '),
+      requesterName: requesterName.trim(),
+      requesterClub: requesterClub.trim(),
+      contactNumber: contactNumber.trim(),
       borrowDate,
       borrowTime,
       returnDate,
       returnTime,
-      purpose
+      purpose: purpose.trim()
     });
 
+    setSelectedInstIds([]);
     setPurpose('');
     setAgreedToTerms(false);
     setIsModalOpen(false);
@@ -235,7 +277,7 @@ export const MemberInstruments = () => {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
                         <span className="font-display font-bold text-lg" style={{ color: '#F8FAFC' }}>
                           {req.instrumentName}
                         </span>
@@ -249,12 +291,30 @@ export const MemberInstruments = () => {
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontFamily: 'monospace', color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.82rem' }}>
-                        {req.id}
-                      </div>
-                      <div style={{ color: '#64748B', fontSize: '0.75rem' }}>
-                        Requested {req.createdAt}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      {req.status === 'Approved' && (
+                        <button
+                          onClick={() => setPrintRequest(req)}
+                          className="btn-secondary"
+                          style={{
+                            padding: '6px 14px',
+                            fontSize: '0.78rem',
+                            borderRadius: '20px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Printer className="w-3.5 h-3.5" /> Print Pass / PDF
+                        </button>
+                      )}
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontFamily: 'monospace', color: 'var(--blue-sky)', fontWeight: 600, fontSize: '0.82rem' }}>
+                          {req.id}
+                        </div>
+                        <div style={{ color: '#64748B', fontSize: '0.75rem' }}>
+                          Requested {req.createdAt}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -279,6 +339,17 @@ export const MemberInstruments = () => {
                     <div>
                       <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>RETURN SCHEDULED</span>
                       <strong style={{ color: '#CBD5E1' }}>{req.returnDate} @ {req.returnTime}</strong>
+                    </div>
+
+                    <div>
+                      <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>REQUESTER</span>
+                      <strong style={{ color: '#F1F5F9' }}>{req.requesterName || req.requester}</strong>
+                      {req.requesterClub && (
+                        <span style={{ display: 'block', fontSize: '0.74rem', color: '#94A3B8' }}>{req.requesterClub}</span>
+                      )}
+                      {req.contactNumber && (
+                        <span style={{ display: 'block', fontSize: '0.74rem', color: 'var(--blue-sky)', fontFamily: 'monospace' }}>{req.contactNumber}</span>
+                      )}
                     </div>
 
                     <div>
@@ -378,9 +449,17 @@ export const MemberInstruments = () => {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
-                  Select Instrument *
-                </label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1' }}>
+                    Select Instruments (Multiple Allowed) *
+                  </label>
+                  {selectedInstIds.length > 0 && (
+                    <span className="badge-sky" style={{ fontSize: '0.72rem' }}>
+                      {selectedInstIds.length} selected
+                    </span>
+                  )}
+                </div>
+
                 {activeInventory.length === 0 ? (
                   <div style={{ 
                     padding: '12px 14px', 
@@ -393,18 +472,109 @@ export const MemberInstruments = () => {
                     No instruments are currently registered in club inventory. Contact a board administrator to register equipment before submitting a requisition.
                   </div>
                 ) : (
-                  <select
-                    value={selectedInstId}
-                    onChange={(e) => setSelectedInstId(e.target.value)}
-                    className="input-field"
+                  <div 
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                      gap: '8px',
+                      maxHeight: '190px',
+                      overflowY: 'auto',
+                      padding: '8px',
+                      background: 'rgba(15, 23, 42, 0.7)',
+                      border: '1px solid var(--blue-border)',
+                      borderRadius: '10px'
+                    }}
                   >
-                    {activeInventory.map((inst) => (
-                      <option key={inst.id} value={inst.id}>
-                        {inst.name} ({inst.code}) - {inst.available ? 'Available' : 'In Use'}
-                      </option>
-                    ))}
-                  </select>
+                    {activeInventory.map((inst) => {
+                      const isSelected = selectedInstIds.includes(inst.id);
+                      return (
+                        <div
+                          key={inst.id}
+                          onClick={() => toggleInstrumentSelection(inst.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            background: isSelected ? 'rgba(56, 189, 248, 0.14)' : 'rgba(255, 255, 255, 0.03)',
+                            border: isSelected ? '1px solid var(--blue-sky)' : '1px solid rgba(255, 255, 255, 0.08)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '4px',
+                              border: isSelected ? '1px solid var(--blue-sky)' : '1px solid #64748B',
+                              background: isSelected ? 'var(--blue-sky)' : 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}
+                          >
+                            {isSelected && <Check className="w-3.5 h-3.5 text-slate-950" strokeWidth={3} />}
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#F8FAFC', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {inst.name}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: inst.available ? '#38bdf8' : '#fbbf24', fontFamily: 'monospace' }}>
+                              {inst.code} • {inst.available ? 'Available' : 'In Use'}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
+                    Requester Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Full Name"
+                    value={requesterName}
+                    onChange={(e) => setRequesterName(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
+                    Requester Club / Org *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. VITC Music Club"
+                    value={requesterClub}
+                    onChange={(e) => setRequesterClub(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
+                    Contact Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 9876543210"
+                    value={contactNumber}
+                    onChange={(e) => setContactNumber(e.target.value)}
+                    className="input-field"
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
@@ -528,6 +698,17 @@ export const MemberInstruments = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Official Instrument Requisition Printout / Modal */}
+      {printRequest && (
+        <InstrumentPrintSlip
+          request={printRequest}
+          onClose={() => setPrintRequest(null)}
+          approverName={printRequest?.approvedBy || (user?.isAdmin ? user?.name : 'V.Mithra')}
+          approverRole={printRequest?.approverRole || (user?.isAdmin ? user?.role : 'Creative Head')}
+          approverDate={printRequest?.approvedAt || printRequest?.createdAt}
+        />
       )}
 
     </div>

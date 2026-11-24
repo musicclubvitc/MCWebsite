@@ -1,0 +1,418 @@
+import React from 'react';
+import { Printer, X, Download } from 'lucide-react';
+
+/**
+ * InstrumentPrintSlip Component
+ * Renders the printable official Instrument Requisition Pass matching the club printout format:
+ * - Header: Logo + "MUSIC CLUB VIT CHENNAI"
+ * - Title: INSTRUMENT REQUISITION (Approved)
+ * - Metadata: Request ID, Borrow Schedule, Return Schedule
+ * - Requester info: Requester Name, Club / Organization, Contact Number
+ * - Table: S.No., Instrument Name, Asset Code
+ * - Footer: Custody notice + Approver signature block
+ */
+export const InstrumentPrintSlip = ({
+  request,
+  onClose,
+  approverName = 'V.Mithra',
+  approverRole = 'Creative Head',
+  approverDate
+}) => {
+  if (!request) return null;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const formatDateDMY = (dateStr) => {
+    if (!dateStr) return '—';
+    const parts = String(dateStr).split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateStr;
+  };
+
+  const formatLongDate = (dateVal) => {
+    if (!dateVal) return null;
+    try {
+      const clean = String(dateVal).includes('T') ? String(dateVal).split('T')[0] : String(dateVal).split(' ')[0];
+      const parts = clean.split('-').map(Number);
+      if (parts.length === 3 && !parts.some(isNaN)) {
+        let year, month, day;
+        if (parts[0] > 1000) {
+          [year, month, day] = parts;
+        } else {
+          [day, month, year] = parts;
+        }
+        const d = new Date(year, month - 1, day);
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+      const d = new Date(dateVal);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    } catch {
+      // Fallback
+    }
+    return null;
+  };
+
+  const rawApprovalDate = approverDate || request.approvedAt || request.approved_at || request.createdAt || request.created_at;
+  const displayApproverDate = formatLongDate(rawApprovalDate) || new Date().toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
+  // Resolve instruments list from structured array or comma-separated strings
+  const instrumentsList = Array.isArray(request.instruments) && request.instruments.length > 0
+    ? request.instruments
+    : (() => {
+        const names = (request.instrumentName || '').split(',').map(s => s.trim()).filter(Boolean);
+        const codes = (request.instrumentCode || '').split(',').map(s => s.trim());
+        return names.map((name, idx) => ({ name, code: codes[idx] || '—' }));
+      })();
+
+  const isApproved = request.status === 'Approved';
+
+  return (
+    <>
+      {/* Screen Modal Overlay (hidden during window.print via CSS) */}
+      <div
+        className="no-print"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 100000,
+          backgroundColor: 'rgba(2, 6, 23, 0.88)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          overflowY: 'auto'
+        }}
+        onClick={onClose}
+      >
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '740px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#0f172a',
+            border: '1.5px solid var(--blue-sky)',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.85)',
+            position: 'relative'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Top modal bar */}
+          <div style={{
+            padding: '14px 20px',
+            borderBottom: '1px solid var(--blue-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(15, 23, 42, 0.98)',
+            flexShrink: 0
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Printer className="w-5 h-5 text-sky-400" />
+              <h3 style={{ color: '#F8FAFC', fontWeight: 700, fontSize: '1.05rem', margin: 0 }}>
+                Official Instrument Requisition Pass
+              </h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <button
+                onClick={handlePrint}
+                className="btn-primary"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 18px',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <Download className="w-4 h-4" /> Save as PDF / Print
+              </button>
+              <button
+                onClick={onClose}
+                className="btn-ghost"
+                style={{ padding: '6px', borderRadius: '8px' }}
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Preview Body */}
+          <div style={{
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: '28px 16px',
+            background: '#0b1329',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'flex-start'
+          }}>
+            <div style={{
+              width: '100%',
+              maxWidth: '620px',
+              backgroundColor: '#ffffff',
+              color: '#0f172a',
+              borderRadius: '8px',
+              padding: '36px 40px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
+              fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+            }}>
+              <SlipInnerContent
+                request={request}
+                formatDateDMY={formatDateDMY}
+                displayApproverDate={displayApproverDate}
+                instrumentsList={instrumentsList}
+                isApproved={isApproved}
+                approverName={approverName}
+                approverRole={approverRole}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Actual Print Element (styled strictly for @media print via #printable-booking-slip) */}
+      <div id="printable-booking-slip" className="print-only">
+        <SlipInnerContent
+          request={request}
+          formatDateDMY={formatDateDMY}
+          displayApproverDate={displayApproverDate}
+          instrumentsList={instrumentsList}
+          isApproved={isApproved}
+          approverName={approverName}
+          approverRole={approverRole}
+        />
+      </div>
+    </>
+  );
+};
+
+const SlipInnerContent = ({
+  request,
+  formatDateDMY,
+  displayApproverDate,
+  instrumentsList,
+  isApproved,
+  approverName,
+  approverRole
+}) => (
+  <div style={{ width: '100%', color: '#0f172a', background: '#ffffff', lineHeight: 1.4 }}>
+    {/* 1. Header with Logo & Title */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px' }}>
+      <img
+        src="/logo.png"
+        alt="VITC Music Club Logo"
+        style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }}
+      />
+      <div>
+        <div style={{
+          fontFamily: 'Cinzel, Georgia, serif',
+          fontWeight: 800,
+          fontSize: '1.25rem',
+          letterSpacing: '1px',
+          color: '#0f172a'
+        }}>
+          MUSIC CLUB
+        </div>
+        <div style={{
+          fontSize: '0.78rem',
+          fontWeight: 700,
+          color: '#0284c7',
+          letterSpacing: '1.5px',
+          textTransform: 'uppercase'
+        }}>
+          VIT CHENNAI
+        </div>
+      </div>
+    </div>
+
+    {/* 2. Main Title with Status */}
+    <div style={{
+      fontFamily: 'Cinzel, Georgia, serif',
+      fontSize: '1.18rem',
+      fontWeight: 700,
+      marginBottom: '16px',
+      color: '#0f172a'
+    }}>
+      INSTRUMENT REQUISITION (
+      <span style={{ color: isApproved ? '#16a34a' : '#d97706', fontWeight: 800 }}>
+        {request.status || 'Approved'}
+      </span>
+      )
+    </div>
+
+    <div style={{ width: '100%', height: '1px', backgroundColor: '#e2e8f0', marginBottom: '18px' }} />
+
+    {/* 3. Schedule Meta */}
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr',
+      gap: '16px',
+      marginBottom: '16px'
+    }}>
+      <div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          REQUEST ID
+        </div>
+        <div style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, marginTop: '4px', fontFamily: 'monospace' }}>
+          {request.id}
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          ISSUE DATE &amp; TIME
+        </div>
+        <div style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, marginTop: '4px' }}>
+          {formatDateDMY(request.borrowDate)} @ {request.borrowTime || '17:00'}
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          RETURN DATE &amp; TIME
+        </div>
+        <div style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, marginTop: '4px' }}>
+          {formatDateDMY(request.returnDate)} @ {request.returnTime || '10:00'}
+        </div>
+      </div>
+    </div>
+
+    {/* 4. Requester Details Meta */}
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr',
+      gap: '16px',
+      marginBottom: '16px',
+      padding: '12px 14px',
+      backgroundColor: '#f8fafc',
+      border: '1px solid #e2e8f0',
+      borderRadius: '6px'
+    }}>
+      <div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          REQUESTER NAME
+        </div>
+        <div style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: 600, marginTop: '3px' }}>
+          {request.requesterName || request.requester || '—'}
+        </div>
+        {request.regNumber && (
+          <div style={{ fontSize: '0.74rem', color: '#475569', fontFamily: 'monospace' }}>
+            {request.regNumber}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          CLUB / ORGANIZATION
+        </div>
+        <div style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: 600, marginTop: '3px' }}>
+          {request.requesterClub || 'VITC Music Club'}
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          CONTACT NUMBER
+        </div>
+        <div style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: 600, marginTop: '3px', fontFamily: 'monospace' }}>
+          {request.contactNumber || '—'}
+        </div>
+      </div>
+    </div>
+
+    {request.purpose && (
+      <div style={{ fontSize: '0.82rem', color: '#334155', marginBottom: '16px' }}>
+        <strong style={{ color: '#0f172a' }}>Purpose: </strong>
+        {request.purpose}
+      </div>
+    )}
+
+    {/* Subtitle notice */}
+    <div style={{
+      fontSize: '0.78rem',
+      fontStyle: 'italic',
+      color: '#475569',
+      marginBottom: '10px'
+    }}>
+      Only the following listed club equipment is authorized for checkout.
+    </div>
+
+    {/* 5. Instruments Table */}
+    <table style={{
+      width: '100%',
+      borderCollapse: 'collapse',
+      textAlign: 'left',
+      fontSize: '0.82rem',
+      marginBottom: '26px'
+    }}>
+      <thead>
+        <tr style={{
+          borderBottom: '2px solid #0f172a',
+          color: '#0f172a',
+          fontWeight: 700,
+          fontSize: '0.75rem'
+        }}>
+          <th style={{ padding: '8px 6px', width: '50px' }}>S.No.</th>
+          <th style={{ padding: '8px 12px' }}>Instrument / Gear Name</th>
+          <th style={{ padding: '8px 12px', width: '180px' }}>Asset Code</th>
+        </tr>
+      </thead>
+      <tbody>
+        {instrumentsList.map((inst, idx) => (
+          <tr key={idx} style={{ borderBottom: '1px solid #cbd5e1' }}>
+            <td style={{ padding: '8px 6px', fontWeight: 600, color: '#0f172a' }}>
+              {idx + 1}
+            </td>
+            <td style={{ padding: '8px 12px', fontWeight: 500, color: '#0f172a' }}>
+              {inst.name}
+            </td>
+            <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontWeight: 600, color: '#0f172a' }}>
+              {inst.code || '—'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    {/* 6. Instruction warning note */}
+    <div style={{
+      fontSize: '0.78rem',
+      fontWeight: 600,
+      color: '#0f172a',
+      marginBottom: '36px'
+    }}>
+      Kindly collect and return all equipment on schedule and in good working condition.
+    </div>
+
+    {/* 7. Permission Signature Block */}
+    <div style={{
+      fontSize: '0.78rem',
+      color: '#0f172a',
+      lineHeight: 1.5
+    }}>
+      <div style={{ color: '#475569', marginBottom: '2px' }}>Permission granted by</div>
+      <div style={{ fontWeight: 700 }}>{approverName}</div>
+      <div style={{ color: '#334155' }}>{approverRole}</div>
+      <div style={{ color: '#64748B', marginTop: '2px' }}>{displayApproverDate}</div>
+    </div>
+  </div>
+);

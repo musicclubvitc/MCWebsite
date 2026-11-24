@@ -45,10 +45,11 @@ export const Navbar = ({ activeTab, setActiveTab, onOpenAuthModal }) => {
 
   // Member-level dropdown items (all logged-in users)
   const memberDropdownItems = [
-    { id: 'member-profile',    label: 'My Profile',   icon: UserCheck },
-    { id: 'member-bands',      label: 'My Bands',     icon: Disc },
-    { id: 'member-bookings',   label: 'My Bookings',  icon: Clock },
-    { id: 'member-slot',       label: 'Book a Slot',  icon: BookMarked },
+    { id: 'member-profile',     label: 'My Profile',          icon: UserCheck },
+    { id: 'member-bands',       label: 'My Bands',            icon: Disc },
+    { id: 'member-bookings',    label: 'My Bookings',         icon: Clock },
+    { id: 'member-slot',        label: 'Book a Slot',         icon: BookMarked },
+    { id: 'member-instruments', label: 'Instrument Requests', icon: Guitar },
   ];
 
   // Admin-only dropdown items

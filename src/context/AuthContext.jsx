@@ -255,20 +255,47 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (data) {
-        const formatted = data.map(r => ({
-          id: r.id,
-          instrumentName: r.instrument_name,
-          instrumentCode: r.instrument_code,
-          borrowDate: r.borrow_date,
-          returnDate: r.return_date,
-          borrowTime: '17:30',
-          returnTime: '10:00',
-          purpose: r.event_name || 'Music Club Practice',
-          status: r.status,
-          requester: r.booker_name,
-          regNumber: r.booker_reg,
-          createdAt: r.created_at?.split('T')[0] || ''
-        }));
+        const formatted = data.map(r => {
+          let rawEvent = r.event_name || 'Music Club Practice';
+          let meta = {};
+          const metaMatch = rawEvent.match(/\n?\[META\]([\s\S]*?)\[\/META\]$/);
+          if (metaMatch) {
+            try {
+              meta = JSON.parse(metaMatch[1]);
+              rawEvent = rawEvent.slice(0, metaMatch.index).trim() || 'Music Club Practice';
+            } catch {
+              // Ignore malformed meta
+            }
+          }
+
+          const namesArr = (r.instrument_name || '').split(',').map(s => s.trim()).filter(Boolean);
+          const codesArr = (r.instrument_code || '').split(',').map(s => s.trim());
+          const instrumentsList = Array.isArray(meta.instruments) && meta.instruments.length > 0
+            ? meta.instruments
+            : namesArr.map((name, idx) => ({ name, code: codesArr[idx] || '' }));
+
+          return {
+            id: r.id,
+            instrumentName: r.instrument_name,
+            instrumentCode: r.instrument_code,
+            instruments: instrumentsList,
+            borrowDate: r.borrow_date,
+            returnDate: r.return_date,
+            borrowTime: meta.borrowTime || '17:30',
+            returnTime: meta.returnTime || '10:00',
+            purpose: rawEvent,
+            status: r.status,
+            requester: r.booker_name,
+            requesterName: r.booker_name,
+            requesterClub: meta.requesterClub || '',
+            contactNumber: meta.contactNumber || '',
+            regNumber: r.booker_reg,
+            createdAt: r.created_at?.split('T')[0] || '',
+            approvedAt: r.status === 'Approved' ? (r.created_at?.split('T')[0] || '') : '',
+            approvedBy: meta.approvedBy || '',
+            approverRole: meta.approverRole || ''
+          };
+        });
         setInstrumentRequests(formatted);
         console.log(`%c[Supabase] Synced ${data.length} instrument requests`, 'color: #38bdf8');
       }
@@ -955,28 +982,51 @@ export const AuthProvider = ({ children }) => {
 
   // ---------------- INSTRUMENT REQUISITION ACTIONS ----------------
   const addInstrumentRequest = async (newRequest) => {
+    const instrumentsList = Array.isArray(newRequest.instruments) && newRequest.instruments.length > 0
+      ? newRequest.instruments
+      : (newRequest.instrumentName ? [{ name: newRequest.instrumentName, code: newRequest.instrumentCode || '' }] : []);
+
+    const joinedNames = instrumentsList.map(i => i.name).join(', ');
+    const joinedCodes = instrumentsList.map(i => i.code).filter(Boolean).join(', ');
+    const reqName = (newRequest.requesterName || (user ? user.name : '') || 'Club Member').trim();
+
     const reqRecord = {
       id: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
       ...newRequest,
+      instruments: instrumentsList,
+      instrumentName: joinedNames,
+      instrumentCode: joinedCodes,
       status: "Pending",
-      requester: user ? user.name : "Club Member",
+      requester: reqName,
+      requesterName: reqName,
+      requesterClub: (newRequest.requesterClub || '').trim(),
+      contactNumber: (newRequest.contactNumber || '').trim(),
       regNumber: user ? user.regNumber : "",
       createdAt: new Date().toISOString().split('T')[0]
     };
     setInstrumentRequests(prev => [reqRecord, ...prev]);
 
     if (isSupabaseConfigured && supabase) {
+      const metaPayload = {
+        requesterClub: reqRecord.requesterClub,
+        contactNumber: reqRecord.contactNumber,
+        borrowTime: newRequest.borrowTime || '17:00',
+        returnTime: newRequest.returnTime || '10:00',
+        instruments: instrumentsList
+      };
+      const packedEventName = `${(newRequest.purpose || '').trim()}\n[META]${JSON.stringify(metaPayload)}[/META]`;
+
       try {
         const { error } = await supabase
           .from('instrument_requests')
           .insert({
             id: reqRecord.id,
-            instrument_name: newRequest.instrumentName,
-            instrument_code: newRequest.instrumentCode,
+            instrument_name: joinedNames,
+            instrument_code: joinedCodes,
             borrow_date: newRequest.borrowDate,
             return_date: newRequest.returnDate,
-            event_name: newRequest.purpose,
-            booker_name: user ? user.name : "Club Member",
+            event_name: packedEventName,
+            booker_name: reqName,
             booker_reg: user ? user.regNumber : "",
             status: 'Pending'
           });
@@ -986,13 +1036,20 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    showToast(`Requisition submitted for ${newRequest.instrumentName}!`);
+    showToast(`Requisition submitted for ${joinedNames}!`);
     return reqRecord;
   };
 
   const updateInstrumentStatus = async (id, newStatus) => {
+    const todayStr = new Date().toISOString().split('T')[0];
     setInstrumentRequests(prev =>
-      prev.map(r => (r.id === id ? { ...r, status: newStatus } : r))
+      prev.map(r => (r.id === id ? {
+        ...r,
+        status: newStatus,
+        approvedAt: newStatus === 'Approved' ? todayStr : r.approvedAt,
+        approvedBy: newStatus === 'Approved' ? (user?.name || 'V.Mithra') : r.approvedBy,
+        approverRole: newStatus === 'Approved' ? (user?.role || 'Creative Head') : r.approverRole
+      } : r))
     );
 
     if (isSupabaseConfigured && supabase) {
