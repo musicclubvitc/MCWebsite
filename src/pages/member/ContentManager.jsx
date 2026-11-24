@@ -30,6 +30,7 @@ import {
 import { formatImageUrl } from '../../lib/galleryUtils';
 import { sortTenuresDesc, getOrderedTenures } from '../../lib/teamUtils';
 import { getNextLinearId } from '../../lib/idUtils';
+import { ConfirmModal } from '../../components/ConfirmModal';
 import { DEFAULT_INSTRUCTIONS, INSTRUCTION_ICON_OPTIONS, getInstructionIcon } from '../../data/instructionData';
 
 export const ContentManager = () => {
@@ -45,6 +46,11 @@ export const ContentManager = () => {
     return data;
   });
   const [importStatus, setImportStatus] = useState('');
+  const [confirmState, setConfirmState] = useState(null);
+
+  const requestConfirm = ({ title, message, confirmText = 'Delete', variant = 'danger', onConfirm }) => {
+    setConfirmState({ title, message, confirmText, variant, onConfirm });
+  };
 
   // Team session states
   const teamSessions = localData.team || { "2024-25": [] };
@@ -154,16 +160,22 @@ export const ContentManager = () => {
       showToast("At least one board tenure must remain", "error");
       return;
     }
-    if (!window.confirm(`Are you sure you want to delete tenure session ${sessName} and all its members?`)) return;
-    const nextTeam = { ...teamSessions };
-    delete nextTeam[sessName];
-    const nextOrder = sessionKeys.filter(k => k !== sessName);
-    const remainingKeys = getOrderedTenures(nextTeam, nextOrder);
-    setLocalData({ ...localData, team: nextTeam, teamOrder: nextOrder });
-    if (selectedSession === sessName) {
-      setSelectedSession(remainingKeys[0] || "2026-27");
-    }
-    showToast(`Deleted board tenure ${sessName}`);
+    requestConfirm({
+      title: `Delete Tenure ${sessName}?`,
+      message: `Are you sure you want to delete tenure session ${sessName} and all its members?`,
+      confirmText: 'Delete Tenure',
+      onConfirm: () => {
+        const nextTeam = { ...teamSessions };
+        delete nextTeam[sessName];
+        const nextOrder = sessionKeys.filter(k => k !== sessName);
+        const remainingKeys = getOrderedTenures(nextTeam, nextOrder);
+        setLocalData({ ...localData, team: nextTeam, teamOrder: nextOrder });
+        if (selectedSession === sessName) {
+          setSelectedSession(remainingKeys[0] || "2026-27");
+        }
+        showToast(`Deleted board tenure ${sessName}`);
+      }
+    });
   };
 
   const handleAddMemberToSession = (sessName) => {
@@ -246,11 +258,17 @@ export const ContentManager = () => {
       showToast("At least one instruction tab must remain", "error");
       return;
     }
-    if (!window.confirm("Are you sure you want to delete this tab and all its rules?")) return;
-    const nextTabs = instructionTabs.filter(t => t.id !== tabId);
-    updateInstructionsData({ tabs: nextTabs });
-    setSelectedInstructionTabId(nextTabs[0]?.id || "");
-    showToast("Instruction tab deleted");
+    requestConfirm({
+      title: 'Delete Instruction Tab?',
+      message: 'Are you sure you want to delete this instruction tab and all its rules?',
+      confirmText: 'Delete Tab',
+      onConfirm: () => {
+        const nextTabs = instructionTabs.filter(t => t.id !== tabId);
+        updateInstructionsData({ tabs: nextTabs });
+        setSelectedInstructionTabId(nextTabs[0]?.id || "");
+        showToast("Instruction tab deleted");
+      }
+    });
   };
 
   const handleMoveInstructionTab = (index, direction) => {
@@ -350,11 +368,17 @@ export const ContentManager = () => {
           {/* Reset button */}
           <button
             onClick={() => {
-              if (window.confirm("Reset all content back to factory default?")) {
-                resetToDefault();
-                setLocalData(JSON.parse(JSON.stringify(content)));
-                showToast("Content reset to defaults", "info");
-              }
+              requestConfirm({
+                title: 'Reset All Content?',
+                message: 'Are you sure you want to reset all website CMS content back to factory defaults? Unsaved changes will be lost.',
+                confirmText: 'Reset Content',
+                variant: 'warning',
+                onConfirm: () => {
+                  resetToDefault();
+                  setLocalData(JSON.parse(JSON.stringify(content)));
+                  showToast("Content reset to defaults", "info");
+                }
+              });
             }}
             className="btn-ghost"
             style={{ fontSize: '0.82rem', padding: '8px 14px', color: '#f87171' }}
@@ -691,8 +715,15 @@ export const ContentManager = () => {
                 </div>
                 <button
                   onClick={() => {
-                    const next = localData.events.filter((_, i) => i !== idx);
-                    setLocalData({ ...localData, events: next });
+                    requestConfirm({
+                      title: 'Delete Event?',
+                      message: `Are you sure you want to remove "${ev.name || `Event ${idx + 1}`}"?`,
+                      confirmText: 'Delete Event',
+                      onConfirm: () => {
+                        const next = localData.events.filter((_, i) => i !== idx);
+                        setLocalData({ ...localData, events: next });
+                      }
+                    });
                   }}
                   style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
@@ -944,8 +975,15 @@ export const ContentManager = () => {
                   </button>
                   <button
                     onClick={() => {
-                      const next = localData.bands.filter((_, i) => i !== idx);
-                      setLocalData({ ...localData, bands: next });
+                      requestConfirm({
+                        title: 'Delete Band?',
+                        message: `Are you sure you want to remove "${b.name || `Band ${idx + 1}`}" from the showcase?`,
+                        confirmText: 'Delete Band',
+                        onConfirm: () => {
+                          const next = localData.bands.filter((_, i) => i !== idx);
+                          setLocalData({ ...localData, bands: next });
+                        }
+                      });
                     }}
                     title="Delete band"
                     style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '2px 4px', display: 'flex', alignItems: 'center' }}
@@ -1834,12 +1872,20 @@ export const ContentManager = () => {
         };
 
         const handleDeletePhoto = (idx) => {
-          const nextPhotos = photos.filter((_, i) => i !== idx);
-          setLocalData({
-            ...localData,
-            gallery: {
-              ...(localData.gallery || {}),
-              photos: nextPhotos
+          const targetPhoto = photos[idx];
+          requestConfirm({
+            title: 'Delete Gallery Item?',
+            message: `Are you sure you want to remove "${targetPhoto?.title || `Photo ${idx + 1}`}" from the gallery?`,
+            confirmText: 'Delete Item',
+            onConfirm: () => {
+              const nextPhotos = photos.filter((_, i) => i !== idx);
+              setLocalData({
+                ...localData,
+                gallery: {
+                  ...(localData.gallery || {}),
+                  photos: nextPhotos
+                }
+              });
             }
           });
         };
@@ -2146,6 +2192,19 @@ export const ContentManager = () => {
           </div>
         );
       })()}
+
+      <ConfirmModal
+        isOpen={Boolean(confirmState)}
+        title={confirmState?.title}
+        message={confirmState?.message}
+        confirmText={confirmState?.confirmText}
+        variant={confirmState?.variant}
+        onConfirm={() => {
+          confirmState?.onConfirm?.();
+          setConfirmState(null);
+        }}
+        onCancel={() => setConfirmState(null)}
+      />
 
     </div>
   );

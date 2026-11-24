@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { BookingPrintSlip } from '../../components/BookingPrintSlip';
 import { InstrumentPrintSlip } from '../../components/InstrumentPrintSlip';
+import { ConfirmModal } from '../../components/ConfirmModal';
 import { getNextLinearId } from '../../lib/idUtils';
 import { 
   ShieldCheck, 
@@ -142,6 +143,11 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   const [selectedInstDetails, setSelectedInstDetails] = useState(null);
   const [printBooking, setPrintBooking] = useState(null);
   const [printInstRequest, setPrintInstRequest] = useState(null);
+  const [confirmState, setConfirmState] = useState(null);
+
+  const requestConfirm = ({ title, message, confirmText = 'Delete', variant = 'danger', onConfirm }) => {
+    setConfirmState({ title, message, confirmText, variant, onConfirm });
+  };
 
   // Gear Inventory Management States
   const [gearSubTab, setGearSubTab] = useState('requests'); // 'requests' | 'inventory'
@@ -198,8 +204,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   };
 
   const handleDeleteUser = (id) => {
-    deleteAdminUser(id);
-    setSelectedUser(null);
+    const targetName = selectedUser?.name || id;
+    requestConfirm({
+      title: 'Delete Member Account?',
+      message: `Are you sure you want to permanently remove ${targetName} from the club member directory? This action cannot be undone.`,
+      confirmText: 'Delete Member',
+      onConfirm: () => {
+        deleteAdminUser(id);
+        setSelectedUser(null);
+      }
+    });
   };
 
   // ---------------- BAND ACTIONS ----------------
@@ -210,8 +224,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
   };
 
   const handleDeleteBand = (id) => {
-    deleteAdminBand(id);
-    setSelectedBand(null);
+    const targetName = selectedBand?.name || id;
+    requestConfirm({
+      title: 'Delete Band?',
+      message: `Are you sure you want to permanently delete "${targetName}" and its roster? This action cannot be undone.`,
+      confirmText: 'Delete Band',
+      onConfirm: () => {
+        deleteAdminBand(id);
+        setSelectedBand(null);
+      }
+    });
   };
 
   const handleRemoveBandMember = (mIdx) => {
@@ -237,11 +259,19 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
   const handleBulkDeleteBookings = () => {
     if (selectedBookingIds.length === 0) return;
-    selectedBookingIds.forEach(id => {
-      if (deleteBooking) deleteBooking(id);
+    const count = selectedBookingIds.length;
+    requestConfirm({
+      title: `Delete ${count} Booking${count > 1 ? 's' : ''}?`,
+      message: `Are you sure you want to permanently delete ${count} selected room booking${count > 1 ? 's' : ''}? This action cannot be undone.`,
+      confirmText: `Delete ${count} Booking${count > 1 ? 's' : ''}`,
+      onConfirm: () => {
+        selectedBookingIds.forEach(id => {
+          if (deleteBooking) deleteBooking(id);
+        });
+        setSelectedBookingIds([]);
+        showToast(`Deleted ${count} booking(s)`, 'info');
+      }
     });
-    setSelectedBookingIds([]);
-    showToast(`Deleted ${selectedBookingIds.length} booking(s)`, 'info');
   };
 
   // ---------------- INSTRUMENT ACTIONS ----------------
@@ -253,10 +283,18 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
   const handleBulkDeleteInst = () => {
     if (selectedInstIds.length === 0) return;
-    selectedInstIds.forEach(id => {
-      if (deleteInstrumentRequest) deleteInstrumentRequest(id);
+    const count = selectedInstIds.length;
+    requestConfirm({
+      title: `Delete ${count} Requisition${count > 1 ? 's' : ''}?`,
+      message: `Are you sure you want to permanently delete ${count} selected instrument requisition${count > 1 ? 's' : ''}? This action cannot be undone.`,
+      confirmText: `Delete ${count} Requisition${count > 1 ? 's' : ''}`,
+      onConfirm: () => {
+        selectedInstIds.forEach(id => {
+          if (deleteInstrumentRequest) deleteInstrumentRequest(id);
+        });
+        setSelectedInstIds([]);
+      }
     });
-    setSelectedInstIds([]);
   };
 
   // ==================== 1. BOOKINGS (Earliest to Latest) ====================
@@ -587,8 +625,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                   </button>
                   <button
                     onClick={() => {
-                      deleteBooking(selectedBookingDetails.id);
-                      setSelectedBookingDetails(null);
+                      const targetId = selectedBookingDetails.id;
+                      requestConfirm({
+                        title: 'Delete Booking?',
+                        message: `Are you sure you want to permanently delete booking ${targetId}? This action cannot be undone.`,
+                        confirmText: 'Delete Booking',
+                        onConfirm: () => {
+                          deleteBooking(targetId);
+                          setSelectedBookingDetails(null);
+                        }
+                      });
                     }}
                     style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}
                   >
@@ -876,7 +922,14 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                                   Details
                                 </button>
                                 <button
-                                  onClick={() => deleteBooking(b.id)}
+                                  onClick={() => {
+                                    requestConfirm({
+                                      title: 'Delete Booking?',
+                                      message: `Are you sure you want to permanently delete booking ${b.id} (${b.date} • ${b.timeSlot})?`,
+                                      confirmText: 'Delete Booking',
+                                      onConfirm: () => deleteBooking(b.id)
+                                    });
+                                  }}
                                   style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
                                   title="Delete booking"
                                 >
@@ -1684,9 +1737,12 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                             </button>
                             <button
                               onClick={() => {
-                                if (window.confirm(`Delete ${item.name} from club inventory?`)) {
-                                  deleteInstrument(item.id);
-                                }
+                                requestConfirm({
+                                  title: 'Delete Equipment?',
+                                  message: `Are you sure you want to permanently remove "${item.name}" (${item.code}) from club inventory?`,
+                                  confirmText: 'Delete Equipment',
+                                  onConfirm: () => deleteInstrument(item.id)
+                                });
                               }}
                               className="btn-ghost"
                               style={{ padding: '6px', borderRadius: '8px' }}
@@ -1818,8 +1874,16 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                       </button>
                       <button
                         onClick={() => {
-                          deleteInstrumentRequest(selectedInstDetails.id);
-                          setSelectedInstDetails(null);
+                          const targetId = selectedInstDetails.id;
+                          requestConfirm({
+                            title: 'Delete Instrument Requisition?',
+                            message: `Are you sure you want to permanently delete requisition ${targetId}? This action cannot be undone.`,
+                            confirmText: 'Delete Requisition',
+                            onConfirm: () => {
+                              deleteInstrumentRequest(targetId);
+                              setSelectedInstDetails(null);
+                            }
+                          });
                         }}
                         style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 600 }}
                       >
@@ -1993,7 +2057,14 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                                       Details
                                     </button>
                                     <button
-                                      onClick={() => deleteInstrumentRequest(req.id)}
+                                      onClick={() => {
+                                        requestConfirm({
+                                          title: 'Delete Instrument Requisition?',
+                                          message: `Are you sure you want to permanently delete requisition ${req.id} for ${req.instrumentName}?`,
+                                          confirmText: 'Delete Requisition',
+                                          onConfirm: () => deleteInstrumentRequest(req.id)
+                                        });
+                                      }}
                                       style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '4px' }}
                                       title="Delete request"
                                     >
@@ -2251,6 +2322,20 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
           approverDate={printInstRequest?.approvedAt || printInstRequest?.createdAt}
         />
       )}
+
+      {/* ===================== CONFIRMATION MODAL ===================== */}
+      <ConfirmModal
+        isOpen={Boolean(confirmState)}
+        title={confirmState?.title}
+        message={confirmState?.message}
+        confirmText={confirmState?.confirmText}
+        variant={confirmState?.variant}
+        onConfirm={() => {
+          confirmState?.onConfirm?.();
+          setConfirmState(null);
+        }}
+        onCancel={() => setConfirmState(null)}
+      />
 
     </div>
   );
