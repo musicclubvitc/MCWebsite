@@ -14,8 +14,8 @@ import { Printer, X, Download, ShieldCheck } from 'lucide-react';
 export const BookingPrintSlip = ({
   booking,
   onClose,
-  approverName = 'V.Mithra',
-  approverRole = 'Creative Head',
+  approverName = 'Club Board',
+  approverRole = 'Authorized Signatory',
   approverDate
 }) => {
   if (!booking) return null;

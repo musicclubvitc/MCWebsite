@@ -29,14 +29,8 @@ import {
 } from 'lucide-react';
 import { formatImageUrl } from '../../lib/galleryUtils';
 import { sortTenuresDesc, getOrderedTenures } from '../../lib/teamUtils';
+import { getNextLinearId } from '../../lib/idUtils';
 import { DEFAULT_INSTRUCTIONS, INSTRUCTION_ICON_OPTIONS, getInstructionIcon } from '../../data/instructionData';
-
-const PRESET_EVENT_IMAGES = [
-  { label: 'Concert Stage', url: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80' },
-  { label: 'Rock Band', url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80' },
-  { label: 'Acoustic Guitar', url: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80' },
-  { label: 'Festival Crowd', url: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=800&q=80' },
-];
 
 export const ContentManager = () => {
   const { content, updateContent, resetToDefault, exportContentJson, importContentJson } = useContent();
@@ -676,8 +670,8 @@ export const ContentManager = () => {
                   venue: "Campus Stage",
                   prizePool: "Exhibition",
                   status: "Upcoming",
-                  description: "Full details of the upcoming music concert...",
-                  image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80"
+                  description: "",
+                  image: ""
                 };
                 setLocalData({ ...localData, events: [newEv, ...(localData.events || [])] });
               }}
@@ -812,7 +806,7 @@ export const ContentManager = () => {
                     </label>
                     <input
                       type="text"
-                      placeholder="https://images.unsplash.com/... or Google Drive share link"
+                      placeholder="Paste image URL or Google Drive share link"
                       value={ev.image || ''}
                       onChange={(e) => {
                         const next = [...localData.events];
@@ -821,28 +815,6 @@ export const ContentManager = () => {
                       }}
                       className="input-field"
                     />
-                  </div>
-
-                  {/* Preset quick buttons */}
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Quick image suggestions: </span>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
-                      {PRESET_EVENT_IMAGES.map((preset, pI) => (
-                        <button
-                          key={pI}
-                          type="button"
-                          onClick={() => {
-                            const next = [...localData.events];
-                            next[idx].image = preset.url;
-                            setLocalData({ ...localData, events: next });
-                          }}
-                          className="btn-ghost"
-                          style={{ padding: '3px 8px', fontSize: '0.72rem' }}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Visual Image Preview */}
@@ -904,12 +876,12 @@ export const ContentManager = () => {
             <button
               onClick={() => {
                 const newBand = {
-                  id: `band-${Date.now()}`,
+                  id: getNextLinearId(localData.bands, 'band', 1),
                   name: "New Official Band",
                   genre: "Rock / Fusion",
-                  description: "Band description...",
-                  image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
-                  instagram: "https://www.instagram.com/vitcmusicclub",
+                  description: "",
+                  image: "",
+                  instagram: "",
                   members: []
                 };
                 setLocalData({ ...localData, bands: [...(localData.bands || []), newBand] });
@@ -1847,9 +1819,9 @@ export const ContentManager = () => {
             id: `photo-${Date.now()}`,
             title: "New Club Moment",
             album: existingAlbums[0] || "Concerts",
-            url: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1600&q=80",
-            date: "2026",
-            caption: "Live stage performance at VIT Chennai."
+            url: "",
+            date: new Date().getFullYear().toString(),
+            caption: ""
           };
           const nextPhotos = [newPhoto, ...photos];
           setLocalData({

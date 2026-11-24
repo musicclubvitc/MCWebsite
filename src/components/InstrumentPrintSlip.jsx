@@ -14,8 +14,8 @@ import { Printer, X, Download } from 'lucide-react';
 export const InstrumentPrintSlip = ({
   request,
   onClose,
-  approverName = 'V.Mithra',
-  approverRole = 'Creative Head',
+  approverName = 'Club Board',
+  approverRole = 'Authorized Signatory',
   approverDate
 }) => {
   if (!request) return null;

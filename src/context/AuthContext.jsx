@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getNextLinearId } from '../lib/idUtils';
 
 const AuthContext = createContext();
 
@@ -794,13 +795,13 @@ export const AuthProvider = ({ children }) => {
     const todayStr = new Date().toISOString().split('T')[0];
     const isDirectlyApproved = initialStatus === 'Approved';
     const bookingRecord = {
-      id: `BKG-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: getNextLinearId(bookings, 'BKG', 4),
       ...newBooking,
       status: initialStatus,
       createdAt: todayStr,
       approvedAt: isDirectlyApproved ? todayStr : '',
-      approvedBy: isDirectlyApproved ? (user?.name || 'V.Mithra') : '',
-      approverRole: isDirectlyApproved ? (user?.role || 'Creative Head') : ''
+      approvedBy: isDirectlyApproved ? (user?.name || 'Club Board') : '',
+      approverRole: isDirectlyApproved ? (user?.role || 'Authorized Signatory') : ''
     };
     setBookings(prev => [bookingRecord, ...prev]);
 
@@ -854,8 +855,8 @@ export const AuthProvider = ({ children }) => {
         status: newStatus,
         ...(isNowApproved ? { 
           approvedAt: todayStr,
-          approvedBy: user?.name || b.approvedBy || 'V.Mithra',
-          approverRole: user?.role || b.approverRole || 'Creative Head'
+          approvedBy: user?.name || b.approvedBy || 'Club Board',
+          approverRole: user?.role || b.approverRole || 'Authorized Signatory'
         } : {})
       } : b))
     );
@@ -912,10 +913,10 @@ export const AuthProvider = ({ children }) => {
   // ---------------- GEAR INVENTORY ACTIONS ----------------
   const addInstrument = async (item) => {
     const newInst = {
-      id: item.id || `INST-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: item.id || getNextLinearId(instruments, 'INST', 4),
       name: item.name,
       category: item.category || 'Gear',
-      code: item.code || `GEAR-${Date.now().toString().slice(-4)}`,
+      code: item.code || getNextLinearId(instruments, 'GEAR', 3, 'code'),
       location: item.location || 'Music Room',
       condition: item.condition || 'Good',
       available: item.available !== false,
@@ -991,7 +992,7 @@ export const AuthProvider = ({ children }) => {
     const reqName = (newRequest.requesterName || (user ? user.name : '') || 'Club Member').trim();
 
     const reqRecord = {
-      id: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: getNextLinearId(instrumentRequests, 'REQ', 4),
       ...newRequest,
       instruments: instrumentsList,
       instrumentName: joinedNames,
@@ -1047,8 +1048,8 @@ export const AuthProvider = ({ children }) => {
         ...r,
         status: newStatus,
         approvedAt: newStatus === 'Approved' ? todayStr : r.approvedAt,
-        approvedBy: newStatus === 'Approved' ? (user?.name || 'V.Mithra') : r.approvedBy,
-        approverRole: newStatus === 'Approved' ? (user?.role || 'Creative Head') : r.approverRole
+        approvedBy: newStatus === 'Approved' ? (user?.name || 'Club Board') : r.approvedBy,
+        approverRole: newStatus === 'Approved' ? (user?.role || 'Authorized Signatory') : r.approverRole
       } : r))
     );
 

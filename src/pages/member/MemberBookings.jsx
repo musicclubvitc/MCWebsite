@@ -374,8 +374,8 @@ export const MemberBookings = () => {
         <BookingPrintSlip
           booking={printBooking}
           onClose={() => setPrintBooking(null)}
-          approverName={printBooking?.approvedBy || (user?.isAdmin ? user?.name : 'V.Mithra')}
-          approverRole={printBooking?.approverRole || (user?.isAdmin ? user?.role : 'Creative Head')}
+          approverName={printBooking?.approvedBy || (user?.isAdmin ? user?.name : 'Club Board')}
+          approverRole={printBooking?.approverRole || (user?.isAdmin ? user?.role : 'Authorized Signatory')}
           approverDate={printBooking?.approvedAt || printBooking?.createdAt}
         />
       )}

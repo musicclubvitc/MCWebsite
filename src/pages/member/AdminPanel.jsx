@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { BookingPrintSlip } from '../../components/BookingPrintSlip';
 import { InstrumentPrintSlip } from '../../components/InstrumentPrintSlip';
+import { getNextLinearId } from '../../lib/idUtils';
 import { 
   ShieldCheck, 
   Clock, 
@@ -1531,11 +1532,11 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     setGearForm({
                       name: '',
                       category: 'Electric Guitar',
-                      code: `GEAR-${Math.floor(100 + Math.random() * 900)}`,
+                      code: getNextLinearId(instruments, 'GEAR', 3, 'code'),
                       location: 'Music Room',
                       condition: 'Excellent',
                       available: true,
-                      image: 'https://images.unsplash.com/photo-1564186763535-ebb21ef5277f?auto=format&fit=crop&w=400&q=80'
+                      image: ''
                     });
                     setShowAddGearModal(true);
                   }}
@@ -2177,7 +2178,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                 </label>
                 <input
                   type="url"
-                  placeholder="https://images.unsplash.com/... or Google Drive share link"
+                  placeholder="Paste image URL or Google Drive share link"
                   value={gearForm.image}
                   onChange={(e) => setGearForm({ ...gearForm, image: formatImageUrl(e.target.value) })}
                   className="input-field"
@@ -2234,8 +2235,8 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
         <BookingPrintSlip
           booking={printBooking}
           onClose={() => setPrintBooking(null)}
-          approverName={printBooking?.approvedBy || user?.name || 'V.Mithra'}
-          approverRole={printBooking?.approverRole || user?.role || 'Creative Head'}
+          approverName={printBooking?.approvedBy || user?.name || 'Club Board'}
+          approverRole={printBooking?.approverRole || user?.role || 'Authorized Signatory'}
           approverDate={printBooking?.approvedAt || printBooking?.createdAt}
         />
       )}
@@ -2245,8 +2246,8 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
         <InstrumentPrintSlip
           request={printInstRequest}
           onClose={() => setPrintInstRequest(null)}
-          approverName={printInstRequest?.approvedBy || user?.name || 'V.Mithra'}
-          approverRole={printInstRequest?.approverRole || user?.role || 'Creative Head'}
+          approverName={printInstRequest?.approvedBy || user?.name || 'Club Board'}
+          approverRole={printInstRequest?.approverRole || user?.role || 'Authorized Signatory'}
           approverDate={printInstRequest?.approvedAt || printInstRequest?.createdAt}
         />
       )}

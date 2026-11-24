@@ -569,7 +569,7 @@ export const MemberInstruments = () => {
                   <input
                     type="tel"
                     required
-                    placeholder="e.g. 9876543210"
+                    placeholder="Enter phone number"
                     value={contactNumber}
                     onChange={(e) => setContactNumber(e.target.value)}
                     className="input-field"
@@ -705,8 +705,8 @@ export const MemberInstruments = () => {
         <InstrumentPrintSlip
           request={printRequest}
           onClose={() => setPrintRequest(null)}
-          approverName={printRequest?.approvedBy || (user?.isAdmin ? user?.name : 'V.Mithra')}
-          approverRole={printRequest?.approverRole || (user?.isAdmin ? user?.role : 'Creative Head')}
+          approverName={printRequest?.approvedBy || (user?.isAdmin ? user?.name : 'Club Board')}
+          approverRole={printRequest?.approverRole || (user?.isAdmin ? user?.role : 'Authorized Signatory')}
           approverDate={printRequest?.approvedAt || printRequest?.createdAt}
         />
       )}

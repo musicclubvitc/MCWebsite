@@ -281,17 +281,38 @@ export const Home = ({ setActiveTab, onOpenAuthModal }) => {
           }}
         >
           <div>
-            <img 
-              src={formatImageUrl(about.image) || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1000&q=80"} 
-              alt="About Music Club VITCC"
-              style={{
-                width: '100%',
-                height: '340px',
-                objectFit: 'cover',
-                borderRadius: '14px',
-                border: '1px solid var(--blue-border)'
-              }} 
-            />
+            {about.image ? (
+              <img 
+                src={formatImageUrl(about.image)} 
+                alt="About Music Club VITCC"
+                style={{
+                  width: '100%',
+                  height: '340px',
+                  objectFit: 'cover',
+                  borderRadius: '14px',
+                  border: '1px solid var(--blue-border)'
+                }} 
+              />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '340px',
+                  borderRadius: '14px',
+                  border: '1px dashed var(--blue-border)',
+                  background: 'rgba(15, 23, 42, 0.5)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  color: '#64748B'
+                }}
+              >
+                <Music className="w-10 h-10" style={{ color: 'var(--blue-sky)', opacity: 0.6 }} />
+                <span style={{ fontSize: '0.88rem' }}>VIT Chennai Music Club</span>
+              </div>
+            )}
           </div>
 
           <div>
