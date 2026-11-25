@@ -300,6 +300,24 @@ const SlipInnerContent = ({
       </div>
     </div>
 
+    {/* Band Name (shown if this is a band booking) */}
+    {(booking.bandName || booking.band_name) && (
+      <div style={{
+        marginBottom: '16px',
+        padding: '10px 14px',
+        backgroundColor: '#f8fafc',
+        border: '1px solid #e2e8f0',
+        borderRadius: '6px'
+      }}>
+        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          BAND NAME
+        </div>
+        <div style={{ fontSize: '0.92rem', color: '#0f172a', fontWeight: 700, marginTop: '3px' }}>
+          {booking.bandName || booking.band_name}
+        </div>
+      </div>
+    )}
+
     {/* Subtitle notice */}
     <div style={{
       fontSize: '0.78rem',
