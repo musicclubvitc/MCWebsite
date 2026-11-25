@@ -5,6 +5,7 @@ import { BookingPrintSlip } from '../../components/BookingPrintSlip';
 import { InstrumentPrintSlip } from '../../components/InstrumentPrintSlip';
 import { ConfirmModal } from '../../components/ConfirmModal';
 import { getNextLinearId } from '../../lib/idUtils';
+import { formatTime12h } from '../../lib/timeUtils';
 import { 
   ShieldCheck, 
   Clock, 
@@ -1813,7 +1814,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                   <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '8px', border: '1px solid var(--blue-border)', marginBottom: '24px' }}>
                     <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginBottom: '4px' }}>Borrow Schedule & Purpose</div>
                     <div style={{ color: '#F8FAFC', fontSize: '0.9rem', marginBottom: '6px' }}>
-                      <strong>Borrow:</strong> {selectedInstDetails.borrowDate} @ {selectedInstDetails.borrowTime || '17:00'} | <strong>Return:</strong> {selectedInstDetails.returnDate} @ {selectedInstDetails.returnTime || '10:00'}
+                      <strong>Borrow:</strong> {selectedInstDetails.borrowDate} @ {formatTime12h(selectedInstDetails.borrowTime || '5:00 PM')} | <strong>Return:</strong> {selectedInstDetails.returnDate} @ {formatTime12h(selectedInstDetails.returnTime || '10:00 AM')}
                     </div>
                     <div style={{ color: '#CBD5E1', fontSize: '0.85rem' }}>
                       <strong>Purpose:</strong> {selectedInstDetails.purpose}

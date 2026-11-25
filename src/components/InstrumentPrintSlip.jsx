@@ -1,5 +1,6 @@
 import React from 'react';
 import { Printer, X, Download } from 'lucide-react';
+import { formatTime12h } from '../lib/timeUtils';
 
 /**
  * InstrumentPrintSlip Component
@@ -281,7 +282,7 @@ const SlipInnerContent = ({
           ISSUE DATE &amp; TIME
         </div>
         <div style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, marginTop: '4px' }}>
-          {formatDateDMY(request.borrowDate)} @ {request.borrowTime || '17:00'}
+          {formatDateDMY(request.borrowDate)} @ {formatTime12h(request.borrowTime || '5:00 PM')}
         </div>
       </div>
 
@@ -290,7 +291,7 @@ const SlipInnerContent = ({
           RETURN DATE &amp; TIME
         </div>
         <div style={{ fontSize: '0.86rem', color: '#0f172a', fontWeight: 600, marginTop: '4px' }}>
-          {formatDateDMY(request.returnDate)} @ {request.returnTime || '10:00'}
+          {formatDateDMY(request.returnDate)} @ {formatTime12h(request.returnTime || '10:00 AM')}
         </div>
       </div>
     </div>

@@ -20,6 +20,11 @@ const TIME_SLOTS = [
   '07:55 PM - 08:50 PM',
 ];
 
+const ADMIN_EXTRA_SLOTS = [
+  '05:00 AM - 07:55 AM',
+  '09:00 PM - 11:55 PM',
+];
+
 // Converts "08:00 AM" or "01:30 PM" to minutes from midnight
 function parseTimeToMinutes(t) {
   if (!t) return 0;
@@ -133,6 +138,7 @@ export const MemberSlot = () => {
   };
 
   const modes = isAdmin ? ADMIN_MODES : BOOKING_MODES;
+  const availableSlots = isAdmin ? [...TIME_SLOTS, ...ADMIN_EXTRA_SLOTS] : TIME_SLOTS;
 
   useEffect(() => {
     if (myBands.length > 0 && (!selectedBand || !myBands.some(b => b.id === selectedBand))) {
@@ -142,10 +148,10 @@ export const MemberSlot = () => {
 
   useEffect(() => {
     if (!isAdmin && bookingMode === 'Block') setBookingMode('Self');
-  }, [isAdmin]);
+  }, [isAdmin, bookingMode]);
 
   // Compute statuses for all slots on selected date
-  const slotStatuses = TIME_SLOTS.map(slot => ({
+  const slotStatuses = availableSlots.map(slot => ({
     slot,
     ...getSlotInfo(slot, selectedDate, bookings),
   }));
@@ -168,9 +174,9 @@ export const MemberSlot = () => {
       showToast('Please select a start and end time.', 'error');
       return;
     }
-    const si = TIME_SLOTS.indexOf(startSlot);
-    const ei = TIME_SLOTS.indexOf(endSlot);
-    if (ei < si) {
+    const startTime = startSlot.split(' - ')[0];
+    const endTime   = endSlot.split(' - ')[1];
+    if (parseTimeToMinutes(endTime) <= parseTimeToMinutes(startTime)) {
       showToast('End time must be after start time.', 'error');
       return;
     }
@@ -179,8 +185,6 @@ export const MemberSlot = () => {
       return;
     }
 
-    const startTime = startSlot.split(' - ')[0];
-    const endTime   = endSlot.split(' - ')[1];
     const timeRange = `${startTime} - ${endTime}`;
 
     const isConflict = bookings.some(b => {
@@ -412,7 +416,7 @@ export const MemberSlot = () => {
               </label>
               <select value={startSlot} onChange={e => setStartSlot(e.target.value)} className="input-field" required>
                 <option value="">Select the starting time</option>
-                {TIME_SLOTS.map(slot => (
+                {availableSlots.map(slot => (
                   <option key={slot} value={slot}>{slot.split(' - ')[0]}</option>
                 ))}
               </select>
@@ -423,7 +427,7 @@ export const MemberSlot = () => {
               </label>
               <select value={endSlot} onChange={e => setEndSlot(e.target.value)} className="input-field" required>
                 <option value="">Select the ending time</option>
-                {TIME_SLOTS.map(slot => (
+                {availableSlots.map(slot => (
                   <option key={slot} value={slot}>{slot.split(' - ')[1]}</option>
                 ))}
               </select>

@@ -10,7 +10,52 @@ import {
   Check
 } from 'lucide-react';
 import { formatImageUrl } from '../../lib/imageUtils';
+import { formatTime12h, parseTime12hParts } from '../../lib/timeUtils';
 import { InstrumentPrintSlip } from '../../components/InstrumentPrintSlip';
+
+const HOURS_12 = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+const MINUTES_12 = ['00', '15', '30', '45'];
+
+const Time12hSelect = ({ value, onChange }) => {
+  const { hour12, minute, period } = parseTime12hParts(value);
+  const updatePart = (nextHour, nextMin, nextPeriod) => {
+    onChange(`${nextHour}:${nextMin} ${nextPeriod}`);
+  };
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+      <select
+        value={hour12}
+        onChange={(e) => updatePart(e.target.value, minute, period)}
+        className="input-field"
+        aria-label="Hour"
+      >
+        {HOURS_12.map(h => (
+          <option key={h} value={h}>{h}</option>
+        ))}
+      </select>
+      <select
+        value={MINUTES_12.includes(minute) ? minute : '00'}
+        onChange={(e) => updatePart(hour12, e.target.value, period)}
+        className="input-field"
+        aria-label="Minute"
+      >
+        {MINUTES_12.map(m => (
+          <option key={m} value={m}>{m}</option>
+        ))}
+      </select>
+      <select
+        value={period}
+        onChange={(e) => updatePart(hour12, minute, e.target.value)}
+        className="input-field"
+        aria-label="AM/PM"
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
+};
 
 export const MemberInstruments = () => {
   const { user, myInstrumentRequests, addInstrumentRequest, instruments, refreshAllLiveData, showToast } = useAuth();
@@ -52,13 +97,13 @@ export const MemberInstruments = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
-  const [borrowTime, setBorrowTime] = useState('17:00');
+  const [borrowTime, setBorrowTime] = useState('5:00 PM');
   const [returnDate, setReturnDate] = useState(() => {
     const nextDay = new Date();
     nextDay.setDate(nextDay.getDate() + 1);
     return nextDay.toISOString().split('T')[0];
   });
-  const [returnTime, setReturnTime] = useState('10:00');
+  const [returnTime, setReturnTime] = useState('10:00 AM');
   const [purpose, setPurpose] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formError, setFormError] = useState('');
@@ -333,12 +378,12 @@ export const MemberInstruments = () => {
                   >
                     <div>
                       <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>ISSUE WINDOW</span>
-                      <strong style={{ color: '#F1F5F9' }}>{req.borrowDate} @ {req.borrowTime}</strong>
+                      <strong style={{ color: '#F1F5F9' }}>{req.borrowDate} @ {formatTime12h(req.borrowTime)}</strong>
                     </div>
 
                     <div>
                       <span style={{ color: '#64748B', display: 'block', fontSize: '0.72rem', fontWeight: 600 }}>RETURN SCHEDULED</span>
-                      <strong style={{ color: '#CBD5E1' }}>{req.returnDate} @ {req.returnTime}</strong>
+                      <strong style={{ color: '#CBD5E1' }}>{req.returnDate} @ {formatTime12h(req.returnTime)}</strong>
                     </div>
 
                     <div>
@@ -597,13 +642,7 @@ export const MemberInstruments = () => {
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
                     Borrow Time *
                   </label>
-                  <input
-                    type="time"
-                    required
-                    value={borrowTime}
-                    onChange={(e) => setBorrowTime(e.target.value)}
-                    className="input-field"
-                  />
+                  <Time12hSelect value={borrowTime} onChange={setBorrowTime} />
                 </div>
               </div>
 
@@ -627,13 +666,7 @@ export const MemberInstruments = () => {
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#CBD5E1', marginBottom: '4px' }}>
                     Return Time *
                   </label>
-                  <input
-                    type="time"
-                    required
-                    value={returnTime}
-                    onChange={(e) => setReturnTime(e.target.value)}
-                    className="input-field"
-                  />
+                  <Time12hSelect value={returnTime} onChange={setReturnTime} />
                 </div>
               </div>
 
