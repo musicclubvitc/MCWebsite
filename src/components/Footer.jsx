@@ -129,7 +129,7 @@ export const Footer = () => {
           }}
         >
           <div style={{ color: '#64748B', fontSize: '0.85rem' }}>
-            Copyright © 2012–2026. All Rights Reserved. Built with ❤️ for <span style={{ color: 'var(--blue-sky)', fontWeight: 600 }}>VITC Music Club</span>.
+            Copyright © 2012–2026. All Rights Reserved. Built with ❤️ for <span style={{ color: 'var(--blue-sky)', fontWeight: 600 }}>VITC Music Club</span> by <span style={{ color: 'var(--blue-sky)', fontWeight: 600 }}>Michael Dias</span>.
           </div>
 
           <button
