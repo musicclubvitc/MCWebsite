@@ -185,6 +185,7 @@ export const Team = () => {
                   marginTop: 'auto',
                   display: 'flex',
                   alignItems: 'center',
+                  gap: '16px',
                   paddingTop: '12px',
                   borderTop: '1px solid var(--blue-border)',
                   width: '100%',

@@ -59,7 +59,7 @@ export const getBookingDeltaInfo = (slotDateStr, createdAtStr) => {
   const msDiff = slotUtc - createdUtc;
   const daysDelta = Math.round(msDiff / (1000 * 60 * 60 * 24));
 
-  const isOverLimit = daysDelta > 3;
+  const isOverLimit = daysDelta >= 3;
 
   let tooltip = '';
   if (daysDelta === 0) {
@@ -68,7 +68,7 @@ export const getBookingDeltaInfo = (slotDateStr, createdAtStr) => {
     tooltip = `Booked 1 day in advance (Slot: ${formattedSlotDate}, Booked: ${formattedBookingDate})`;
   } else if (daysDelta > 1) {
     tooltip = `Booked ${daysDelta} days in advance (Slot: ${formattedSlotDate}, Booked: ${formattedBookingDate})${
-      isOverLimit ? ' — ⚠️ Warning: Booked more than 3 days in advance' : ''
+      isOverLimit ? ' — ⚠️ Warning: Booked 3 or more days in advance' : ''
     }`;
   } else {
     const abs = Math.abs(daysDelta);

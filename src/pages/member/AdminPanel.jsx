@@ -298,7 +298,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     });
   };
 
-  // ==================== 1. BOOKINGS (Earliest to Latest) ====================
+  // ==================== 1. BOOKINGS (Newest First) ====================
   const [bookingSearch, setBookingSearch] = useState('');
   const [bookingStatusFilter, setBookingStatusFilter] = useState('All');
   const [bookingPage, setBookingPage] = useState(1);
@@ -306,9 +306,11 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
   const sortedBookings = useMemo(() => {
     return [...bookings].sort((a, b) => {
-      const dComp = (a.date || '').localeCompare(b.date || '');
+      const cComp = (b.createdAtTimestamp || b.createdAt || '').localeCompare(a.createdAtTimestamp || a.createdAt || '');
+      if (cComp !== 0) return cComp;
+      const dComp = (b.date || '').localeCompare(a.date || '');
       if (dComp !== 0) return dComp;
-      return (a.timeSlot || '').localeCompare(b.timeSlot || '');
+      return (b.id || '').localeCompare(a.id || '');
     });
   }, [bookings]);
 
@@ -421,7 +423,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
     return filteredUsers.slice(start, start + USERS_PAGE_SIZE);
   }, [filteredUsers, userPage]);
 
-  // ==================== 4. INSTRUMENT REQUESTS (Earliest to Latest) ====================
+  // ==================== 4. INSTRUMENT REQUESTS (Newest First) ====================
   const [instReqSearch, setInstReqSearch] = useState('');
   const [instReqStatusFilter, setInstReqStatusFilter] = useState('All');
   const [instReqPage, setInstReqPage] = useState(1);
@@ -429,9 +431,11 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
 
   const sortedInstRequests = useMemo(() => {
     return [...instrumentRequests].sort((a, b) => {
-      const dComp = (a.borrowDate || '').localeCompare(b.borrowDate || '');
+      const cComp = (b.createdAtTimestamp || b.createdAt || '').localeCompare(a.createdAtTimestamp || a.createdAt || '');
+      if (cComp !== 0) return cComp;
+      const dComp = (b.borrowDate || '').localeCompare(a.borrowDate || '');
       if (dComp !== 0) return dComp;
-      return (a.borrowTime || '').localeCompare(b.borrowTime || '');
+      return (b.id || '').localeCompare(a.id || '');
     });
   }, [instrumentRequests]);
 
@@ -653,7 +657,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                     ALL BOOKINGS
                   </h2>
                   <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
-                    Ordered earliest to latest • Total: {filteredBookings.length}
+                    Ordered newest first • Total: {filteredBookings.length}
                   </div>
                 </div>
 
@@ -1902,7 +1906,7 @@ export const AdminPanel = ({ activeSection = 'manage-bookings', onSectionChange 
                         GEAR REQUISITION REQUESTS
                       </h2>
                       <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
-                        Ordered earliest to latest • Total: {filteredInstRequests.length}
+                        Ordered newest first • Total: {filteredInstRequests.length}
                       </div>
                     </div>
 

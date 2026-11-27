@@ -137,7 +137,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('slot_bookings')
         .select('*')
-        .order('slot_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.warn('[Supabase] slot_bookings read error:', error.message);
@@ -158,6 +158,7 @@ export const AuthProvider = ({ children }) => {
           membersInfo: b.members_info,
           status: (b.status === 'Rejected' || b.status === 'Declined') ? 'Declined' : b.status,
           createdAt: b.created_at?.split('T')[0] || '',
+          createdAtTimestamp: b.created_at || '',
           approvedAt: b.approved_at ? b.approved_at.split('T')[0] : (b.status === 'Approved' ? (b.created_at?.split('T')[0] || '') : ''),
           approvedBy: b.approved_by || '',
           approverRole: b.approver_role || ''
@@ -192,6 +193,7 @@ export const AuthProvider = ({ children }) => {
           madeBy: b.leader_name,
           status: b.status || 'Approved',
           createdAt: b.created_at?.split('T')[0] || '',
+          createdAtTimestamp: b.created_at || '',
           memberCount: (b.band_members || []).length || 1,
           members: (b.band_members || []).map(m => ({
             name: m.member_name,
@@ -248,7 +250,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase
         .from('instrument_requests')
         .select('*')
-        .order('borrow_date', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.warn('[Supabase] instrument_requests read error:', error.message);
@@ -292,6 +294,7 @@ export const AuthProvider = ({ children }) => {
             contactNumber: meta.contactNumber || '',
             regNumber: r.booker_reg,
             createdAt: r.created_at?.split('T')[0] || '',
+            createdAtTimestamp: r.created_at || '',
             approvedAt: r.status === 'Approved' ? (r.created_at?.split('T')[0] || '') : '',
             approvedBy: meta.approvedBy || '',
             approverRole: meta.approverRole || ''
