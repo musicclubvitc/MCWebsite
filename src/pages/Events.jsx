@@ -5,7 +5,8 @@ import {
   MapPin, 
   Trophy, 
   Search, 
-  X
+  X,
+  ExternalLink
 } from 'lucide-react';
 import { formatImageUrl } from '../lib/imageUtils';
 
