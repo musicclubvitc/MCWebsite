@@ -390,6 +390,7 @@ export const AuthProvider = ({ children }) => {
     // Auto-refresh when user focuses window or switches back to tab
     const handleFocus = () => {
       fetchLiveBookings();
+      fetchLiveUsers();
     };
     window.addEventListener('focus', handleFocus);
 
@@ -509,6 +510,44 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem("vitc_music_all_users", JSON.stringify(allUsers));
   }, [allUsers]);
+
+  // Keep active logged-in user profile synced whenever allUsers updates from admin edits or Supabase Realtime
+  useEffect(() => {
+    if (!user || !Array.isArray(allUsers) || allUsers.length === 0) return;
+    const matched = allUsers.find(
+      u => u.id === user.id || (user.email && u.email?.toLowerCase() === user.email.toLowerCase())
+    );
+    if (!matched) return;
+
+    const nextIsAdmin = matched.type === 'Admin';
+    const nextVerified = matched.verified === 'Verified';
+    const nextRole = matched.role || 'Musician';
+    const nextName = matched.name || user.name;
+    const nextEmail = matched.email || user.email;
+    const nextReg = matched.regNumber ?? user.regNumber;
+    const nextSecretKey = matched.secretKey || user.secretKey;
+
+    if (
+      user.role !== nextRole ||
+      user.name !== nextName ||
+      user.email !== nextEmail ||
+      user.regNumber !== nextReg ||
+      user.secretKey !== nextSecretKey ||
+      Boolean(user.isAdmin) !== nextIsAdmin ||
+      Boolean(user.verified) !== nextVerified
+    ) {
+      setUser(prev => prev ? {
+        ...prev,
+        name: nextName,
+        email: nextEmail,
+        regNumber: nextReg,
+        role: nextRole,
+        secretKey: nextSecretKey,
+        isAdmin: nextIsAdmin,
+        verified: nextVerified
+      } : null);
+    }
+  }, [allUsers, user]);
 
   const loginAsDemo = () => {
     showToast("Demo account is disabled for production deployment. Please sign in or register.", "info");
@@ -1119,25 +1158,49 @@ export const AuthProvider = ({ children }) => {
 
   const updateAdminUser = async (updatedUser) => {
     setAllUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-    showToast(`Updated member account: ${updatedUser.name}`);
+
+    // Also update current logged-in user immediately if it matches
+    if (user && (user.id === updatedUser.id || (user.email && updatedUser.email && user.email.toLowerCase() === updatedUser.email.toLowerCase()))) {
+      setUser(prev => prev ? {
+        ...prev,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        regNumber: updatedUser.regNumber,
+        role: updatedUser.role || 'Musician',
+        secretKey: updatedUser.secretKey || prev.secretKey,
+        isAdmin: updatedUser.type === 'Admin',
+        verified: updatedUser.verified === 'Verified'
+      } : null);
+    }
 
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase
+        const { error } = await supabase
           .from('profiles')
           .update({
             name: updatedUser.name,
             email: updatedUser.email,
             reg_number: updatedUser.regNumber,
             role: updatedUser.role,
+            secret_key: updatedUser.secretKey,
             is_admin: updatedUser.type === 'Admin',
             is_verified: updatedUser.verified === 'Verified'
           })
           .eq('id', updatedUser.id);
+        if (error) {
+          console.error("Update profile in Supabase error:", error);
+          showToast(`Failed to sync profile update: ${error.message}`, "error");
+          return;
+        }
+        notifyCrossTab('users');
       } catch (err) {
         console.error("Update profile in Supabase error:", err);
+        showToast("Failed to sync profile update to server", "error");
+        return;
       }
     }
+
+    showToast(`Updated member account: ${updatedUser.name}`);
   };
 
   const deleteAdminUser = async (userId) => {
