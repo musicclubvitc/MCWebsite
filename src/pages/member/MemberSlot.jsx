@@ -375,12 +375,16 @@ export const MemberSlot = () => {
                 }}>
                   {status}
                 </span>
-                {/* Show booker name when slot is taken */}
-                {booker && status !== 'Available' && (
+                {/* Show booker name only to admins; regular users only see the block reason if blocked */}
+                {status !== 'Available' && ((isAdmin && (booker || reason)) || (!isAdmin && status === 'Blocked' && reason)) && (
                   <div style={{ fontSize: '0.78rem', color: '#94A3B8', minWidth: 0 }}>
-                    <span style={{ color: '#CBD5E1', fontWeight: 500 }}>{booker}</span>
-                    {reason && (
-                      <span style={{ color: '#ca8a04', marginLeft: '6px' }}>— {reason}</span>
+                    {isAdmin && booker && (
+                      <span style={{ color: '#CBD5E1', fontWeight: 500 }}>{booker}</span>
+                    )}
+                    {(isAdmin ? reason : (status === 'Blocked' ? reason : '')) && (
+                      <span style={{ color: '#ca8a04', marginLeft: isAdmin && booker ? '6px' : 0 }}>
+                        {isAdmin && booker ? `— ${reason}` : reason}
+                      </span>
                     )}
                   </div>
                 )}
