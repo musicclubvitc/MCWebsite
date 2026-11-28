@@ -1,21 +1,16 @@
 import React, { useState } from 'react';
 import { useContent } from '../context/ContentContext';
-import { useAuth } from '../context/AuthContext';
 import { 
   Calendar, 
   MapPin, 
   Trophy, 
-  Ticket, 
   Search, 
-  X, 
-  CheckCircle2,
-  ExternalLink
+  X
 } from 'lucide-react';
 import { formatImageUrl } from '../lib/imageUtils';
 
-export const Events = ({ setActiveTab }) => {
+export const Events = () => {
   const { content } = useContent();
-  const { showToast } = useAuth();
   
   const events = content?.events || [];
 
@@ -23,7 +18,6 @@ export const Events = ({ setActiveTab }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [activeModalEvent, setActiveModalEvent] = useState(null);
-  const [registeredEvents, setRegisteredEvents] = useState({});
 
   const categories = ['All', 'Performance', 'Competition', 'Workshop', 'Open Mic', 'Intercollege Fest'];
 
@@ -43,11 +37,6 @@ export const Events = ({ setActiveTab }) => {
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
-
-  const handleRegister = (event) => {
-    setRegisteredEvents(prev => ({ ...prev, [event.id]: true }));
-    showToast(`Registered for ${event.name}! Details sent to your student email.`);
-  };
 
   return (
     <div className="container-custom" style={{ paddingTop: '36px', paddingBottom: '60px' }}>
@@ -289,23 +278,6 @@ export const Events = ({ setActiveTab }) => {
                   >
                     View Details
                   </button>
-
-                  {event.status === 'Upcoming' && (
-                    <button
-                      onClick={() => handleRegister(event)}
-                      className={registeredEvents[event.id] ? "btn-ghost" : "btn-primary"}
-                      style={{ fontSize: '0.82rem', padding: '6px 14px' }}
-                      disabled={registeredEvents[event.id]}
-                    >
-                      {registeredEvents[event.id] ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#34D399' }}>
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Registered
-                        </span>
-                      ) : (
-                        'Register'
-                      )}
-                    </button>
-                  )}
                 </div>
 
               </div>
@@ -497,19 +469,6 @@ export const Events = ({ setActiveTab }) => {
               <button onClick={() => setActiveModalEvent(null)} className="btn-ghost">
                 Close
               </button>
-
-              {activeModalEvent.status === 'Upcoming' && (
-                <button
-                  onClick={() => {
-                    handleRegister(activeModalEvent);
-                    setActiveModalEvent(null);
-                  }}
-                  className="btn-primary"
-                  disabled={registeredEvents[activeModalEvent.id]}
-                >
-                  {registeredEvents[activeModalEvent.id] ? 'Already Registered' : 'Confirm Registration'}
-                </button>
-              )}
             </div>
           </div>
         </div>
